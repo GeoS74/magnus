@@ -1,0 +1,180 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+  <title>MAGNUS | сотрудники</title>
+  <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+  <!--https://bootswatch.com/cosmo/-->
+  <!--https://icons.getbootstrap.com/-->
+  <style>
+    .main {
+      margin: 20px;
+      max-width: 800px;
+    }
+
+    h1 {
+      margin: 35px 0
+    }
+
+    #searchForm {
+      margin: 35px 0
+    }
+
+    #searchForm input[type=text] {
+      float: left;
+      width: 85%
+    }
+
+    #searchForm button {
+      float: right;
+      width: 15%
+    }
+
+    h4{
+      cursor: pointer;
+    }
+    h4:hover{
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+
+  <div class="main">
+    <h1>Список сотрудников</h1>
+
+    <!--кнопка добавления сотрудника-->
+    <a href="/valdane/staffer/add" class="btn btn-outline-primary">Добавить сотрудника</a>
+
+    <!--строка поиска-->
+    <form id="searchForm" onsubmit="event.preventDefault()">
+      <fieldset>
+        <div class="form-group row">
+          <div class="form-group">
+            <input type="text" name="search" class="form-control" placeholder="Введите фамилию сотрудника">
+            <button class="btn btn-primary" id="search">Поиск</button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+    <script>
+  // let fd = new FormData(searchForm);
+  // ('GET', `/staffer?needle=${fd.get('search')}`);
+    </script>
+
+    <!--список сотрудников-->
+    <div id="content"></div>
+
+    <!--загрузка новых результатов-->
+    <button type="button" id="load_next" class="btn btn-primary mt-4">Загрузить ещё...</button>
+  </div>
+</body>
+<script>
+  //поиск сотрудника
+  search.addEventListener('click', event => {
+    event.target.disabled = true; //заблокировать кнопку подгрузки данных, чтобы не "завалить сервер запросами"
+    load_next.hidden = false; //скрыть кнопку подгрузки при начале нового поиска
+
+    const fd = new FormData(searchForm);
+ 
+    fetch(`/valdane/staffer?needle=${fd.get('search')}`, { method: 'GET' })
+    .then(async response => {
+      if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+        const res = await response.json();
+        content.innerHTML = '';
+        for(const staff of res) content.insertAdjacentHTML('beforeend', makeRow(staff));
+      }
+      // else if(response.status === 401){ //ошибка авторизации
+      //     //тут может быть переадресация при разрыве сессии
+      //     //...
+      // }
+      else {
+        throw new Error('error HTTP ' + response.status);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(_ => event.target.disabled = false);
+
+  });
+
+
+
+  //запрос новых данных
+  load_next.addEventListener('click', event => {
+    event.target.disabled = true; //заблокировать кнопку подгрузки данных, чтобы не "завалить сервер запросами"
+
+    const names = document.querySelectorAll('h4');
+    const last_id = names[names.length-1].getAttribute('id');
+
+    const fd = new FormData(searchForm);
+    fetch(`/valdane/staffer?last_id=${last_id}&needle=${fd.get('search')}`, { method: 'GET' })
+    .then(async response => {
+      if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+        const res = await response.json();
+        for(const staff of res) content.insertAdjacentHTML('beforeend', makeRow(staff));
+        if(!res.length) event.target.hidden = true; //скрыть кнопку подгрузки при начале нового поиска
+        event.target.disabled = false;
+      }
+      // else if(response.status === 401){ //ошибка авторизации
+      //     //тут может быть переадресация при разрыве сессии
+      //     //...
+      // }
+      else {
+        throw new Error('error HTTP ' + response.status);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+  });
+
+
+  fetch('/valdane/staffer/', { method: 'GET' })
+    .then(async response => {
+      if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+        const res = await response.json();
+        for(const staff of res) content.insertAdjacentHTML('beforeend', makeRow(staff));
+      }
+      // else if(response.status === 401){ //ошибка авторизации
+      //     //тут может быть переадресация при разрыве сессии
+      //     //...
+      // }
+      else {
+        throw new Error('error HTTP ' + response.status);
+      }
+    })
+    .catch(error => {
+      console.log(error);
+    });
+
+function makeRow(data){
+  return `
+          <div class="card">
+          <div class="card-body">
+            <h4 class="card-title" id="${data.id}" onclick="location= '${'/valdane/staffer/'+data.id}'">${data.name}</h4>
+            <p class="text-muted">${data.position}</p>
+            <small class="text-muted" style="position:absolute; right:18px; top: 18px;">${makeStatusInfo(data.status)}</small>
+          </div>
+        </div>
+      `;
+}
+function makeStatusInfo(status){
+    switch(status) {
+        case 'уволен':
+            return `<span class="text-danger">${status}<span>`;
+            break;
+        case 'кадровый резерв':
+            return `<span class="text-warning">${status}<span>`;
+            break;
+        default: return '';
+    }
+}
+</script>

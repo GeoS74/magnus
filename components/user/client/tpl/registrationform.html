@@ -1,0 +1,146 @@
+<!DOCTYPE HTML> 
+<html lang="ru">
+<head>
+  <title>MAGNUS | signup</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/> 
+    <meta name="viewport" content="width=device-width"/>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css"/><!--https://bootswatch.com/cosmo/-->
+                                                                          <!--https://icons.getbootstrap.com/-->
+    <script type="text/javascript" src="/libs/El.js"></script>
+    <style>
+        #main{
+            position:absolute;
+            top:0px;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+        }
+        #main:before{
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+        }
+        #form{
+            text-align: left;
+            display: inline-block;
+            vertical-align: middle;
+            width: 80%;
+            max-width: 450px;
+            border: 1px solid #ced4da;
+            padding: 10px 50px 30px 50px;
+        }
+        legend{font-size: 2em;}
+        button{width: 100%;}
+        #showpass{
+            float:right;
+            cursor:pointer;
+
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none;   /* Chrome/Safari/Opera */
+            -khtml-user-select: none;    /* Konqueror */
+            -moz-user-select: none;      /* Firefox */
+            -ms-user-select: none;       /* Internet Explorer/Edge */
+            user-select: none;           /* Non-prefixed version, currently
+                                            not supported by any browser */
+        }
+    </style>
+</head>
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+
+
+    
+<div id="main">
+    <form id="form" class="border-primary">
+        <div class="form-group">
+            <label for="email" class="form-label mt-4">Email</label>
+            <input type="text" name="email" id="email" class="form-control" placeholder="email" autofocus>
+            <label for="password" class="form-label mt-4">Password</label>
+            <span class="form-label mt-4 text-muted" id="showpass">Show password</span>
+            <input type="password" name="password" id="password" class="form-control " placeholder="password">
+            <label for="displayName" class="form-label mt-4">Your name <span class="text-muted">- optional</span></label>
+            <input type="text" name="displayName" id="displayName" class="form-control" placeholder="name" autofocus>
+        </div>
+        <button type="submit" class="btn btn-primary mt-4" id="button">Create an account</button>
+        <div class="form-group text-center mt-3">
+            <span class="text-muted">Already have an account?</span>
+            <a href="/login" class="text-primary">Sign in</a>
+        </div>
+    </form>
+</div>
+</body>
+<script>
+    document.getElementById('form').addEventListener('submit', event => {
+        event.preventDefault();
+        button.disabled = true; //деактивировать кнопку отправки данных
+        fetch('/signup',
+            {
+                method: 'POST',
+                headers: {},
+                body: new FormData(event.target)
+            })
+        .then(async response => {
+            if(response.ok) { // если HTTP-статус в диапазоне 200-299 
+                setValid(email);
+                setValid(password);
+                setValid(displayName);
+
+                console.log( await response.json() );
+            }
+            else if(response.status === 400){ //ошибка авторизации
+                showMistake(await response.json());
+            }
+            else {
+                throw new Error('error HTTP '+response.status);
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+    });
+
+    function showMistake(error){
+        switch(error.path){
+            case 'user':
+                setInvalid(email, error.message);
+                setValid(password);
+                setValid(displayName);
+                break;
+            case 'password':
+                setValid(email);
+                setInvalid(password , error.message);
+                setValid(displayName);
+                break;
+            case 'displayName':
+                setValid(email);
+                setValid(password);
+                setInvalid(displayName , error.message);
+                break;
+        }
+    }
+    function setValid(elem){
+        elem.classList.remove('is-invalid');
+        if(elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV'){
+            elem.nextElementSibling.remove();
+        }
+    }
+    function setInvalid(elem, message){
+        elem.classList.add('is-invalid');
+
+        if(!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV'){
+            elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+        }
+        else if(elem.nextElementSibling.tagName === 'DIV') {
+            elem.nextElementSibling.innerHTML = message;
+        }
+    }
+
+    showpass.addEventListener('click', event => {
+        password.type = password.type == 'password' ? 'text' : 'password';
+        event.target.textContent = event.target.textContent  == 'Show password' ? 'Hide password' : 'Show password';
+    });
+    showpass.addEventListener('mouseover', event => event.target.classList.toggle('text-muted'));
+    showpass.addEventListener('mouseout', event => event.target.classList.toggle('text-muted'));
+</script>

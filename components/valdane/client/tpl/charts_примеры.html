@@ -1,0 +1,302 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | графики</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+
+    <link href="/libs/webix/webix.css" rel="stylesheet" type="text/css">
+    <script src="/libs/webix/webix.js" type="text/javascript"></script>
+    <!--https://webix.com/how-to-start/-->
+    <!--https://ru.docs.webix.com/desktop__calendar.html-->
+    <!--https://ru.docs.webix.com/api__refs__ui.calendar_events.html-->
+    <!--https://docs.webix.com/tutorials__start_coding.html-->
+    <style>
+        .main {
+            margin: 20px;
+            min-width: 450px;
+            max-width: 1500px;
+            width: 80%;
+            border: 0px solid red;
+        }
+
+        h1 {
+            margin: 35px 0
+        }
+
+
+        #modal_layer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            background: rgb(117, 117, 117, 0.5);
+            z-index: 100500;
+        }
+
+        #formCreateChart {
+            width: 80%;
+            max-width: 500px;
+            border: 1px solid #ced4da;
+            padding: 10px 50px 30px 50px;
+            background: white;
+        }
+
+        .chart {
+            text-align: center;
+            border: 0px solid green;
+        }
+
+        h3 {
+            margin: 25px 0;
+        }
+
+        .chart-table td {
+            width: 80px;
+            height: 40px;
+            border: 1px solid #ced4da;
+        }
+
+        .chart-table td:nth-of-type(1) {
+            width: 350px;
+        }
+
+        /* зелёненький цвет #d9f0d1 */
+    </style>
+</head>
+
+<body>
+    <!--#include file="./client/public/tpl/top_menu.html"-->
+
+
+    <div id="modal_layer" hidden="hidden">
+        <form id="formCreateChart" class="border-primary" onsubmit="event.preventDefault()">
+            <legend class="mt-3">Создать новый график</legend>
+            <div class="form-group">
+                <label for="techCenter" class="form-label mt-4">Технический центр</label>
+                <select class="form-select" name="techCenter" id="techCenter">
+                    <option value="">Выберите Тех. центр</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="buttonCreateChart">Создать график</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideCreateChartForm()>Отмена</button>
+        </form>
+    </div>
+
+
+
+
+    <div class="main">
+        <h1>Графики</h1>
+        <button type="button" class="btn btn-outline-primary" id="createChart">Создать график</button>
+        <script>
+            //кнопка создать график
+            createChart.onclick = event => {
+                showCreateChartForm();
+            }
+            //показать / скрыть форму создания графика
+            function showCreateChartForm() {
+                modal_layer.hidden = false;
+            }
+            function hideCreateChartForm() {
+                modal_layer.hidden = true;
+            }
+            //заполнить список тех.центров формы создания графика
+            fetch('/valdane/techcenter', { method: 'GET' })
+                .then(async response => {
+                    const res = await response.json();
+                    for (const t of res) {
+                        techCenter.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`);
+                    }
+
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+            //клик по кнопке "Создать график"
+            buttonCreateChart.onclick = event => {
+                formCreateChart.reset();
+                hideCreateChartForm();
+            };
+        </script>
+
+
+
+
+
+
+
+        <div class="chart">
+            <h3>Ямал</h3>
+
+            <table class="chart-table">
+                <tr>
+                    <td></td>
+                    <td colspan="5">2021</td>
+                    <td colspan="7">2022</td>
+                </tr>
+
+                <tr>
+                    <td>Сотрудники</td>
+                    <td>январь</td>
+                    <td>февраль</td>
+                    <td>март</td>
+                    <td>апрель</td>
+                    <td>май</td>
+                    <td>июнь</td>
+                    <td>июль</td>
+                    <td>август</td>
+                    <td>сентябрь</td>
+                    <td>октябрь</td>
+                    <td>ноябрь</td>
+                    <td>декабрь</td>
+                </tr>
+
+                <tr>
+                    <td>Иванов И.И.</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+
+
+                <tr>
+                    <td>Сидоров С.В.</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <svg width="100%" height="100%">
+                            <rect width="100%" height="100%" fill="purple" x="25%" y="0" />
+                        </svg>
+                    </td>
+                    <td>
+                        <svg width="100%" height="100%">
+                            <title>10/10/2022 - 31/12/2022</title>
+                            <rect width="100%" height="100%" fill="purple" />
+                        </svg>
+                    </td>
+                    <td>
+                        <svg width="100%" height="100%">
+                            <title>10/10/2022 - 31/12/2022</title>
+                            <rect width="100%" height="100%" fill="purple" x="-50%" y="0" />
+                        </svg>
+                    </td>
+                </tr>
+            </table>
+
+
+
+        </div>
+
+
+
+
+
+
+
+        <div id="mybox" hidden></div>
+
+        <script>
+            webix.Date.startOnMonday = true; //первый день недели - понедельник (по умолчанию воскресенье)
+            webix.i18n.setLocale("ru-RU");
+
+            const cal = webix.ui({
+                view: "calendar",
+                id: "my_calendar",
+                date: new Date(2022, 0, 1),
+                weekHeader: false,
+                events: webix.Date.isHoliday,
+                width: 300,
+                height: 250,
+                hidden: true,
+                container: "mybox" //указать контейнер
+            });
+
+            $$("my_calendar").attachEvent("onAfterDateSelect", function (date) {
+                console.log(date);
+                //$$('my_calendar').setValue(new Date(2022,0,30));
+            });
+
+            // cal.hide();
+            cal.show();
+
+
+        </script>
+
+    </div>
+
+
+
+
+
+    <!-- https://developers.google.com/chart/interactive/docs/gallery/timeline?hl=ru -->
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <div id="timeline"></div>
+    <script>
+        google.charts.load('current', { 'packages': ['timeline'] });
+        google.charts.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var container = document.getElementById('timeline');
+            var chart = new google.visualization.Timeline(container);
+            var dataTable = new google.visualization.DataTable();
+
+            dataTable.addColumn({ type: 'string', id: 'President' });
+            dataTable.addColumn({ type: 'string', id: 'dummy bar label' });
+            dataTable.addColumn({ type: 'string', role: 'tooltip' });
+            dataTable.addColumn({ type: 'date', id: 'Start' });
+            dataTable.addColumn({ type: 'date', id: 'End' });
+            dataTable.addRows([
+                ['Washington', 'asdasd', 'jungle', new Date(2022, 2, 1), new Date(2022, 4, 7)],
+                ['Adams', 'test', 'music', new Date(2022, 3, 1), new Date(2022, 5, 17)]
+            ]);
+
+            chart.draw(dataTable, {
+                timeline: {
+                    colorByRowLabel: true,
+                    groupByRowLabel: false,
+                    rowLabelStyle: {
+                        color: 'green'
+                    },
+                    showBarLabels: true,
+                    showRowLabels: true,
+                },
+                width: 1000
+            });
+        }
+    </script>
+</body>
+<!-- 
+        dataTable.addColumn({ type: 'string', id: 'President' });
+        dataTable.addColumn({ type: 'string', id: 'dummy bar label' });
+        dataTable.addColumn({ type: 'string', role: 'tooltip' });
+        dataTable.addColumn({ type: 'date', id: 'Start' });
+        dataTable.addColumn({ type: 'date', id: 'End' });
+        dataTable.addRows([
+          [ 'Washington', null, 'George', new Date(1789, 3, 29), new Date(1797, 2, 3) ],
+          [ 'Adams', null, 'John', new Date(1797, 2, 3),  new Date(1801, 2, 3) ],
+          [ 'Jefferson', null, 'Thomas', new Date(1801, 2, 3),  new Date(1809, 2, 3) ]]); -->

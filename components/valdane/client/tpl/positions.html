@@ -1,0 +1,243 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | список должностей</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" /><!--https://bootswatch.com/cosmo/-->
+                                                                           <!--https://icons.getbootstrap.com/-->
+    <style>
+        .main {
+            margin: 20px;
+            max-width: 800px;
+        }
+
+        #modal_layer {
+            position: fixed;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            background: rgb(117, 117, 117, 0.5);
+            z-index: 100500;
+            text-align: center;
+            display: none;
+        }
+
+        #modal_layer:before {
+            content: '';
+            display: inline-block;
+            height: 100%;
+            vertical-align: middle;
+        }
+
+        #form {
+            text-align: left;
+            display: inline-block;
+            vertical-align: middle;
+            width: 80%;
+            max-width: 450px;
+            border: 1px solid #ced4da;
+            padding: 10px 50px 30px 50px;
+            background: white;
+            z-index: 100501;
+        }
+
+        h1 {margin: 35px 0}
+        .main ul {margin: 30px 0}
+        .main ul li {padding: 8px 0}
+
+        /*блок с иконками редактирования записей*/
+        .edit-svg-pic{
+            display: inline-block;
+            margin-left: 25px;
+        }
+        .edit-svg-pic > svg:hover{
+            cursor: pointer;
+            fill:#2780e3;
+        }
+    </style>
+</head>
+
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+
+
+    <div id="modal_layer">
+        <form id="form" class="border-primary">
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                </button>
+            </div>
+            <div class="form-group">
+                <label for="title" class="form-label mt-4">Название должности</label>
+                <input type="text" name="title" id="title" class="form-control" placeholder="должность" autofocus>
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="button">Отправить данные</button>
+            <input type="hidden" name="_id" id="_id" value="">
+        </form>
+    </div>
+    <script>
+        //отправка данных на сервер
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const fd = new FormData(event.target);
+            const options = {
+                headers: {},
+                body: fd
+            };
+            let url;
+
+            if( fd.get('_id') ){ //если скрытое поле заполнено - редактировать запись, иначе добавить запись
+                options.method = 'PUT';
+                url = '/valdane/position/'+fd.get('_id');
+            }
+            else {
+                options.method = 'POST';
+                url = '/valdane/position';
+            }
+
+            button.disabled = true; //деактивировать кнопку отправки данных
+            fetch(url, options)
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                        const res = await response.json();
+                        hideModal();
+
+                        if(options.method === 'POST'){ //если метод POST - добавить запись, иначе редактировать запись
+                            document.querySelector('.main ul').insertAdjacentHTML('afterbegin', makeLi(res));
+                        }
+                        else {
+                            document.getElementById(res.id).innerHTML = res.title;
+                        }
+                    }
+                    else if (response.status === 400) { //ошибка валидации
+                        setInvalid(title, 'Это поле не должно быть пустым');
+                    }
+                    // else if(response.status === 401){ //ошибка авторизации
+                    //     //тут может быть переадресация при разрыве сессии
+                    //     //...
+                    // }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+        });
+    </script>
+
+    <div class="main">
+        <h1>Список должностей</h1>
+        <button type="button" class="btn btn-outline-primary" id="addPosition">Новая должность</button>
+        <ul></ul>
+    </div>
+    <script>
+        //заполнение списка
+        (async _ => {
+            fetch('/valdane/position', {method: 'GET'})
+            .then(async response => {
+                const res = await response.json();
+                const ul = document.querySelector('.main ul');
+                for(const p of res) {
+                    ul.insertAdjacentHTML('afterbegin', makeLi(p));
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            });
+        })();
+    </script>
+</body>
+<script>
+    //генератор HTML элементов списка
+    function makeLi(data){
+        return `<li id="${data.id}" onmouseenter="showSVG(event)" onmouseleave="hideSVG(event)">${data.title}</li>`;
+    }
+    //показать/скрыть div с иконками редактирования записи
+    function showSVG(event){
+        event.target.insertAdjacentHTML('beforeend', makeSVG());
+    }
+    function hideSVG(event){
+        event.target.querySelector('div').remove();
+    }
+    //возвращает div с иконками редактирования записи
+    function makeSVG(){
+        return `<div class="edit-svg-pic">
+                <svg xmlns="http://www.w3.org/2000/svg" onclick="editor(event)" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                    <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z"/>
+                    <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5v11z"/>
+                  </svg>
+
+                  <svg xmlns="http://www.w3.org/2000/svg" onclick="deleter(event)" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                  </svg>
+                </div>`;
+    }
+    //клик по иконке редактирования записи
+    function editor(event){
+        //используется .closest(), т.к. событие может произойти на path-элементе иконки
+        const id = event.target.closest('svg').parentElement.parentElement.id;
+        const title = event.target.closest('svg').parentElement.parentElement.innerText;
+        fillForm(id, title);
+        showModal();
+    }
+    //клик по иконке удаления записи
+    function deleter(event){
+        if( !confirm('Вы действительно хотите удалить эту запись?') ) return;
+        //используется .closest(), т.к. событие может произойти на path-элементе иконки
+        const id = event.target.closest('svg').parentElement.parentElement.id;
+        fetch('/valdane/position/'+id, {method: 'DELETE'})
+        .then(async response => {
+            const res = await response.json();
+            document.getElementById(id).remove();
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    }
+    //клик по кнопке добавления
+    addPosition.onclick = _ => { showModal() };
+    //клик по закрытию формы
+    modal_layer.onclick = event => {
+        if (!event.target.closest('.btn-close')) return;
+        hideModal();
+    };
+    //показать скрыть модальное окно
+    function showModal() {
+        modal_layer.style.display = 'block';
+        title.focus();
+        setValid(title);
+    }
+    function hideModal() {
+        modal_layer.style.display = 'none';
+        form.reset();
+        form.querySelector('#_id').value = null; //сброс скрытого поля с id записи
+    }
+    //показать/скрыть ошибку ввода данных
+    function setValid(elem) {
+        elem.classList.remove('is-invalid');
+        if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+            elem.nextElementSibling.remove();
+        }
+    }
+    function setInvalid(elem, message) {
+        elem.classList.add('is-invalid');
+
+        if (!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV') {
+            elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+        }
+        else {
+            elem.nextElementSibling.innerHTML = message;
+        }
+    }
+    //заполнение полей формы
+    function fillForm(id, title){
+        form.querySelector('#_id').value = id;
+        form.querySelector('#title').value = title;
+    }
+</script>

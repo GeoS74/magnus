@@ -1,0 +1,807 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | графики</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+
+    <link href="/libs/webix/webix.css" rel="stylesheet" type="text/css">
+    <script src="/libs/webix/webix.js" type="text/javascript"></script>
+    <!--https://webix.com/how-to-start/-->
+    <!--https://ru.docs.webix.com/desktop__calendar.html-->
+    <!--https://ru.docs.webix.com/api__refs__ui.calendar_events.html-->
+    <!--https://docs.webix.com/tutorials__start_coding.html-->
+    <script src="/libs/Chart.js" type="text/javascript"></script>
+    <style>
+        .main {
+            margin: 20px;
+            min-width: 900px;
+            max-width: 1200px;
+            width: 80%;
+            border: 0px solid red;
+        }
+
+        h1,
+        h3 {
+            margin: 35px 0
+        }
+
+
+        .modal_layer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            background: rgb(117, 117, 117, 0.5);
+            z-index: 100500;
+        }
+
+        .modal-form {
+            border: 1px solid #ced4da;
+            padding: 10px 50px 30px 50px;
+            background: white;
+        }
+
+        #formCreateChart {
+            width: 80%;
+            max-width: 500px;
+        }
+
+        #formChangePeriod {
+            width: 80%;
+            max-width: 500px;
+        }
+
+        #formAddStaff {
+            width: 80%;
+            max-width: 500px;
+        }
+
+        /*контейнер для графика*/
+        .chart {
+            border: 0px solid red;
+            text-align: center;
+        }
+
+
+        .period>div {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .period select {
+            margin: 0 10px;
+        }
+
+
+        /*ссылка на профиль сотрудника*/
+        .staff-link {
+            text-decoration: none;
+        }
+
+        .staff-link:hover {
+            text-decoration: underline;
+            color: #2780e3;
+        }
+
+
+        .bi-person-plus:hover {
+            cursor: pointer;
+            fill: #2780e3;
+        }
+
+        .period-block {
+            cursor: pointer;
+        }
+
+        .period-block:hover {
+            cursor: pointer;
+            fill: #2068b9;
+        }
+
+
+        #formChangePeriodBlock {
+            width: 730px;
+        }
+
+        .calendarVidget {
+            display: flex;
+        }
+
+        .calendarVidget>div {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--#include file="./client/public/tpl/top_menu.html"-->
+
+    <script>//построение графика
+        class InteractiveChart extends Chart {
+            constructor(...args) {
+                super(...args);
+            }
+
+            _insertPicNewStaff() {
+                const offset = this._heightRow / 2 + this._fontSize / 2;
+                const pic = ` <svg x="110" y="${offset - 16}" 
+                width="18" height="18" fill="currentColor" class="bi bi-person-plus" viewBox="0 0 16 16">
+                <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                <path fill-rule="evenodd" d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"/>
+                <rect width="18" height="18" x="0" y ="0" opacity="0"/>
+                </svg>`;
+                this._container.querySelector('svg text').insertAdjacentHTML('afterend', pic);
+            }
+            //@Override
+            draw() {
+                this._container.insertAdjacentHTML('beforeend', this._render());
+                this._insertPicNewStaff();
+            }
+            //@Override
+            _makePeriodBlocks(periods, offset) {
+                //фоновый блок должен содержать id сотрудника
+                let result = ` <rect opacity="0"
+                                data-staffer-id="${periods[0][2]}"
+                                width="${this._width - this._periodPaddingLeft}" height="${this._heightRow}"
+                                x="${this._periodPaddingLeft}" 
+                                y ="${offset}" />`;
+                for (let period of periods) {
+                    //кол-во дней от начала графика до начала блока
+                    let diffDayStart = (period[0] - this._dateStart) / 1000 / 60 / 60 / 24;
+                    diffDayStart = (diffDayStart <= 0) ? 0 : Math.round(diffDayStart);
+                    //левая граница блока превышает правую границу периода графика - завершить итерацию
+                    if (diffDayStart >= this._daysOfPeriod) continue;
+
+
+                    //кол-во дней от начала графика до начала блока
+                    let diffDayEnd = (period[1] - this._dateStart) / 1000 / 60 / 60 / 24;
+                    diffDayEnd = (diffDayEnd >= this._daysOfPeriod) ? this._daysOfPeriod : Math.round(diffDayEnd);
+                    //правая граница блока меньше левой границы периода графика - завершить итерацию
+                    if (diffDayEnd < 0) continue; //если 0 - период составляет 1 день
+
+                    result += `<g>
+                            <title>${this._getFormatDateForTitle(period[0])} - ${this._getFormatDateForTitle(period[1])}</title>
+                            <rect 
+                            data-staffer-id="${period[2]}"
+                            data-block-id="${period[3]}"
+                            data-period-start="${period[0].getTime()}" 
+                            data-period-end="${period[1].getTime()}"
+                            class="period-block"
+                            width="${(diffDayEnd - diffDayStart + 1) * this._step}" height="${this._heightRow}" fill="${this._colorBlock}" 
+                            stroke="red" stroke-width="0"
+                                x="${this._periodPaddingLeft + diffDayStart * this._step}" 
+                                y ="${offset}
+                                "/>
+                            </g>`;
+                }
+                return result;
+            }
+            //@Override
+            _makeText(text, offset, idStaff) {
+                return `<text x="10" y="${offset}" font-size="${this._fontSize}" fill="${this._colorText}">
+                    <a href="/valdane/staffer/${idStaff}" class="staff-link" target="blank">${text}</a>
+                    </text>`;
+            }
+            //@Override
+            _makeRows() {
+                let result = this._makeHeaderRow(),
+                    i = 1;
+                for (const row of this._rows) {
+                    const offsetText = i * this._heightRow + this._heightRow / 2 + this._fontSize / 2;
+                    const offsetBlock = i * this._heightRow;
+                    result += this._makeText(row[0], offsetText, row[1][0][2]); //добавить id сотрудника
+                    result += this._makePeriodBlocks(row[1], offsetBlock);
+                    i++;
+                }
+                return result;
+            }
+        }
+
+        // const chart = new InteractiveChart();
+        // chart.container = document.querySelector('.chart');
+
+        // chart.setPeriod(new Date(2022, 0), new Date(2022, 11));
+        // chart.setPeriod(new Date(2022, 2), new Date(2022, 12));
+        // chart.setPeriod(new Date(2022, 0), new Date(2023, 5));
+        // chart.setPeriod(new Date(2022, 2), new Date(2022, 2));
+
+        // chart.addRow(['Иванов И.И.', null, null, 'id_12345']);
+        // chart.addRow(['Иванов И.И.', new Date(2022, 0, 5), new Date(2022, 1, 5), 'id_12345']);
+        // chart.addRow(['Петров М.С.', new Date(2022, 1, 7), new Date(2022, 5, 17), 'id_54321']);
+        // chart.addRow(['Петров М.С.', new Date(2021, 11, 25), new Date(2022, 0, 17), 'id_54321']);
+        // chart.addRow(['Иванов И.И.', new Date(2022, 5, 25), new Date(2022, 6, 18), 'id_12345']);
+        // chart.addRow(['Иванов И.И.', new Date(2022, 11, 25), new Date(2023, 11, 28), 'id_12345']);
+        // chart.draw();
+        // console.log(chart);
+
+
+        //глобальная коллекция графиков
+        //ключ - id тех.центра
+        const charts = new Map();
+        //глобальная коллекция сотрудников
+        //ключ - полное Ф.И.О. сотрудника
+        const staffers = new Map();
+    </script>
+
+
+
+
+    <!-- форма создания графика -->
+    <div class="modal_layer" id="createChartModal" hidden="hidden">
+        <form id="formCreateChart" class="border-primary modal-form" onsubmit="event.preventDefault()">
+            <legend class="mt-3">Создать новый график</legend>
+            <div class="form-group">
+                <label for="techCenter" class="form-label mt-4">Технический центр</label>
+                <select class="form-select" name="techCenter" id="techCenter">
+                    <option value="">Выберите Тех. центр</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="buttonCreateChart">Создать график</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideCreateChartForm()>Отмена</button>
+        </form>
+    </div>
+
+
+
+    <!-- форма изменения периода отображения графиков-->
+    <div class="modal_layer" id="changePeriodModal" hidden="hidden">
+        <form id="formChangePeriod" class="border-primary modal-form" onsubmit="event.preventDefault()">
+            <legend class="mt-3">Период отображения графиков</legend>
+            <div class="form-group period">
+                <label for="techCenter" class="form-label mt-4">Начало периода:</label>
+                <div><select class="form-select" id="monthStart" name="monthStart"></select>
+                    <select class="form-select" id="yearStart" name="yearStart"></select>
+                </div>
+
+            </div>
+            <div class="form-group period">
+                <label for="techCenter" class="form-label mt-4">Конец периода:</label>
+                <div>
+                    <select class="form-select" id="monthEnd" name="monthEnd"></select>
+                    <select class="form-select" id="yearEnd" name="yearEnd"></select>
+                </div>
+
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="buttonChangePeriod">Изменить период</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideChangePeriodForm()>Отмена</button>
+        </form>
+    </div>
+
+
+
+    <!-- форма изменения/добавления периода блока -->
+    <div class="modal_layer" id="changePeriodBlock" hidden="hidden">
+        <form id="formChangePeriodBlock" class="border-primary modal-form" onsubmit="event.preventDefault()">
+            <legend class="mt-3">Установить период</legend>
+            <div class="form-group calendarVidget">
+                <div>
+                    <label for="leftCalendarContainer" class="form-label mt-4">Начало периода:</label>
+                    <div id="leftCalendarContainer"></div>
+                </div>
+
+                <div>
+                    <label for="rightCalendarContainer" class="form-label mt-4">Конец периода:</label>
+                    <div id="rightCalendarContainer"></div>
+                </div>
+            </div>
+            <input type="hidden" name="techCenterId">
+            <input type="hidden" name="stafferId">
+            <input type="hidden" name="startPeriod">
+            <input type="hidden" name="endPeriod">
+            <input type="hidden" name="blockId">
+            <button type="submit" class="btn btn-primary mt-4" id="buttonChangePeriodBlock">Установить период</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin: 0 55px 0 15px"
+                onclick=hideChangePeriodBlockForm()>Отмена</button>
+            <button type="button" class="btn btn-outline-warning mt-4" id="buttonDelPeriodBlock">Удалить период</button>
+        </form>
+    </div>
+    <script>//виджет календарей
+        webix.Date.startOnMonday = true; //первый день недели - понедельник (по умолчанию воскресенье)
+        webix.i18n.setLocale("ru-RU");
+        //левый календарь
+        const cal = webix.ui({
+            view: "calendar",
+            id: "leftCalendar",
+            date: new Date(new Date().getFullYear(), new Date().getMonth()),
+            weekHeader: false,
+            events: webix.Date.isHoliday,
+            width: 300,
+            height: 250,
+            hidden: true,
+            container: "leftCalendarContainer" //указать контейнер
+        });
+        $$("leftCalendar").attachEvent("onAfterDateSelect", function (date) {
+            formChangePeriodBlock.elements.startPeriod.value = date.getTime();
+        });
+        // cal.hide();
+        // cal.setValue(new Date(2023, 3, 15));
+        cal.show();
+        //правый календарь
+        const cal2 = webix.ui({
+            view: "calendar",
+            id: "rightCalendar",
+            date: new Date(new Date().getFullYear(), 11),
+            weekHeader: false,
+            events: webix.Date.isHoliday,
+            width: 300,
+            height: 250,
+            hidden: true,
+            container: "rightCalendarContainer" //указать контейнер
+        });
+        $$("rightCalendar").attachEvent("onAfterDateSelect", function (date) {
+            formChangePeriodBlock.elements.endPeriod.value = date.getTime();
+        });
+        cal2.show();
+
+        //клик по блоку с периодом (редактирование периода)
+        document.body.addEventListener('click', event => {
+            if (!event.target.dataset.periodStart) return; //брать только блоки с датами
+            //изменить оформление формы
+            formChangePeriodBlock.querySelector('legend').innerHTML = 'Изменить период';
+            buttonChangePeriodBlock.value = 'Изменить период';
+            buttonDelPeriodBlock.hidden = false;
+            //установить даты на контроллерах
+            cal.setValue(new Date(+event.target.dataset.periodStart));
+            cal2.setValue(new Date(+event.target.dataset.periodEnd));
+            //установить значения скрытых полей формы
+            formChangePeriodBlock.elements.stafferId.value = event.target.dataset.stafferId;
+            formChangePeriodBlock.elements.techCenterId.value = event.target.parentElement.parentElement.parentElement.dataset.techcenterId;
+            formChangePeriodBlock.elements.startPeriod.value = cal.getValue().getTime();
+            formChangePeriodBlock.elements.endPeriod.value = cal2.getValue().getTime();
+            formChangePeriodBlock.elements.blockId.value = event.target.dataset.blockId;
+            showChangePeriodBlockForm();
+        });
+        //клик по фоновому блоку без периода (добавление периода)
+        document.body.addEventListener('click', event => {
+            if (!event.target.dataset.stafferId || event.target.dataset.periodStart) return; //брать только фоновые блоки
+            //изменить оформление формы
+            formChangePeriodBlock.querySelector('legend').innerHTML = 'Установить период';
+            buttonChangePeriodBlock.value = 'Установить период';
+            buttonDelPeriodBlock.hidden = true;
+            //сброс контроллеров
+            cal.setValue(null);
+            cal2.setValue(null);
+            //установить значения скрытых полей формы
+            formChangePeriodBlock.elements.stafferId.value = event.target.dataset.stafferId;
+            formChangePeriodBlock.elements.techCenterId.value = event.target.parentElement.parentElement.dataset.techcenterId;
+            formChangePeriodBlock.elements.startPeriod.value = '';
+            formChangePeriodBlock.elements.endPeriod.value = '';
+            formChangePeriodBlock.elements.blockId.value = '';
+            showChangePeriodBlockForm();
+        });
+        //отправка данных на сервер
+        buttonChangePeriodBlock.onclick = event => {
+            setValid(leftCalendarContainer);
+            setValid(rightCalendarContainer);
+
+            // console.log(event.target.dataset.stafferId);
+            const fd = new FormData(formChangePeriodBlock);
+            //проверка периодов startPeriod / endPeriod
+            if (!fd.get('startPeriod')) {
+                return setInvalid(leftCalendarContainer, 'Укажите начало периода');
+            }
+            if (!fd.get('endPeriod')) {
+                return setInvalid(rightCalendarContainer, 'Укажите конец периода');
+            }
+
+            const options = {
+                headers: {},
+                body: fd
+            };
+
+            if (fd.get('blockId')) { //если есть id блока (периода), то редактировать
+                options.method = 'PUT';
+            }
+            else {
+                options.method = 'POST';
+            }
+
+            event.target.disabled = true; //деактивировать кнопку отправки данных
+            fetch('/valdane/chart/period', options)
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                        const res = await response.json();
+                        // console.log(res);
+                        hideChangePeriodBlockForm();
+
+                        //взять из глобального хранилища график
+                        const chart = charts.get(res.techCenterId);
+
+                        if (options.method === 'POST') {
+                            //добавить в него новый блок
+                            chart.addRow([`${res.staffShortName} (${res.staffPosition})`, new Date(res.start), new Date(res.end), res.staffId, res.blockId]);
+                        }
+                        else {
+                            //здесь надо отредактировать границы периода, но т.к. специального метода для поиска периода в объекте Chart нет - сделать это руками
+                            const periods = chart._rows.get(`${res.staffShortName} (${res.staffPosition})`);
+
+                            for (const p of periods) {
+                                if (p[3] !== res.blockId) continue;
+                                //изменить период
+                                p[0] = new Date(res.start);
+                                p[1] = new Date(res.end);
+                                break;
+                            }
+                        }
+                        //удалить график и отрисовать по новой
+                        chart.container.querySelector('svg').remove();
+                        chart.draw();
+                    }
+                    else if (response.status === 400) { //ошибка валидации
+                        const res = await response.json();
+                        setInvalid(leftCalendarContainer, res.error);
+                    }
+                    // else if(response.status === 401){ //ошибка авторизации
+                    //     //тут может быть переадресация при разрыве сессии
+                    //     //...
+                    // }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => event.target.disabled = false); //активировать кнопку отправки данных
+        };
+        //клик по кнопке удаления периода
+        buttonDelPeriodBlock.onclick = event => {
+            if (!confirm('Вы точно хотите удалить период?')) return;
+
+            event.target.disabled = true; //деактивировать кнопку удаления
+            fetch('/valdane/chart/period/' + formChangePeriodBlock.elements.blockId.value, { method: 'DELETE' })
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299
+                        const res = await response.json();
+                        console.log(res);
+                        hideChangePeriodBlockForm();
+
+                        //взять из глобального хранилища график
+                        const chart = charts.get(res.techCenterId);
+                        //удалить период, но т.к. специального метода для поиска периода в объекте Chart нет - сделать это руками
+                        const periods = chart._rows.get(`${res.staffShortName} (${res.staffPosition})`);
+
+                        for (const p of periods) {
+                            if (p[3] !== res.blockId) continue;
+                            //обнулить периоды
+                            p[0] = null;
+                            p[1] = null;
+                            break;
+                        }
+                        //удалить график и отрисовать по новой
+                        chart.container.querySelector('svg').remove();
+                        chart.draw();
+                    }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => event.target.disabled = false);
+        };
+        //показать / скрыть форму изменения периода блока
+        function showChangePeriodBlockForm() {
+            changePeriodBlock.hidden = false;
+        }
+        function hideChangePeriodBlockForm() {
+            setValid(leftCalendarContainer);
+            setValid(rightCalendarContainer);
+            changePeriodBlock.hidden = true;
+        }
+    </script>
+
+
+
+
+    <!-- форма добавления сотрудника в график -->
+    <div class="modal_layer" id="addStaff" hidden="hidden">
+        <form id="formAddStaff" class="border-primary modal-form" onsubmit="event.preventDefault()">
+            <legend class="mt-3">Добавить сотрудника</legend>
+            <div class="form-group">
+                <label for="staffList" class="form-label mt-4">Ф.И.О. сотрудника:</label>
+                <input list="staffer-list" name="name" id="staffList" class="form-control"
+                    placeholder="Ф.И.О. сотрудника" autofocus autocomplete="off">
+                <datalist id="staffer-list"></datalist>
+            </div>
+            <input type="hidden" name="techcenterId">
+            <button type="submit" class="btn btn-primary mt-4" id="buttonAddStaff">Добавить</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideAddStaffForm()>Отмена</button>
+        </form>
+    </div>
+    <script>//форма добавления сотрудника в график
+        //показать / скрыть форму добавления сотрудника
+        function showAddStaffForm() {
+            addStaff.hidden = false;
+            staffList.focus();
+        }
+        function hideAddStaffForm() {
+            setValid(staffList);
+            formAddStaff.reset();
+            addStaff.hidden = true;
+        }
+        //вызов формы добавления сотрудника в график
+        document.body.addEventListener('click', event => {
+            if (!event.target.closest('.bi-person-plus')) return; //клик по svg добавления сотрудника
+            showAddStaffForm();
+            //записать id тех. центра (из блока-оболочки графика)
+            formAddStaff.elements.techcenterId.value = event.target.parentElement.parentElement.parentElement.dataset.techcenterId;
+        });
+        //клик по кнопке добавления сотрудника
+        buttonAddStaff.onclick = event => {
+            const fd = new FormData(formAddStaff);
+            //получить данные о сотруднике из глобального хранилища
+            const staffer = staffers.get(fd.get('name'));
+            if (!staffer) {
+                setInvalid(staffList, 'Не правильно указан сотрудник');
+                return;
+            }
+
+            //получить объект графика
+            const chart = charts.get(fd.get('techcenterId'));
+            chart.addRow([`${staffer.shortName} (${staffer.position})`, null, null, staffer.id, null]);
+            //удалить старый график
+            chart.container.querySelector('svg').remove();
+            //отрисовать новый график
+            chart.draw();
+            //скрыть форму добавления сотрудника
+            hideAddStaffForm();
+        };
+        //заполнение глобальной коллекции сотрудников + заполнение datalist формы
+        fetch('/valdane/staffer/', { method: 'GET' })
+            .then(async response => {
+                const res = await response.json();
+                const stafferDataList = document.querySelector('#staffer-list');
+                for (const staff of res) {
+                    //добавить в глобальное хранилище
+                    staffers.set(staff.name, staff);
+                    //добавить в datalist
+                    stafferDataList.insertAdjacentHTML('afterbegin', `<option value="${staff.name}">`);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            });
+        //показать/скрыть ошибку ввода данных
+        function setValid(elem) {
+            elem.classList.remove('is-invalid');
+            if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+                elem.nextElementSibling.remove();
+            }
+        }
+        function setInvalid(elem, message) {
+            elem.classList.add('is-invalid');
+
+            if (!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV') {
+                elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+            }
+            else {
+                elem.nextElementSibling.innerHTML = message;
+            }
+        }
+    </script>
+
+
+
+
+
+
+
+
+
+    <div class="main">
+        <h1>Графики</h1>
+        <button type="button" class="btn btn-outline-primary" id="createChart" onclick="showCreateChartForm()">Создать
+            график</button>
+        <script>//создание графика
+            //показать / скрыть форму создания графика
+            function showCreateChartForm() {
+                createChartModal.hidden = false;
+            }
+            function hideCreateChartForm() {
+                formCreateChart.reset();
+                createChartModal.hidden = true;
+            }
+            //заполнить список тех.центров формы создания графика
+            fetch('/valdane/techcenter', { method: 'GET' })
+                .then(async response => {
+                    const res = await response.json();
+                    for (const t of res) {
+                        techCenter.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.title}</option>`);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+            //клик по кнопке "Создать график"
+            buttonCreateChart.onclick = event => {
+                const selectedIndex = formCreateChart.elements.techCenter.selectedIndex;
+
+                if (!selectedIndex) return;
+                //заблокировать тех.центр от дальнейшего выбора (1 тех. центр == 1 график)
+                formCreateChart.elements.techCenter.options[selectedIndex].disabled = true;
+
+                const idTechCenter = formCreateChart.elements.techCenter.value;
+                const titleTechCenter = formCreateChart.elements.techCenter.options[selectedIndex].text;
+                document.querySelector('.main').insertAdjacentHTML('beforeend', `<div class="chart" data-techcenter-id="${idTechCenter}"><h3>${titleTechCenter}</h3></div>`)
+
+                //отрисовать новый график
+                const chart = new InteractiveChart();
+                chart.container = document.querySelector(`.chart[data-techcenter-id="${idTechCenter}"]`);
+                chart.setPeriod(new Date(+yearStart.value, +monthStart.value), new Date(+yearEnd.value, +monthEnd.value));
+
+                chart.draw();
+                //добавить объект графика в глобальное хранилище
+                charts.set(idTechCenter, chart);
+                //скрыть форму
+                hideCreateChartForm();
+            };
+        </script>
+
+
+
+        <button type="button" class="btn btn-outline-primary" id="changePeriod" style="margin-left: 20px">Изменить
+            период</button>
+        <script>//изменение периода отображения графиков
+            monthStart.insertAdjacentHTML('afterbegin', makeOptionMonth());
+            monthEnd.insertAdjacentHTML('afterbegin', makeOptionMonth());
+            yearStart.insertAdjacentHTML('afterbegin', makeOptionYear(2019));
+            yearEnd.insertAdjacentHTML('afterbegin', makeOptionYear(2019));
+            //initialization period
+            (_ => {
+                const date = new Date();
+                yearStart.value = date.getFullYear();
+                yearEnd.value = date.getFullYear() + 1;
+                monthStart.selectedIndex = date.getMonth();
+                monthEnd.selectedIndex = date.getMonth();
+            })();
+
+            function makeOptionMonth() {
+                return `
+                        <option value="0">январь</option>
+                        <option value="1">февраль</option>
+                        <option value="2">март</option>
+                        <option value="3">апрель</option>
+                        <option value="4">май</option>
+                        <option value="5">июнь</option>
+                        <option value="6">июль</option>
+                        <option value="7">август</option>
+                        <option value="8">сентябрь</option>
+                        <option value="9">октябрь</option>
+                        <option value="10">ноябрь</option>
+                        <option value="11">декабрь</option>
+                `;
+            }
+            function makeOptionYear(startYear) {
+                let result = '';
+                const date = new Date();
+                for (let i = startYear; i < (date.getFullYear() + 10); i++) {
+                    result += `<option value="${i}">${i}</option>`;
+                }
+                return result;
+            }
+            //кнопка изменить период
+            changePeriod.onclick = event => {
+                showChangePeriodForm();
+            }
+            //показать / скрыть форму изменения периода
+            function showChangePeriodForm() {
+                changePeriodModal.hidden = false;
+            }
+            function hideChangePeriodForm() {
+                changePeriodModal.hidden = true;
+            }
+            //клик по кнопке "Изменить период"
+            buttonChangePeriod.onclick = event => {
+                const dateStart = new Date(+yearStart.value, +monthStart.value);
+                const dateEnd = new Date(+yearEnd.value, +monthEnd.value + 1, 0); //взять полный месяц
+
+                event.target.disabled = true; //деактивировать кнопку
+                fetch(`/valdane/chart?start=${dateStart.getTime()}&end=${dateEnd.getTime()}`, { method: 'GET' })
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                            hideChangePeriodForm();
+                            const res = await response.json();
+                            console.log(res);
+
+                            // при изменении периода клиент должен обработать ситуацию 
+                            // когда сервер не отдаёт данные по какому-нибудь ранее отрисованному графику.
+                            // для этого надо взять все отрисованные графики и сравнить их с теми, которые возвращаются сервером,
+                            // если по графику нет данных, то отрисовать его пустым
+                            const updateChart = {}; //объект для фиксации изменённых графиков
+                            for (const key in res) {
+                                //BUG DETECTED
+                                //константа dateEnd здесь не подойдёт, т.к. при попытке отрисовки 1 месяца, будет отрисован ещё и следующий
+                                renderChart(res[key], dateStart.getTime(), new Date(+yearEnd.value, +monthEnd.value).getTime());
+                                updateChart[res[key].techCenterId] = true;
+                            }
+
+                            const allCharts = document.querySelectorAll('.chart');
+                            for (const ch of allCharts) {
+                                if (updateChart[ch.dataset.techcenterId]) continue;
+                                //график отрисован, но сервер вернул пустые данные по периоду
+                                //формируем псевдо-данные для функции рендеринга
+                                const dataChart = {
+                                    techCenterId: ch.dataset.techcenterId,
+                                    techCenterTitle: ch.querySelector('h3').text,
+                                    periods: []
+                                };
+                                renderChart(dataChart, dateStart.getTime(), new Date(+yearEnd.value, +monthEnd.value).getTime());
+                            }
+                        }
+                        else {
+                            throw new Error('error HTTP ' + response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    })
+                    .finally(_ => event.target.disabled = false);
+            };
+        </script>
+
+
+
+    </div>
+
+
+    <script>//начальная отрисовка графиков
+        (_ => {
+            const dateStart = new Date(+yearStart.value, +monthStart.value);
+            const dateEnd = new Date(+yearEnd.value, +monthEnd.value);
+
+            fetch(`/valdane/chart?start=${dateStart.getTime()}&end=${dateEnd.getTime()}`, { method: 'GET' })
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                        const res = await response.json();
+                        console.log(res);
+                        for (const key in res) renderChart(res[key], dateStart.getTime(), dateEnd.getTime());
+                    }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        })();
+
+
+
+        function renderChart(data, start, end) {
+            //заблокировать тех.центр от дальнейшего выбора (1 тех. центр == 1 график)
+            formCreateChart.querySelector(`option[value="${data.techCenterId}"]`).disabled = true;
+
+            if (!document.querySelector(`.chart[data-techcenter-id="${data.techCenterId}"]`)) {
+                //отрисовать обёртку графика
+                document.querySelector('.main').insertAdjacentHTML('beforeend', `<div class="chart" data-techcenter-id="${data.techCenterId}"><h3>${data.techCenterTitle}</h3></div>`)
+            }
+
+            const chart = new InteractiveChart();
+            chart.container = document.querySelector(`.chart[data-techcenter-id="${data.techCenterId}"]`);
+            chart.setPeriod(new Date(start), new Date(end));
+
+            // //добавить блоки
+            for (const p of data.periods) {
+                chart.addRow([`${p.staffShortName} (${p.staffPosition})`, new Date(p.start), new Date(p.end), p.staffId, p.blockId]);
+            }
+            const svg = chart.container.querySelector('svg');
+            if (svg) svg.remove();
+            chart.draw();
+            //добавить объект графика в глобальное хранилище
+            charts.set(data.techCenterId, chart);
+        }
+    </script>
+</body>

@@ -1,0 +1,7 @@
+node_modules/
+secret.env
+files/
+test/
+readme.txt
+backup*
+**/scancopy/

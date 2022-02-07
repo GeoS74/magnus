@@ -1,0 +1,385 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | сотрудник</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+    <style>
+        #modal_layer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            background: rgb(117, 117, 117, 0.5);
+            z-index: 100500;
+        }
+
+        #uploadForm {
+            width: 80%;
+            max-width: 550px;
+            border: 1px solid;
+            padding: 10px 50px 30px 50px;
+            background: white;
+        }
+
+
+
+        .main {
+            margin: 20px;
+            min-width: 450px;
+            max-width: 800px;
+            width: 80%;
+            border: 0px solid red;
+        }
+
+        h1 {
+            margin: 35px 0;
+        }
+
+        #avatar>svg,
+        #avatar>img {
+            width: 100%;
+            border-radius: 150px;
+            overflow: hidden;
+        }
+
+        .row {
+            display: table-row;
+        }
+
+        .cell {
+            border: 0px solid green;
+            float: left;
+        }
+
+        .left-col {
+            width: 30%;
+        }
+
+        .right-col {
+            width: 70%;
+            padding-left: 30px;
+        }
+
+
+        .liner {
+            position: relative;
+            line-height: 1.7em;
+        }
+
+        .liner small {
+            position: relative;
+            padding-right: 15px;
+            background: white;
+        }
+
+        hr {
+            position: absolute;
+            width: 100%;
+        }
+
+        /*кнопки режактирования и заливки файла*/
+        .optional>button {
+            width: 100%;
+        }
+
+
+        /*блок с иконками редактирования записей*/
+        .edit-svg-pic{
+            display: inline-block;
+            margin-left: 25px;
+        }
+        .edit-svg-pic > svg:hover{
+            cursor: pointer;
+            fill:#2780e3;
+        }
+    </style>
+</head>
+
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+
+    <div id="modal_layer" hidden="hidden">
+        <form id="uploadForm" class="border-primary">
+            <legend class="mt-3">Загрузка файлов</legend>
+            <div class="form-group">
+                <label for="file_alias" class="form-label mt-4">Название файла</label>
+                <input type="text" name="file_alias" id="file_alias" class="form-control"
+                    placeholder="название файла" />
+                <label for="scanCopy" class="form-label mt-4">Прикрепите скан-копию файла</label>
+                <input type="file" name="scanCopy" id="scanCopy" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="button">Загрузить файл</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideModal()>Отмена</button>
+            
+            <input type="hidden" name="id_staffer" id="id_staffer"/>
+        </form>
+    </div>
+
+    <script>
+        id_staffer.value = location.pathname.split('/').pop();
+
+        uploadForm.addEventListener('submit', event => {
+            event.preventDefault();
+
+            button.disabled = true; //деактивировать кнопку отправки данных
+            fetch('/valdane/staffer/upload_file', {
+                method: 'POST',
+                headers: {},
+                body: new FormData(event.target)
+            })
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                        const res = await response.json();
+                        setValid(scanCopy);
+                        hideModal();
+                        fillFile(res);
+                        // console.log(res);
+                    }
+                    else if (response.status === 400) { //ошибка валидации
+                        const res = await response.json();
+                        setInvalid(scanCopy, res.error);
+                    }
+                    // else if(response.status === 401){ //ошибка авторизации
+                    //     //тут может быть переадресация при разрыве сессии
+                    //     //...
+                    // }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+        });
+        function setValid(elem) {
+            elem.classList.remove('is-invalid');
+            if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+                elem.nextElementSibling.remove();
+            }
+        }
+        function setInvalid(elem, message) {
+            elem.classList.add('is-invalid');
+
+            if (!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV') {
+                elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+            }
+            else if (elem.nextElementSibling.tagName === 'DIV') {
+                elem.nextElementSibling.innerHTML = message;
+            }
+        }
+
+
+        function showModal() {
+            setValid(scanCopy);
+            document.querySelector('#modal_layer').hidden = false;
+        }
+        function hideModal(event) {
+            document.querySelector('#modal_layer').hidden = true;
+            uploadForm.reset();
+        }
+    </script>
+
+
+
+    <div class="main">
+
+        <!-- <div id="avatar"><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+    </svg>
+</div>
+<h1>Иванов Пётр Сидорович</h1> -->
+        <div class="row">
+            <div class="cell left-col avatar" id="avatar">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                    <path
+                        d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
+                </svg>
+            </div>
+
+            <div class="cell right-col header">
+                <h1></h1>
+                <h4></h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="cell left-col optional">
+                <button type="button" class="btn btn-primary mt-4"
+                    onclick="location='/valdane/staffer/upd/'+location.pathname.split('/').pop()">Изменить профиль</button>
+                <button type="button" class="btn btn-outline-primary mt-3" onclick=showModal()>Добавить файлы</button>
+            </div>
+
+
+            <div class="cell right-col content">
+                <div class="">
+                    <p class="mt-3"><b>Контакты:</b> <span style="white-space:pre-wrap"></span></p>
+                    <p><b>Табельный номер:</b> <span></span></p>
+                    <p><b>Разряд:</b> <span></span></p>
+                </div>
+                <div class="liner mt-4">
+                    <hr><small class="text-muted">Личные данные</small>
+                    <p class="mt-2"><b>Паспорт:</b> <span style="white-space:pre-wrap"></span></p>
+                    <p><b>Номер банковской карты:</b> <span></span></p>
+                    <p><b>День рождения:</b> <span></span></p>
+                    <p><b>Место жительства по регистрации:</b> <span style="white-space:pre-wrap"></span></p>
+                    <p><b>Базовый город:</b> <span></span></p>
+                </div>
+                <div class="liner mt-4">
+                    <hr><small class="text-muted">Прочие данные</small>
+                    <p class="mt-2"><b>Оф. трудоустроен:</b> <span></span></p>
+                    <p><b>Дата принятия на работу:</b> <span></span></p>
+                    <p><b>Статус:</b> <span></span></p>
+                    <p><b>Характеристика:</b> <span style="white-space:pre-wrap"></span></p>
+                </div>
+                <div class="liner mt-4">
+                    <hr><small class="text-muted">Биометрические данные</small>
+                    <p class="mt-2"><b>Спец. одежда:</b> <span style="white-space:pre-wrap"></span></p>
+                    <p><b>Размер охвата головы:</b> <span></span></p>
+                    <p><b>Рост:</b> <span></span></p>
+                    <p><b>Размер одежды:</b> <span></span></p>
+                    <p><b>Размер обуви:</b> <span></span></p>
+                </div>
+                <div class="liner mt-4">
+                    <hr><small class="text-muted">COVID-19</small>
+                    <p class="mt-2"><b>Сертификат о вакцинации:</b> <span></span></p>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+</body>
+<script>
+    function setFormatDate(data) {
+        if (!data) return '';
+
+        const date = new Date(data);
+        const arr = [];
+        arr.push(date.getDate() < 10 ? '0' + date.getDate() : date.getDate());
+        arr.push((date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : (date.getMonth() + 1));
+        arr.push(date.getFullYear());
+        return arr.join('.');
+    }
+
+    function fillPage(data) {
+        document.querySelector('h1').innerHTML = data.name;
+        document.querySelector('h4').innerHTML = data.position.title || ''; //должность
+        // console.log(head_p);
+
+
+        const paragraph = document.querySelectorAll('.content span');
+        paragraph[0].innerHTML = data.contacts || ''; //контакты
+        paragraph[1].innerHTML = data.personnelNumber || ''; //табельный номер
+        paragraph[2].innerHTML = data.skill || ''; //разряд
+        paragraph[3].innerHTML = data.passport || ''; //паспорт
+        paragraph[4].innerHTML = data.bankcardNumber || ''; //номер банковской карты
+        paragraph[5].innerHTML = setFormatDate(data.birthday); //день рождения
+        paragraph[6].innerHTML = data.placeOfResidence || ''; //Место жительства по регистрации
+        paragraph[7].innerHTML = data.baseCity || ''; //Базовый город
+        paragraph[8].innerHTML = data.isBusy ? 'да' : 'нет'; //Оф. трудоустроен
+        paragraph[9].innerHTML = setFormatDate(data.startDate); //Дата принятия на работу
+        paragraph[10].innerHTML = data.status || ''; //Статус
+        paragraph[11].innerHTML = data.characteristic || '';  //Характеристика
+        paragraph[12].innerHTML = data.biometricData.coveralls || '';  //Спец. одежда
+        paragraph[13].innerHTML = data.biometricData.sizeHead || '';  //Размер охвата головы
+        paragraph[14].innerHTML = data.biometricData.height || '';  //Рост
+        paragraph[15].innerHTML = data.biometricData.clothingSize || '';  //Размер одежды
+        paragraph[16].innerHTML = data.biometricData.shoeSize || '';  //Размер обуви
+
+        //Сертификат о вакцинации
+        paragraph[17].innerHTML = (vacc => {
+            let str = '';
+            if (vacc.start) str += `сертификат действует с ${setFormatDate(vacc.start)}`;
+            if (vacc.start && vacc.end) str += ` до ${setFormatDate(vacc.end)}`;
+            if (!vacc.start && vacc.end) str += `сертификат действует до ${setFormatDate(vacc.end)}`;
+            return str;
+        })(data.vaccination);  //Сертификат о вакцинации
+
+
+
+        // console.log(paragraph);
+
+        const avatar = document.createElement('img');
+        avatar.src = 'http://batona.net/uploads/posts/2018-05/1526324138_001.jpg';
+        document.querySelector('#avatar > svg').replaceWith(avatar);
+        setTimeout(_ => {
+            // document.querySelector('#avatar > svg').replaceWith(avatar);
+        }, 3000);
+
+        // setTimeout(_ => {
+        //     avatar.src = 'https://bipbap.ru/wp-content/uploads/2018/02/3-6.png';
+        // }, 5000);
+        // setTimeout(_ => {
+        //     avatar.src = 'https://omoro.ru/wp-content/uploads/2018/08/smeshnie-pandi-1.jpg';
+        // }, 7000);
+        // document.querySelector('#avatar > svg').replaceWith(avatar);
+    }
+
+    function fillFile(data){
+
+        if(!data.files || !data.files.length) return;
+
+
+        if(!document.querySelector('#files')) { //если блока с файлами нет
+            document.querySelector('.content > div').insertAdjacentHTML('afterend', '<div class="liner mt-4" id="files"><hr><small class="text-muted">Файлы</small></div>')
+        }
+        
+        console.log(data.files);
+
+        for(const f of data.files) {
+            const st = (f === data.files[0]) ? 'mt-2' : ''; //первый элемент в блоке
+            files.insertAdjacentHTML('beforeend', `<p id="${f.id}" onmouseenter="showSVG(event)" onmouseleave="hideSVG(event)" class="${st}"><a href ="/valdane/staffer/files/${f.fname}">${f.alias}</a></p>`);
+        }
+    }
+    //показать/скрыть div с иконками редактирования записи
+    function showSVG(event){
+        event.target.insertAdjacentHTML('beforeend', makeSVG());
+    }
+    function hideSVG(event){
+        event.target.querySelector('div').remove();
+    }
+    //возвращает div с иконками редактирования записи
+    function makeSVG(){
+        return `<div class="edit-svg-pic">
+                  <svg xmlns="http://www.w3.org/2000/svg" onclick="deleter(event)" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                  </svg>
+                </div>`;
+    }
+    //клик по иконке удаления файла
+    function deleter(event){
+        if( !confirm('Вы действительно хотите удалить эту запись?') ) return;
+        //используется .closest(), т.к. событие может произойти на path-элементе иконки
+        const id = event.target.closest('svg').parentElement.parentElement.id;
+
+        fetch('/valdane/staffer/file/'+id, {method: 'DELETE'})
+        .then(async response => {
+            document.getElementById(id).remove();
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    }
+
+    fetch('/valdane/staff/' + location.pathname.split('/').pop(), { method: 'GET' })
+        .then(async response => {
+            const res = await response.json();
+            console.log(res);
+            fillPage(res);
+            fillFile(res);
+        })
+        .catch(error => {
+            console.log(error);
+        });
+</script>

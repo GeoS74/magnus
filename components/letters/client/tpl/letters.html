@@ -1,0 +1,407 @@
+<!DOCTYPE HTML> 
+<html lang="ru">
+<head>
+  <title>Реестр писем</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/> 
+    <meta name="viewport" content="width=device-width"/>
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css"/><!--https://bootswatch.com/cosmo/-->
+                                                                          <!--https://icons.getbootstrap.com/-->
+    <script type="text/javascript" src="/libs/El.js"></script>
+    <style>
+        .main{margin: 20px; max-width:800px;}
+        h1{margin: 35px 0}
+        
+        #searchForm{margin: 35px 0}
+        #searchForm input[type=text]{float:left;width:85%}
+        #searchForm button{float:right; width:15%}
+
+        #addThemaForm,
+        #addLetterForm{
+          border: 1px solid #ced4da;
+        }
+
+        .modal_block{
+            width: 550px;
+
+            position:fixed; 
+            background:white; 
+            z-index:100501; 
+            padding:35px 45px; 
+            border-radius: 0px;
+        }
+        .modal_block button{ margin-right: 15px; }
+
+        .modal_layer{
+            position:fixed;
+            top:0px; width:100%; 
+            height:100%; 
+            background:rgb(117, 117, 117); 
+            z-index:100500; 
+            opacity:0.5;
+        }
+
+        .simple_column{ display: inline-block; } /*дата и номер письма*/
+
+        .tooltip_small{margin-left:15px; cursor:pointer; font-size:14px;}
+        .tooltip_small:hover{color: var(--bs-body-color) !important;}
+
+        .error_message{color:red; margin-left:15px}
+
+        .letter_row p{ margin: 0 0 0 15px; }
+        .letter_row{ margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+   
+    
+<div class="main">
+<h1>Реестр писем</h1>
+
+<!--кнопка добавления новой переписки-->
+<button type="button" class="btn btn-outline-primary" id="addThema">Новая переписка</button>
+<script>
+    addThema.onclick = _ => {
+        themaForm.render();
+        background_layer.render();
+        setValid(titleThemaInput);
+    };
+</script>
+
+<!--строка поиска-->
+<form id="searchForm" onsubmit="event.preventDefault()">
+    <fieldset>
+        <div class="form-group row">
+            <div class="form-group">
+                <input type="text" name="searchText" class="form-control" placeholder="Ввведите номер письма">
+                <button class="btn btn-primary">Поиск</button>
+            </div>
+        </div>
+    </fieldset>
+</form>
+<script>
+    searchForm.querySelector('button').onclick = _ => {  
+        let fd = new FormData(searchForm);
+        themas.query('GET', `/themas?needle=${fd.get('searchText')}`);
+        themas.elem.innerHTML = '';
+
+        //заблокировать кнопку поиска, чтобы не "завалить сервер запросами"
+        searchForm.querySelector('button').disabled = true;
+
+        //скрыть кнопку подгрузки при начале нового поиска
+        load_next.hidden = true;
+    };
+</script>
+
+<script>//фон для модального окна
+    const background_layer = new El('<div class="modal_layer">')
+        .on('click', _ => hideModal());
+</script>
+
+<script>//форма создания темы
+    const themaForm = new El('<form id="addThemaForm" class="modal_block border-primary">')
+        .render('afterbegin', '<legend>Новая переписка</legend>')
+        .render('beforeend', '<div class="form-group"><label for="titleThemaInput" class="form-label mt-4">Введите тему переписки</label>')
+        .on('submit', _ => event.preventDefault())
+        .setHandler(function(){
+            if(this.getVal().error) {
+                if(this.getVal().status === 400){
+                  // let error_message = themaForm.elem.querySelector('.error_message');
+                  // if(error_message)error_message.remove();
+                  // this.elem.querySelector('label').insertAdjacentHTML('afterend', `<span class="error_message">${this.getVal().error}</span>`);
+
+                  setInvalid(titleThemaInput, this.getVal().error);
+                }
+                else {
+                  console.log(this.getVal());
+                }
+                return;
+            }
+
+            hideModal();
+
+            themas.render('afterbegin', createHtmlThema(this.getVal()));
+        });
+    
+    //позиционирование формы
+    themaForm.elem.style.left = document.documentElement.clientWidth/4 + 'px';
+    themaForm.elem.style.top = document.documentElement.clientHeight/4 + 'px';
+    
+     //text
+     new El('<input type="text" name="title" id="titleThemaInput" class="form-control" placeholder="Тема переписки">')
+        .setParentNode(themaForm.elem.querySelector('.form-group'))
+        .render()
+        .render('afterend', '<small class="form-text text-muted">Тема объединяет письма общим смыслом</small>');
+
+    //button
+    new El('<button type="submit" class="btn btn-primary mt-4">Создать</button>')
+        .setParentNode(themaForm.elem)
+        .render()
+        .on('click', _ => themaForm.query('POST', '/thema', new FormData(themaForm.elem)));
+    
+    //button
+    new El('<button type="button" class="btn btn-outline-primary mt-4">Отмена</button>')
+        .setParentNode(themaForm.elem)
+        .render()
+        .on('click', _ => hideModal());
+</script>
+
+<script>//форма добаления письма
+    const letterForm = new El('<form id="addLetterForm" class="modal_block border-primary">')
+        .render('afterbegin', '<input type="hidden" name="id_thema"/>')
+        .render('afterbegin', '<legend>Скан-копия письма</legend>')
+        .render('beforeend', '<div class="form-group"><label for="numberLetterInput" class="form-label mt-4">Добавьте атрибуты письма</label>')
+        .on('submit', function(){event.preventDefault()})
+        .setHandler(async function(){
+            if(this.getVal().error) {
+                if(this.getVal().status === 400){
+                  // let error_message = themaForm.elem.querySelector('.error_message');
+                  // if(error_message)error_message.remove();
+                  // this.elem.querySelector('label').insertAdjacentHTML('afterend', `<span class="error_message">${this.getVal().error}</span>`);
+
+                  setInvalid(letterFile, this.getVal().error);
+                }
+                else {
+                  console.log(this.getVal());
+                }
+                return;
+            }
+
+        hideModal();
+
+        document.querySelector(`[data-thema-id="${this.getVal().id}"] h4`)
+            .insertAdjacentHTML('afterend', createHtmlLetter(this.getVal()));
+      });
+  
+  //позиционирование формы
+  letterForm.elem.style.left = document.documentElement.clientWidth/4 + 'px';
+  letterForm.elem.style.top = document.documentElement.clientHeight/4 + 'px';
+
+
+
+  
+   //text
+   new El('<input type="text" name="number" id="numberLetterInput" class="form-control" placeholder="Номер письма"/>')
+      .setParentNode(letterForm.elem.querySelector('.form-group'))
+      .render()
+      .wrap('<div class="simple_column" style="width:65%">');
+
+   new El('<input type="text" name="date" id="input_date" class="form-control" placeholder="__.__.____"/>')
+      .setParentNode(letterForm.elem.querySelector('.form-group'))
+      .render()
+      .wrap('<div class="simple_column" style="width:30%; float:right">')
+
+      //установка даты
+      .on('focus', function(){
+        this.setSelectionRange(0, 0);
+      })
+      .on('blur', function(){
+        if( this.value.match(/\d/g) && this.value.match(/\d/g).length !=8 )
+          this.value = makeDateTemplate('');
+      })
+      .on('input', function(){
+        let numbers = this.value.match(/\d/g) || [];
+
+        this.value =  makeDateTemplate( numbers.join('') );
+
+        this.setSelectionRange(getPositionCursor(numbers), getPositionCursor(numbers));
+      });
+
+      function getPositionCursor(arr){
+        if(arr.length <= 2) return arr.length;
+        if(arr.length > 2 && arr.length <= 3) return arr.length + 1;
+        if(arr.length > 3) return arr.length + 2;
+      }
+
+      function makeDateTemplate(str){
+        let result = '';
+
+        for(let i = 0; i < 8; i++){
+          if(i == 2 || i == 4) result += '.';
+
+          result += str[i] || '_';
+        }
+        return result;
+      }
+
+
+
+    //file
+   new El('<input type="file" name="scanCopyLetter" id="letterFile" class="form-control"/>')
+      .setParentNode(letterForm.elem)
+      .render()
+      .wrap('<div class="form-group">')
+      .render('beforebegin', '<label for="letterFile" class="form-label mt-4">Прикрепите скан-копию файла</label>');
+
+
+  //textarea
+    new El('<textarea name="description" class="form-control" id="descriptionTextarea" rows="3"></textarea>')
+      .setParentNode(letterForm.elem)
+      .render()
+      .wrap('<div class="form-group">')
+      .render('beforebegin', '<label for="descriptionTextarea" class="form-label mt-4">Кратко опишите содержание письма</label>');
+
+
+
+
+  //submit
+  new El('<button type="submit" class="btn btn-primary mt-4">Создать</button>')
+      .setParentNode(letterForm.elem)
+      .render()
+      .on('click', function(){
+        letterForm.query('POST', '/letter', new FormData(letterForm.elem));
+      });
+  
+  
+  new El('<button type="button" class="btn btn-outline-primary mt-4">Отмена</button>')
+      .setParentNode(letterForm.elem)
+      .render()
+      .on('click', function(){
+        hideModal();
+      });
+  </script>
+
+<script>//общий список тем с письмами
+  const themas = new El('<div id="content">')
+      .setParentNode('.main')
+      .render()
+      .setHandler(function(){
+
+          //разблокировать кнопку поиска
+          searchForm.querySelector('button').disabled = false;
+
+          if(!this.getVal().length) {
+              load_next.hidden = true;
+              return;
+          }
+         
+          for(let thema of this.getVal()){
+                //если тема уже отрисована, добавить в неё новые письма из ответа сервера
+                let letter_div = this.elem.querySelector(`[data-thema-id="${thema.id}"] .card-body`);
+                if(letter_div){
+                    letter_div.insertAdjacentHTML('beforeend', createHtmlLetter(thema));
+                    continue;
+                }
+
+              this.render('beforeend', createHtmlThema(thema));  
+          }
+
+          //разблокировать и показать кнопку подгрузки данных
+          load_next.disabled = false;
+           load_next.hidden = false;
+      })
+      .query('GET', '/themas');
+</script>
+
+<!--загрузка новых результатов-->
+<button type="button" id="load_next" class="btn btn-primary mt-4">Загрузить ещё...</button>
+<script>
+    // при запросе новых результатов клиент передаёт id крайней темы или письма. 
+    // причём если поиск не осуществляется, то надо передавать id  темы, 
+    // если запрашиваются новые данные поиска - id крайнего письма
+  load_next.onclick = _ => {
+    let fd = new FormData(searchForm);
+    themas.query('GET', `/themas?needle=${fd.get('searchText')}&thema_id=${getLastThemaId.call(themas)}&letter_id=${getLastLetterId.call(themas)}`);
+
+    //заблокировать кнопку подгрузки данных, чтобы не "завалить сервер запросами"
+    load_next.disabled = true;
+  };
+
+  function getLastThemaId(){ //возвращает id последней темы письма, полученного клиентом
+    return this.elem.lastElementChild.dataset.themaId || '';
+  }
+
+  function getLastLetterId(){ //возвращает id последнего письма, полученного клиентом
+    //id последнего письма извлекается из массива данных, возвращённых сервером, а не через селекторы
+    //т.к. клиент рендерит блоки с темами, то решение - поиск последнего id через селекторы оказывается не стабильным 
+    const last_letters = themas.getVal()[ themas.getVal().length - 1 ].letters;
+    if(!last_letters.length) return '';
+    return last_letters[last_letters.length - 1].id || '';
+
+    //этот вариант не стабилен
+    //return this.elem.lastElementChild.querySelector('.card-body').lastElementChild.dataset.letterId || '';
+  }
+</script>
+
+<script>//общие функции
+  function setValid(elem){
+          elem.classList.remove('is-invalid');
+          if(elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV'){
+              elem.nextElementSibling.remove();
+          }
+      }
+  function setInvalid(elem, message){
+          elem.classList.add('is-invalid');
+
+          if(!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV'){
+              elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+          }
+          else{
+              elem.nextElementSibling.innerHTML = message;
+          }
+      }
+  function hideModal(){ //скрыть модальное окно
+      // let error_message = themaForm.elem.querySelector('.error_message');
+      // if(error_message) error_message.remove();
+      themaForm.elem.reset();
+      themaForm.elem.remove();
+  
+      // error_message = letterForm.elem.querySelector('.error_message');
+      // if(error_message) error_message.remove();
+      letterForm.elem.reset();
+      letterForm.elem.remove();
+  
+      background_layer.elem.remove();
+  }
+  
+  function createHtmlThema(data){ //генерирует html для переписки
+      return `
+          <div class="card" data-thema-id="${data.id}">
+          <div class="card-body">
+            <h4 class="card-title" onclick=showAddLetterForm(event) onmouseenter=showAddSpan(event) onmouseleave=hideAddSpan(event)>${data.title}</h4>
+            ${createHtmlLetter(data)}
+          </div>
+        </div>
+      `;
+  }
+
+  function createHtmlLetter(data){
+    if(!data.letters) return '';
+
+    let letters = '';
+    for(let letter of data.letters) 
+        letters += `<div class="letter_row" data-letter-id="${letter.id}">
+                        <p class="card-text"><a href="/letters/files/${letter.pathFile}">№ ${letter.number || 'б/н'} от ${formatDate(letter.date)}</a></p>
+                        <small class="text-muted">${letter.description || ''}</small>
+                    </div>`;
+    return letters;
+}
+
+  function formatDate(date){
+    const d = new Date(date);
+    return `${d.getUTCDate()}.${d.getUTCMonth()+1}.${d.getUTCFullYear()}г.`;
+  }
+  
+  function showAddLetterForm(event){
+    let s = event.target.closest('small');
+    if(!s) return;
+
+    let idThema = s.parentElement.parentElement.parentElement.dataset.themaId;
+    letterForm.elem.querySelector('input[type=hidden]').value = idThema;
+  
+    letterForm.render();
+    background_layer.render();
+
+    setValid(letterFile);
+  }
+  
+  function showAddSpan(event){ //показать кнопку добавления письма
+      event.target.insertAdjacentHTML('beforeend', '<small class="text-muted tooltip_small">добавить письмо</small>');
+  }
+  
+  function hideAddSpan(event){ //скрыть кнопку добавления письма
+      event.target.querySelector('small').remove();
+  }
+</script>
+</div>
+</body>

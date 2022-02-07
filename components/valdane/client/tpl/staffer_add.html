@@ -1,0 +1,508 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+<head>
+    <title>MAGNUS | новый сотрудник</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+
+    <style>
+        #form {
+            margin: 20px;
+            text-align: left;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        /*неплохое разделение для блоков формы
+
+        использование: <div class="liner mt-5"><hr><small class="text-muted">Личные данные</small></div>
+
+        .liner{
+            position:relative;
+            line-height: 1.7em;
+        }
+        .liner small{
+            position:relative;
+            padding-right: 15px;
+            background: white;
+        }
+        hr{
+            position:absolute;
+            width: 100%;
+        }
+        */
+    </style>
+</head>
+
+<body>
+ <!--#include file="./client/public/tpl/top_menu.html"-->
+
+
+    <form id="form" class="border-primary">
+        <legend>Новый сотрудник</legend>
+
+        <div class="accordion" id="accordionStaff">
+
+            <!--Сотрудник-->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        <b>Сотрудник</b>
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                    data-bs-parent="#accordionStaff">
+                    <div class="accordion-body">
+
+                        <div class="form-group mb-3">
+                            <label for="name" class="form-label mt-1">Ф.И.О.</label>
+                            <input type="text" name="name" id="name" class="form-control" placeholder="ф.и.о."
+                                autofocus>
+
+                            <label for="personnelNumber" class="form-label mt-3">Табельный номер</label>
+                            <input type="text" name="personnelNumber" id="personnelNumber" class="form-control"
+                                placeholder="табельный номер">
+
+                            <label for="position" class="form-label mt-3">Должность</label>
+                            <select class="form-select" name="position" id="position">
+                                <option value="">Выберите должность</option>
+                            </select>
+
+                            <label for="skill" class="form-label mt-3">Разряд</label>
+                            <input type="text" name="skill" id="skill" class="form-control" placeholder="разряд">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!--Личные данные-->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        <b>Личные данные</b>
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                    data-bs-parent="#accordionStaff">
+                    <div class="accordion-body">
+
+                        <div class="form-group mb-3">
+                            <label for="passport" class="form-label mt-1">Паспорт</label>
+                            <textarea class="form-control" name="passport" id="passport" rows="1"></textarea>
+
+                            <label for="birthday" class="form-label mt-3">День рождения</label>
+                            <input type="text" name="birthday" id="birthday" class="form-control"
+                                placeholder="__.__.____">
+
+                            <label for="placeOfResidence" class="form-label mt-3">Место жительства по
+                                регистрации</label>
+                            <textarea class="form-control" name="placeOfResidence" id="placeOfResidence"
+                                rows="1"></textarea>
+
+                            <label for="contacts" class="form-label mt-3">Контактная информация</label>
+                            <textarea class="form-control" name="contacts" id="contacts" rows="1"></textarea>
+
+                            <label for="baseCity" class="form-label mt-3">Базовый город</label>
+                            <input type="text" name="baseCity" id="baseCity" class="form-control"
+                                placeholder="базовый город">
+
+                            <label for="bankcardNumber" class="form-label mt-3">Номер банковской карты</label>
+                            <input type="text" name="bankcardNumber" id="bankcardNumber" class="form-control"
+                                placeholder="номер банковской карты">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!--Прочие данные-->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        <b>Прочие данные</b>
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+                    data-bs-parent="#accordionStaff">
+                    <div class="accordion-body">
+
+                        <div class="form-group mb-3">
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" value="" name="isBusy" id="isBusy">
+                                <label class="form-check-label" for="isBusy">Оф. трудоустроен</label>
+                            </div>
+
+                            <label for="startDate" class="form-label mt-3">Дата принятия на работу</label>
+                            <input type="text" name="startDate" id="startDate" class="form-control"
+                                placeholder="__.__.____">
+
+                            <label class="mt-2">Статус</label>
+                            <div class="form-check mt-2">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="status" id="status1"
+                                        value="работает" checked="checked">
+                                    Работает
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="status" id="status2"
+                                        value="уволен">
+                                    Уволен
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="status" id="status3"
+                                        value="кадровый резерв">
+                                    Кадровый резерв
+                                </label>
+                            </div>
+
+                            <label for="characteristic" class="form-label mt-3">Характеристика</label>
+                            <textarea class="form-control" name="characteristic" id="characteristic"
+                                rows="1"></textarea>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!--Биометрические данные-->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFour">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                        <b>Биометрические данные</b>
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour"
+                    data-bs-parent="#accordionStaff">
+                    <div class="accordion-body">
+
+                        <div class="form-group mb-3">
+                            <label for="coveralls" class="form-label mt-1">Спец. одежда</label>
+                            <textarea class="form-control" name="coveralls" id="coveralls" rows="1"></textarea>
+
+                            <label for="sizeHead" class="form-label mt-3">Размер ОГ</label>
+                            <input type="text" name="sizeHead" id="sizeHead" class="form-control"
+                                placeholder="размер ОГ">
+
+                            <label for="height" class="form-label mt-3">Рост</label>
+                            <input type="text" name="height" id="height" class="form-control" placeholder="рост">
+
+                            <label for="clothingSize" class="form-label mt-3">Размер одежды</label>
+                            <input type="text" name="clothingSize" id="clothingSize" class="form-control"
+                                placeholder="размер одежды">
+
+                            <label for="shoeSize" class="form-label mt-3">Размер обуви</label>
+                            <input type="text" name="shoeSize" id="shoeSize" class="form-control"
+                                placeholder="размер обуви">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!--COVID-19-->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFive">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                        <b>COVID-19</b>
+                    </button>
+                </h2>
+                <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive"
+                    data-bs-parent="#accordionStaff">
+                    <div class="accordion-body">
+
+                        <div class="form-group mb-3">
+
+                            <label for="vaccinationStart" class="form-label mt-1">Начало действия сертификата</label>
+                            <input type="text" name="vaccinationStart" id="vaccinationStart" class="form-control"
+                                placeholder="__.__.____">
+
+                            <label for="vaccinationEnd" class="form-label mt-3">Конец действия сертификата</label>
+                            <input type="text" name="vaccinationEnd" id="vaccinationEnd" class="form-control"
+                                placeholder="__.__.____">
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3" id="button">Добавить сотрудника</button>
+    </form>
+    </div>
+</body>
+<script>//отправка данных на сервер
+    function addStaffer(event){
+        event.preventDefault();
+
+        button.disabled = true; //деактивировать кнопку отправки данных
+        fetch('/valdane/staffer', {
+            method: 'POST',
+            headers: {},
+            body: new FormData(event.target)
+        })
+            .then(async response => {
+                if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                    const res = await response.json();
+                    location = '/valdane/staffer/' + res.id;
+                }
+                else if (response.status === 400) { //ошибка валидации
+                    setValid(document.getElementById('name'));
+                    setValid(document.getElementById('birthday'));
+                    setValid(document.getElementById('startDate'));
+                    setValid(document.getElementById('vaccinationStart'));
+                    setValid(document.getElementById('vaccinationEnd'));
+                    showMistake(await response.json());
+                }
+                // else if(response.status === 401){ //ошибка авторизации
+                //     //тут может быть переадресация при разрыве сессии
+                //     //...
+                // }
+                else {
+                    throw new Error('error HTTP ' + response.status);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            })
+            .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+    }
+    form.addEventListener('submit', addStaffer);
+
+    function showMistake(error) {
+        switch (error.path) {
+            case 'name':
+                setInvalid(document.getElementById('name'), error.message);
+                break;
+            case 'birthday':
+                setInvalid(document.getElementById('birthday'), error.message);
+                break;
+            case 'startDate':
+                setInvalid(document.getElementById('startDate'), error.message);
+                break;
+            case 'vaccinationStart':
+                setInvalid(document.getElementById('vaccinationStart'), error.message);
+                break;
+            case 'vaccinationEnd':
+                setInvalid(document.getElementById('vaccinationEnd'), error.message);
+                break;
+        }
+    }
+    function setValid(elem) {
+        elem.classList.remove('is-invalid');
+        if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+            elem.nextElementSibling.remove();
+        }
+    }
+    function setInvalid(elem, message) {
+        elem.classList.add('is-invalid');
+
+        if (!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV') {
+            elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+        }
+        else if (elem.nextElementSibling.tagName === 'DIV') {
+            elem.nextElementSibling.innerHTML = message;
+        }
+    }
+</script>
+<script>//переходы CSS из внешних стилей не работают, поэтому используется JS
+    accordionStaff.addEventListener('click', event => {
+        if (!event.target.closest('h2')) return;
+        const div = event.target.closest('.accordion-item');
+        const button = div.querySelector('button');
+
+        button.classList.toggle('collapsed');
+
+        if (button.getAttribute('aria-expanded') == 'true')
+            button.setAttribute('aria-expanded', 'false');
+        else button.setAttribute('aria-expanded', 'true');
+
+        div.querySelector('div').classList.toggle('show');
+    });
+</script>
+<script>
+    //сброс галочки "Трудоустроен" если изменяется статус
+    collapseThree.addEventListener('click', event => {
+        const radio = event.target.closest('input[type=radio]');
+        if (!radio) return;
+
+        if (radio.value !== 'работает') isBusy.checked = false;
+    });
+    //поля для ввода даты
+    dateInput(birthday);
+    dateInput(startDate);
+    dateInput(vaccinationStart);
+    dateInput(vaccinationEnd);
+    function dateInput(elem) {
+        elem.style.width = '125px';
+        elem.addEventListener('focus', event => {
+            event.target.setSelectionRange(0, 0);
+        });
+        elem.addEventListener('blur', event => {
+            if (event.target.value.match(/\d/g) && event.target.value.match(/\d/g).length != 8)
+                event.target.value = '';
+            if (event.target.value === '__.__.____') event.target.value = '';
+        });
+        elem.addEventListener('input', event => {
+            let numbers = event.target.value.match(/\d/g) || [];
+            event.target.value = makeDateTemplate(numbers.join(''));
+            event.target.setSelectionRange(getPositionCursor(numbers), getPositionCursor(numbers));
+        });
+    }
+    function getPositionCursor(arr) {
+        if (arr.length <= 2) return arr.length;
+        if (arr.length > 2 && arr.length <= 3) return arr.length + 1;
+        if (arr.length > 3) return arr.length + 2;
+    }
+    function makeDateTemplate(str) {
+        let result = '';
+        for (let i = 0; i < 8; i++) {
+            if (i == 2 || i == 4) result += '.';
+            result += str[i] || '_';
+        }
+        return result;
+    }
+    //заполнение списка должностей
+    fetch('/valdane/position', { method: 'GET' })
+        .then(async response => {
+            const res = await response.json();
+            for (const pos of res) {
+                position.insertAdjacentHTML('beforeend', makeOption(pos));
+            }
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    //генерация option
+    function makeOption(data) {
+        return `<option value="${data.id}">${data.title}</option>`;
+    }
+</script>
+<script>//заполнение формы данными если профиль редактируется
+    function fillPage(data) {
+        document.querySelector('#form > legend').innerHTML = 'Изменение профиля';
+        document.querySelector('#form > button').innerHTML = 'Сохранить изменения';
+        document.querySelector('#form > button').insertAdjacentHTML('afterend', '<button type="button" class="btn btn-outline-warning mt-3" style="margin-left: 20px">Удалить профиль</button>');
+
+        document.querySelector('.btn-outline-warning').addEventListener('click', event => {
+            if( !confirm('Вы точно хотите удалить этот профиль?') ) return;
+
+            event.target.disabled = true; //деактивировать кнопку удаления профиля
+
+            fetch('/valdane/staffer/' + location.pathname.split('/').pop(), { method: 'DELETE' })
+            .then(async response => {
+                location = '/valdane/staffers';
+            })
+            .catch(error => {
+                console.log(error);
+            })
+            .finally(_ => event.target.disabled = false);
+        });
+
+        document.querySelector('#name').value = data.name || ''; //Ф.И.О.
+        document.querySelector('#personnelNumber').value = data.personnelNumber || ''; //табельный номер
+        if(data.position.id) document.querySelector(`#position option[value="${data.position.id}"]`).selected = true; //должность
+        document.querySelector('#contacts').value = data.contacts || ''; //контакты
+        document.querySelector('#skill').value = data.skill || ''; //разряд
+        document.querySelector('#passport').value = data.passport || ''; //паспорт
+        document.querySelector('#bankcardNumber').value = data.bankcardNumber || '';//номер банковской карты
+        document.querySelector('#birthday').value = setFormatDate(data.birthday);//день рождения
+        document.querySelector('#placeOfResidence').value = data.placeOfResidence || '';//Место жительства по регистрации
+        document.querySelector('#baseCity').value = data.baseCity || '';//Базовый город
+        document.querySelector('#isBusy').checked = !!data.isBusy;//Оф. трудоустроен
+        document.querySelector('#startDate').value = setFormatDate(data.startDate);//Дата принятия на работу
+        document.querySelector(`.form-check-input[value="${data.status}"]`).checked = 'checked';//Статус
+        document.querySelector('#characteristic').value = data.characteristic || '';//Характеристика
+        document.querySelector('#coveralls').value = data.biometricData.coveralls || '';//Спец. одежда
+        document.querySelector('#clothingSize').value = data.biometricData.clothingSize || '';//Размер охвата головы
+        document.querySelector('#height').value = data.biometricData.height || '';//Рост
+        document.querySelector('#sizeHead').value = data.biometricData.sizeHead || '';//Размер одежды
+        document.querySelector('#shoeSize').value = data.biometricData.shoeSize || '';//Размер обуви
+        document.querySelector('#vaccinationStart').value = setFormatDate(data.vaccination.start);//Сертификат о вакцинации
+        document.querySelector('#vaccinationEnd').value = setFormatDate(data.vaccination.end);//Сертификат о вакцинации
+    }
+
+    function setFormatDate(data){
+        if(!data) return '';
+
+        const date = new Date(data);
+        const arr = [];
+        arr.push( date.getDate() < 10 ? '0'+date.getDate() : date.getDate() );
+        arr.push( (date.getMonth()+1) < 10 ? '0'+(date.getMonth()+1) : (date.getMonth()+1)  );
+        arr.push( date.getFullYear() );
+        return arr.join('.');
+    }
+
+    const pathname = location.pathname.split('/');
+    if (pathname[3] === 'upd') {
+        //запрос данных пользователя
+        fetch('/valdane/staff/' + location.pathname.split('/').pop(), { method: 'GET' })
+            .then(async response => {
+                if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                    const res = await response.json();
+                    fillPage(res);
+                }
+                else if(response.status === 400){
+                    alert('пользователь не найден');
+                    location = '/valdane/staffers';
+                }
+                else throw new Error('error HTTP ' + response.status);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+        
+        //изменение обработчика отправки данных
+        form.removeEventListener('submit', addStaffer);
+        form.addEventListener('submit', updStaffer);
+    }
+
+    function updStaffer(event){
+        event.preventDefault();
+        
+        button.disabled = true; //деактивировать кнопку отправки данных
+        fetch('/valdane/staffer/' + location.pathname.split('/').pop(), {
+            method: 'PUT',
+            headers: {},
+            body: new FormData(event.target)
+        })
+            .then(async response => {
+                if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                    const res = await response.json();
+                    location = '/valdane/staffer/' + res.id;
+                }
+                else if (response.status === 400) { //ошибка валидации
+                    setValid(document.getElementById('name'));
+                    setValid(document.getElementById('birthday'));
+                    setValid(document.getElementById('startDate'));
+                    setValid(document.getElementById('vaccinationStart'));
+                    setValid(document.getElementById('vaccinationEnd'));
+                    showMistake(await response.json());
+                }
+                // else if(response.status === 401){ //ошибка авторизации
+                //     //тут может быть переадресация при разрыве сессии
+                //     //...
+                // }
+                else {
+                    throw new Error('error HTTP ' + response.status);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            })
+            .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+    }
+</script>

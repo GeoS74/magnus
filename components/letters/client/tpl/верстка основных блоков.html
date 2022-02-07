@@ -1,0 +1,138 @@
+<!DOCTYPE HTML> 
+<html lang="ru">
+<head>
+  <title>Реестр писем</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/> 
+    <meta name="viewport" content="width=device-width"/>
+  
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css"/><!--https://bootswatch.com/cosmo/-->
+    <script type="text/javascript" src="/libs/El.js"></script>
+    <script>
+        //@Override
+        Backend.prototype.query = function(method, path, data)
+        {
+          
+          let foo = async function(){
+            path = path || this.backend.path;
+            method = method || this.backend.method;
+            data = data || this.backend.data;
+            let response = await fetch(path, {
+              method: method,
+              headers: {},
+              body: method !== 'GET' ? data : null,
+            });
+
+              try{
+                  this.setVal(await response.json());
+              }catch(error){
+                  console.log(error);
+              }
+          }.call(this);
+            return this;
+        };
+    </script>
+    <style>
+        .modal_block{
+            width: 550px;
+            /*
+            position:fixed; 
+            background:white; 
+            z-index:100501; 
+            padding:35px 45px; 
+            border-radius: 0px;
+            */
+        }
+       
+        .modal_block button{ margin-right: 15px; }
+
+        .simple_column{ display: inline-block; } /*дата и номер письма*/
+
+        .tooltip_small{margin-left:15px; cursor:pointer; font-size:14px;}
+        .tooltip_small:hover{color: var(--bs-body-color) !important;}
+
+        .error_message{color:red; margin-left:15px}
+
+        .letter_row p{ margin: 0 0 0 15px; }
+        .letter_row{ margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+
+<form id="addThemaForm" class="modal_block">
+    <legend>Новая переписка</legend>
+    <div class="form-group">
+        <label for="titleThemaInput" class="form-label mt-4">Введите тему переписки</label>
+        <input type="text" name="title" id="titleThemaInput" class="form-control" placeholder="Тема переписки">
+        <small class="form-text text-muted">Тема объединяет письма общим смыслом</small>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Создать</button>
+    <button type="button" class="btn btn-outline-primary mt-4">Отмена</button>
+</form>
+
+<hr>
+
+<form id="addLetterForm" class="modal_block">
+    <input type="hidden" name="id_thema"/>
+    <legend>Скан-копия письма</legend>
+    <div class="form-group">
+        <label for="numberLetterInput" class="form-label mt-4">Добавьте атрибуты письма</label>
+        <div class="simple_column" style="width:65%">
+            <input type="text" name="number" id="numberLetterInput" class="form-control" placeholder="Номер письма"/>
+        </div>
+        <div class="simple_column" style="width:30%; float:right">
+            <input type="text" name="date" id="input_date" class="form-control" placeholder="__.__.____"/>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="letterFile" class="form-label mt-4">Прикрепите скан-копию файла</label>
+        <input type="file" name="scanCopyLetter" id="letterFile" class="form-control"/>
+    </div>
+    <div class="form-group">
+        <label for="descriptionTextarea" class="form-label mt-4">Кратко опишите содержание письма</label>
+        <textarea name="description" class="form-control" id="descriptionTextarea" rows="3"></textarea>
+    </div>
+    <button type="submit" class="btn btn-primary mt-4">Создать</button>
+    <button type="button" class="btn btn-outline-primary mt-4">Отмена</button>
+</form>
+
+<hr>
+
+<div class="card" data-thema-id="">
+    <div class="card-body">
+      <h4 class="card-title">Верификация карданного вала</h4>
+
+      <div class="letter_row">
+      <p class="card-text"><a href="">№ 515/к от 21.10.2021</a></p>
+      <small class="text-muted">Donec id elit non mi porta.</small>
+      </div>
+
+      <div class="letter_row">
+      <p class="card-text"><a href="">№ 515/к от 21.10.2021</a></p>
+      <small class="text-muted">Donec id elit non mi porta.</small>
+    </div>
+    
+    </div>
+</div>
+
+<div class="card" data-thema-id="">
+    <div class="card-body">
+      <h4 class="card-title">Верификация карданного вала</h4>
+
+      <div class="letter_row">
+      <p class="card-text"><a href="">№ 515/к от 21.10.2021</a></p>
+      </div>
+
+      <div class="letter_row">
+      <p class="card-text"><a href="">№ 515/к от 21.10.2021</a></p>
+      <small class="text-muted">Donec id elit non mi porta.</small>
+    </div>
+
+    </div>
+</div>
+
+
+<button type="button" id="load_next" class="btn btn-primary" style="margin-top:25px;">Загрузить ещё...</button>
+
+</body>
+</html>

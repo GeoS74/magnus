@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | графики</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+
+    <link href="/libs/webix/webix.css" rel="stylesheet" type="text/css">
+    <script src="/libs/webix/webix.js" type="text/javascript"></script>
+    <!--https://webix.com/how-to-start/-->
+    <!--https://ru.docs.webix.com/desktop__calendar.html-->
+    <!--https://ru.docs.webix.com/api__refs__ui.calendar_events.html-->
+    <!--https://docs.webix.com/tutorials__start_coding.html-->
+    <style>
+        .main {
+            margin: 20px;
+            max-width: 800px;
+        }
+    </style>
+</head>
+
+<body>
+    <!--#include file="./client/public/tpl/top_menu.html"-->
+
+
+    <div class="main">
+        <h1>Графики</h1>
+
+        <div id="mybox"></div>
+
+        <script>
+            webix.Date.startOnMonday = true; //первый день недели - понедельник (по умолчанию воскресенье)
+            webix.i18n.setLocale("ru-RU");
+
+            const cal = webix.ui({
+                view: "calendar",
+                id: "my_calendar",
+                date: new Date(2022, 0, 1),
+                weekHeader: false,
+                events: webix.Date.isHoliday,
+                width: 300,
+                height: 250,
+                hidden: true,
+                container:"mybox" //указать контейнер
+            });
+
+            $$("my_calendar").attachEvent("onAfterDateSelect", function (date) {
+                console.log(date);
+                //$$('my_calendar').setValue(new Date(2022,0,30));
+            });
+
+            // cal.hide();
+            cal.show();
+
+      
+        </script>
+
+    </div>
+</body>
