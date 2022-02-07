@@ -5,7 +5,7 @@ const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const { allPositions, addPosition, updPosition, delPosition } = require('@valdane/controllers/positions');
 const { allTechCenter, addTechCenter, updTechCenter, delTechCenter } = require('@valdane/controllers/techcenter');
-const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials } = require('@valdane/controllers/staffer');
+const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar } = require('@valdane/controllers/staffer');
 const { addPeriod, updPeriod, delPeriod, allCharts } = require('@valdane/controllers/chart');
 const mongoose = require('mongoose');
 
@@ -20,6 +20,23 @@ const ssi = new SSI({
 const router = new Router();
 
 router.prefix('/valdane');
+
+
+
+
+
+
+//NOT WORKING
+router.use(require('koa-static')('/valdane/scancopy'));
+
+
+
+
+
+
+
+
+
 
 module.exports.router = router;
 
@@ -70,7 +87,14 @@ router.use((ctx, next) => {
 });
 
 
+ 
 
+
+
+
+
+//изменение аватара
+router.post('/staffer/change_avatar', koaBody, changeAvatar);
 //загрузка файлов
 router.post('/staffer/upload_file', koaBody, uploadFile);
 //скачивание файла
@@ -182,7 +206,7 @@ router.del('/techcenter/:id', delTechCenter);
 
 
 
-
+//графики
 router.get('/charts', async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {

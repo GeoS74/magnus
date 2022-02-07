@@ -9,7 +9,7 @@
     <!--https://bootswatch.com/cosmo/-->
     <!--https://icons.getbootstrap.com/-->
     <style>
-        #modal_layer {
+        .modal_layer {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -21,7 +21,15 @@
             z-index: 100500;
         }
 
-        #uploadForm {
+        #changeAvatarForm {
+            width: 80%;
+            max-width: 550px;
+            border: 1px solid;
+            padding: 10px 50px 30px 50px;
+            background: white;
+        }
+
+        #uploadFileForm {
             width: 80%;
             max-width: 550px;
             border: 1px solid;
@@ -43,6 +51,7 @@
             margin: 35px 0;
         }
 
+        #avatar{cursor: pointer}
         #avatar>svg,
         #avatar>img {
             width: 100%;
@@ -92,22 +101,91 @@
 
 
         /*блок с иконками редактирования записей*/
-        .edit-svg-pic{
+        .edit-svg-pic {
             display: inline-block;
             margin-left: 25px;
         }
-        .edit-svg-pic > svg:hover{
+
+        .edit-svg-pic>svg:hover {
             cursor: pointer;
-            fill:#2780e3;
+            fill: #2780e3;
         }
     </style>
 </head>
 
 <body>
- <!--#include file="./client/public/tpl/top_menu.html"-->
+    <!--#include file="./client/public/tpl/top_menu.html"-->
 
-    <div id="modal_layer" hidden="hidden">
-        <form id="uploadForm" class="border-primary">
+    <div class="modal_layer" id="changeAvatarModal" hidden="hidden">
+        <form id="changeAvatarForm" class="border-primary">
+            <legend class="mt-3">Изменить аватар</legend>
+            <div class="form-group">
+                <label for="avatar" class="form-label mt-4">Прикрепите изображение</label>
+                <input type="file" name="avatar" id="avatarImg" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary mt-4" id="chanchedAvatar">Изменить аватар</button>
+            <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
+                onclick=hideChangeAvatarModal()>Отмена</button>
+
+            <input type="hidden" name="id_staffer" />
+        </form>
+    </div>
+    <script>//изменение аватара
+        changeAvatarForm.elements.id_staffer.value = location.pathname.split('/').pop();
+
+        changeAvatarForm.addEventListener('submit', event => {
+            event.preventDefault();
+
+            chanchedAvatar.disabled = true; //деактивировать кнопку отправки данных
+            fetch('/valdane/staffer/change_avatar', {
+                method: 'POST',
+                headers: {},
+                body: new FormData(event.target)
+            })
+                .then(async response => {
+                    if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                        const res = await response.json();
+                        setValid(avatarImg);
+                        hideChangeAvatarModal();
+                        
+                        console.log(res);
+                    }
+                    else if (response.status === 400) { //ошибка валидации
+                        const res = await response.json();
+                        setInvalid(avatarImg, res.error);
+                    }
+                    // else if(response.status === 401){ //ошибка авторизации
+                    //     //тут может быть переадресация при разрыве сессии
+                    //     //...
+                    // }
+                    else {
+                        throw new Error('error HTTP ' + response.status);
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => chanchedAvatar.disabled = false); //активировать кнопку отправки данных
+        });
+
+
+        //показать / скрыть модальное окно изменения аватара
+        function showChangeAvatarModal() {
+            setValid(avatarImg);
+            changeAvatarModal.hidden = false;
+        }
+        function hideChangeAvatarModal() {
+            changeAvatarModal.hidden = true;
+            changeAvatarForm.reset();
+        }
+    </script>
+
+
+
+
+
+    <div class="modal_layer" id="uploadFileModal" hidden="hidden">
+        <form id="uploadFileForm" class="border-primary">
             <legend class="mt-3">Загрузка файлов</legend>
             <div class="form-group">
                 <label for="file_alias" class="form-label mt-4">Название файла</label>
@@ -118,16 +196,15 @@
             </div>
             <button type="submit" class="btn btn-primary mt-4" id="button">Загрузить файл</button>
             <button type="button" class="btn btn-outline-primary mt-4" style="margin-left: 15px"
-                onclick=hideModal()>Отмена</button>
-            
-            <input type="hidden" name="id_staffer" id="id_staffer"/>
+                onclick=hideUploadFileModal()>Отмена</button>
+
+            <input type="hidden" name="id_staffer" />
         </form>
     </div>
+    <script>//загрузка файлов сотрудника
+        uploadFileForm.elements.id_staffer.value = location.pathname.split('/').pop();
 
-    <script>
-        id_staffer.value = location.pathname.split('/').pop();
-
-        uploadForm.addEventListener('submit', event => {
+        uploadFileForm.addEventListener('submit', event => {
             event.preventDefault();
 
             button.disabled = true; //деактивировать кнопку отправки данных
@@ -140,7 +217,7 @@
                     if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                         const res = await response.json();
                         setValid(scanCopy);
-                        hideModal();
+                        hideUploadFileModal();
                         fillFile(res);
                         // console.log(res);
                     }
@@ -177,15 +254,14 @@
                 elem.nextElementSibling.innerHTML = message;
             }
         }
-
-
-        function showModal() {
+        //показать / скрыть модальное окно прикрепления файлов
+        function showUploadFileModal() {
             setValid(scanCopy);
-            document.querySelector('#modal_layer').hidden = false;
+            uploadFileModal.hidden = false;
         }
-        function hideModal(event) {
-            document.querySelector('#modal_layer').hidden = true;
-            uploadForm.reset();
+        function hideUploadFileModal() {
+            uploadFileModal.hidden = true;
+            uploadFileForm.reset();
         }
     </script>
 
@@ -199,7 +275,7 @@
 </div>
 <h1>Иванов Пётр Сидорович</h1> -->
         <div class="row">
-            <div class="cell left-col avatar" id="avatar">
+            <div class="cell left-col avatar" id="avatar" onclick="showChangeAvatarModal()">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
                     <path
                         d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
@@ -214,8 +290,10 @@
         <div class="row">
             <div class="cell left-col optional">
                 <button type="button" class="btn btn-primary mt-4"
-                    onclick="location='/valdane/staffer/upd/'+location.pathname.split('/').pop()">Изменить профиль</button>
-                <button type="button" class="btn btn-outline-primary mt-3" onclick=showModal()>Добавить файлы</button>
+                    onclick="location='/valdane/staffer/upd/'+location.pathname.split('/').pop()">Изменить
+                    профиль</button>
+                <button type="button" class="btn btn-outline-primary mt-3" onclick=showUploadFileModal()>Добавить
+                    файлы</button>
             </div>
 
 
@@ -260,6 +338,7 @@
     </div>
 </body>
 <script>
+    //возвращает дату в отформатированном виде
     function setFormatDate(data) {
         if (!data) return '';
 
@@ -270,7 +349,7 @@
         arr.push(date.getFullYear());
         return arr.join('.');
     }
-
+    //заполнение страницы
     function fillPage(data) {
         document.querySelector('h1').innerHTML = data.name;
         document.querySelector('h4').innerHTML = data.position.title || ''; //должность
@@ -307,14 +386,28 @@
 
 
 
-        // console.log(paragraph);
 
-        const avatar = document.createElement('img');
-        avatar.src = 'http://batona.net/uploads/posts/2018-05/1526324138_001.jpg';
-        document.querySelector('#avatar > svg').replaceWith(avatar);
-        setTimeout(_ => {
-            // document.querySelector('#avatar > svg').replaceWith(avatar);
-        }, 3000);
+
+
+        //NOT WORKING
+        if(data.avatar) {
+            const avatar = document.createElement('img');
+            avatar.src = '/valdane/scancopy/'+data.avatar;
+            document.querySelector('#avatar > svg').replaceWith(avatar);
+            console.log(avatar.src);
+        }
+
+
+
+
+
+        
+        // const avatar = document.createElement('img');
+        // avatar.src = 'http://batona.net/uploads/posts/2018-05/1526324138_001.jpg'; //прикольная фотка
+        // document.querySelector('#avatar > svg').replaceWith(avatar);
+        // setTimeout(_ => {
+        //     // document.querySelector('#avatar > svg').replaceWith(avatar);
+        // }, 3000);
 
         // setTimeout(_ => {
         //     avatar.src = 'https://bipbap.ru/wp-content/uploads/2018/02/3-6.png';
@@ -324,32 +417,32 @@
         // }, 7000);
         // document.querySelector('#avatar > svg').replaceWith(avatar);
     }
+    //заполнение файлами
+    function fillFile(data) {
 
-    function fillFile(data){
-
-        if(!data.files || !data.files.length) return;
+        if (!data.files || !data.files.length) return;
 
 
-        if(!document.querySelector('#files')) { //если блока с файлами нет
+        if (!document.querySelector('#files')) { //если блока с файлами нет
             document.querySelector('.content > div').insertAdjacentHTML('afterend', '<div class="liner mt-4" id="files"><hr><small class="text-muted">Файлы</small></div>')
         }
-        
-        console.log(data.files);
 
-        for(const f of data.files) {
+        // console.log(data.files);
+
+        for (const f of data.files) {
             const st = (f === data.files[0]) ? 'mt-2' : ''; //первый элемент в блоке
             files.insertAdjacentHTML('beforeend', `<p id="${f.id}" onmouseenter="showSVG(event)" onmouseleave="hideSVG(event)" class="${st}"><a href ="/valdane/staffer/files/${f.fname}">${f.alias}</a></p>`);
         }
     }
     //показать/скрыть div с иконками редактирования записи
-    function showSVG(event){
+    function showSVG(event) {
         event.target.insertAdjacentHTML('beforeend', makeSVG());
     }
-    function hideSVG(event){
+    function hideSVG(event) {
         event.target.querySelector('div').remove();
     }
     //возвращает div с иконками редактирования записи
-    function makeSVG(){
+    function makeSVG() {
         return `<div class="edit-svg-pic">
                   <svg xmlns="http://www.w3.org/2000/svg" onclick="deleter(event)" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
@@ -358,24 +451,24 @@
                 </div>`;
     }
     //клик по иконке удаления файла
-    function deleter(event){
-        if( !confirm('Вы действительно хотите удалить эту запись?') ) return;
+    function deleter(event) {
+        if (!confirm('Вы действительно хотите удалить эту запись?')) return;
         //используется .closest(), т.к. событие может произойти на path-элементе иконки
         const id = event.target.closest('svg').parentElement.parentElement.id;
 
-        fetch('/valdane/staffer/file/'+id, {method: 'DELETE'})
-        .then(async response => {
-            document.getElementById(id).remove();
-        })
-        .catch(error => {
-            console.log(error);
-        });
+        fetch('/valdane/staffer/file/' + id, { method: 'DELETE' })
+            .then(async response => {
+                document.getElementById(id).remove();
+            })
+            .catch(error => {
+                console.log(error);
+            });
     }
 
     fetch('/valdane/staff/' + location.pathname.split('/').pop(), { method: 'GET' })
         .then(async response => {
             const res = await response.json();
-            console.log(res);
+            // console.log(res);
             fillPage(res);
             fillFile(res);
         })

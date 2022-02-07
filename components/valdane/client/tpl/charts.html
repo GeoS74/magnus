@@ -463,7 +463,7 @@
                 .then(async response => {
                     if (response.ok) { // если HTTP-статус в диапазоне 200-299
                         const res = await response.json();
-                        console.log(res);
+                        // console.log(res);
                         hideChangePeriodBlockForm();
 
                         //взять из глобального хранилища график
@@ -714,7 +714,7 @@
                         if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                             hideChangePeriodForm();
                             const res = await response.json();
-                            console.log(res);
+                            // console.log(res);
 
                             // при изменении периода клиент должен обработать ситуацию 
                             // когда сервер не отдаёт данные по какому-нибудь ранее отрисованному графику.
@@ -766,7 +766,7 @@
                 .then(async response => {
                     if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                         const res = await response.json();
-                        console.log(res);
+                        // console.log(res);
                         for (const key in res) renderChart(res[key], dateStart.getTime(), dateEnd.getTime());
                     }
                     else {

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const sharp = require('sharp');
 const Staffer = require('@valdane/models/Staffer');
 const StafferFile = require('@valdane/models/StafferFile');
 const limitDocs = 50;
@@ -43,37 +44,95 @@ exports.checkCredentials = (ctx, next) => {
     return next();
 };
 
+exports.changeAvatar = async ctx => {
+    if (!ctx.checkObjectId(ctx.request.body.id_staffer)) {
+        return ctx.throw(403, 'не валидный id сотрудника');
+    }
+
+    if (!ctx.request.files) {
+        return ctx.throw(400, 'файл не загружен');
+    }
+
+    if (!ctx.request.files.avatar.size) {
+        //delete temp file
+        fs.unlink(ctx.request.files.avatar.path, err => {
+            if (err) console.log(err);
+        });
+        return ctx.throw(400, 'файл не загружен');
+    }
+
+    if (ctx.request.files.avatar.size > 5000000) { //5Mb
+        //delete temp file
+        fs.unlink(ctx.request.files.avatar.path, err => {
+            if (err) console.log(err);
+        });
+        return ctx.throw(400, 'размер файла превышает 5МБ');
+    }
+
+    if (!/image\/\w+/.test(ctx.request.files.avatar.type)) {
+        return ctx.throw(400, 'файл должен быть картинкой');
+    }
+
+    let newFileName = 'ava_' + ctx.request.files.avatar.hash + '_' + Date.now() + '.' + ctx.request.files.avatar.name.split('.').pop();
+
+    //change size
+    await sharp(ctx.request.files.avatar.path)
+        .resize({ width: 160 })
+        // .toFormat('png')
+        .toFile('./components/valdane/scancopy/' + newFileName)
+        .catch(err => {
+            console.log(err);
+        });
+
+    //delete temp file
+    fs.unlink(ctx.request.files.avatar.path, err => {
+        if (err) console.log(err);
+    });
+
+    try {
+        const staffer = await Staffer.findOneAndUpdate(
+            { _id: ctx.request.body.id_staffer },
+            { avatar: newFileName },
+            { new: true }
+        );
+        ctx.body = { avatar: staffer.avatar };
+    }
+    catch (error) {
+        throw error;
+    }
+};
+
 exports.uploadFile = async ctx => {
     if (!ctx.checkObjectId(ctx.request.body.id_staffer)) {
         return ctx.throw(403, 'не валидный id сотрудника');
     }
 
 
-    if(!ctx.request.files){
+    if (!ctx.request.files) {
         return ctx.throw(400, 'файл не загружен');
     }
 
-    if(!ctx.request.files.scanCopy.size){
+    if (!ctx.request.files.scanCopy.size) {
         //delete temp file
         fs.unlink(ctx.request.files.scanCopy.path, err => {
-            if(err) console.log(err);
+            if (err) console.log(err);
         });
         return ctx.throw(400, 'файл не загружен');
     }
 
-    if(ctx.request.files.scanCopy.size > 50000000){ //50Mb
+    if (ctx.request.files.scanCopy.size > 50000000) { //50Mb
         //delete temp file
         fs.unlink(ctx.request.files.scanCopy.path, err => {
-            if(err) console.log(err);
+            if (err) console.log(err);
         });
         return ctx.throw(400, 'файл слишком большой');
     }
 
     let newFileName = ctx.request.files.scanCopy.hash + '_' + Date.now() + '.' + ctx.request.files.scanCopy.name.split('.').pop();
-    fs.rename(ctx.request.files.scanCopy.path, './components/valdane/scancopy/'+newFileName, err => {
-        if(err) ctx.throw(500, err);
+    fs.rename(ctx.request.files.scanCopy.path, './components/valdane/scancopy/' + newFileName, err => {
+        if (err) ctx.throw(500, err);
     });
- 
+
 
     const stafferFile = await StafferFile.create({
         staffer: ctx.request.body.id_staffer,
@@ -81,15 +140,6 @@ exports.uploadFile = async ctx => {
         alias: ctx.request.body.file_alias || undefined
     });
 
-
-    // ctx.body = {
-    //     id: thema._id,
-    //     letters: [getLetterStruct(letter)],
-    // }
-
-    // console.log(ctx.request.body);
-    // console.log(ctx.request.files);
-    // console.log(stafferFile);
     ctx.body = {
         files: [{
             id: stafferFile._id,
@@ -100,9 +150,9 @@ exports.uploadFile = async ctx => {
 };
 
 exports.delFile = async ctx => {
-    const delFile = await StafferFile.findOneAndDelete({_id: ctx.params.id});
-    fs.unlink('./components/valdane/scancopy/'+delFile.scanCopyFile, err => {
-        if(err) console.log(err);
+    const delFile = await StafferFile.findOneAndDelete({ _id: ctx.params.id });
+    fs.unlink('./components/valdane/scancopy/' + delFile.scanCopyFile, err => {
+        if (err) console.log(err);
     });
 
     ctx.body = {
@@ -112,42 +162,43 @@ exports.delFile = async ctx => {
 
 exports.searchStaffers = async ctx => {
     const filter = {
-        $text: { 
+        $text: {
             $search: ctx.request.query.needle,
             $language: 'russian'
-        }};
+        }
+    };
 
     const projection = {
         score: { $meta: "textScore" } //добавить в данные оценку текстового поиска (релевантность)
     };
 
-    if(ctx.request.query.last_id) filter._id = {$lt: ctx.request.query.last_id};
+    if (ctx.request.query.last_id) filter._id = { $lt: ctx.request.query.last_id };
 
     const staffers = await Staffer
         .find(filter, projection)
         .sort({
             _id: -1,
-           //score: { $meta: "textScore" } //сортировка по релевантности
+            //score: { $meta: "textScore" } //сортировка по релевантности
         }).limit(limitDocs)
         .populate('position');
 
-        ctx.body = staffers.map(staff => ({
-            id: staff._id,
-            name: staff.name,
-            status: staff.status,
-            position: (staff.position && staff.position.title)  ? staff.position.title : '',
-            shortName: staff.shortName,
-        }));
+    ctx.body = staffers.map(staff => ({
+        id: staff._id,
+        name: staff.name,
+        status: staff.status,
+        position: (staff.position && staff.position.title) ? staff.position.title : '',
+        shortName: staff.shortName,
+    }));
 };
 
 
 exports.allStaffers = async (ctx, next) => {
-    if(ctx.request.query.needle) return next();
+    if (ctx.request.query.needle) return next();
 
     try {
         const filter = {};
 
-        if(ctx.request.query.last_id) filter._id = {$lt: ctx.request.query.last_id};
+        if (ctx.request.query.last_id) filter._id = { $lt: ctx.request.query.last_id };
 
         const staffers = await Staffer.find(filter)
             .sort({ _id: -1 })
@@ -159,7 +210,7 @@ exports.allStaffers = async (ctx, next) => {
             id: staff._id,
             name: staff.name,
             status: staff.status,
-            position: (staff.position && staff.position.title)  ? staff.position.title : '',
+            position: (staff.position && staff.position.title) ? staff.position.title : '',
             shortName: staff.shortName,
         }));
     }
@@ -228,6 +279,7 @@ exports.getStaffer = async ctx => {
 
     ctx.body = {
         id: staffer._id,
+        avatar: staffer.avatar,
         position: staffer.position ? {
             title: staffer.position.title,
             id: staffer.position._id,
@@ -260,15 +312,15 @@ exports.delStaffer = async ctx => {
         await Staffer.findOneAndDelete({ _id: ctx.params.id });
 
         //удаление всех связанных файлов
-        const files = await StafferFile.find({staffer: ctx.params.id});
-        if(files.length){
-            for(const file of files) {
-                fs.unlink('./components/valdane/scancopy/'+file.scanCopyFile, err => {
-                    if(err) console.log(err);
+        const files = await StafferFile.find({ staffer: ctx.params.id });
+        if (files.length) {
+            for (const file of files) {
+                fs.unlink('./components/valdane/scancopy/' + file.scanCopyFile, err => {
+                    if (err) console.log(err);
                 });
             }
         }
-        await StafferFile.deleteMany({staffer: ctx.params.id});
+        await StafferFile.deleteMany({ staffer: ctx.params.id });
 
         ctx.body = {
             id: ctx.params.id
@@ -315,7 +367,7 @@ exports.updStaffer = async ctx => {
                 runValidators: true //запускает валидаторы схемы перед записью
             }
         );
-        ctx.body = {id: staffer._id};
+        ctx.body = { id: staffer._id };
     }
     catch (error) {
         if (error.name === 'ValidationError') {

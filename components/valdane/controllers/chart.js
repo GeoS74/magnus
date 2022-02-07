@@ -122,48 +122,6 @@ exports.allCharts = async ctx => {
             'period.end': { $gt: ctx.request.query.start }
         };
 
-
-        // const filter = {
-        //     $and: [
-        //         {
-        //             'period.end': { $not: { $lt: ctx.request.query.start } }
-        //         },
-        //         {
-        //             'period.start': { $not: { $gt: ctx.request.query.end } }
-        //         }
-        //     ]
-        // };
-
-        //работает, но не совсем правильно
-        // const filter = {
-        //     $or: [
-        //         {
-        //             'period.end': { $not: { $lt: ctx.request.query.start } }
-        //         },
-        //         {
-        //             'period.start': { $not: { $gt: ctx.request.query.end } }
-        //         }
-        //     ]
-        // };
-
-        // const filter = {
-        //     $or: [
-        //         {
-        //             $and: [
-        //                 { 'period.end': { $not: { $lt: ctx.request.query.start } } },
-        //                 { 'period.start': { $not: { $gt: ctx.request.query.end } } }
-        //             ]
-        //         },
-        //         {
-        //             $and: [
-        //                 { 'period.end': { $gt: ctx.request.query.end } },
-        //                 { 'period.start': { $lt: ctx.request.query.start } }
-        //             ]
-        //         }
-        //     ]
-        // };
-
-
         const data = await Chart.find(filter)
             .sort({ _id: 1 })
             .populate('tech')
