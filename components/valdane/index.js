@@ -5,7 +5,7 @@ const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const { allPositions, addPosition, updPosition, delPosition } = require('@valdane/controllers/positions');
 const { allTechCenter, addTechCenter, updTechCenter, delTechCenter } = require('@valdane/controllers/techcenter');
-const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar } = require('@valdane/controllers/staffer');
+const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar, toExcel } = require('@valdane/controllers/staffer');
 const { addPeriod, updPeriod, delPeriod, allCharts } = require('@valdane/controllers/chart');
 const mongoose = require('mongoose');
 
@@ -20,16 +20,6 @@ const ssi = new SSI({
 const router = new Router();
 
 router.prefix('/valdane');
-
-
-
-
-
- 
-
-
-
-
 
 
 module.exports.router = router;
@@ -81,6 +71,8 @@ router.use((ctx, next) => {
 });
 
 
+//вернуть данные по сотрудникам в виде Excel
+router.get('/staffers/excel', toExcel);
 //изменение аватара
 router.post('/staffer/change_avatar', koaBody, changeAvatar);
 //загрузка файлов

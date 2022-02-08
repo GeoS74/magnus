@@ -3,7 +3,8 @@ const sharp = require('sharp');
 const Staffer = require('@valdane/models/Staffer');
 const StafferFile = require('@valdane/models/StafferFile');
 const limitDocs = 50;
-
+const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
+const mime = require('mime-types');
 
 exports.checkCredentials = (ctx, next) => {
     if (ctx.request.body.birthday) {
@@ -44,6 +45,75 @@ exports.checkCredentials = (ctx, next) => {
     return next();
 };
 
+exports.toExcel = async ctx => {
+    try {
+        const ws_data = [["№ п/п", "Ф.И.О.", "Табельный номер", "Должность", "Разряд", "Паспорт", "День рождения", "Место жительства", "Контакты",
+            "Базовый город", "Номер банк. карты", "Оф. трудоустроен", "Дата принятия на работу", "Статус", "Характеристика",
+            "Спец. одежда", "Размер ОГ", "Рост", "Размер одежды", "Размер обуви", "Вакцинация от", "Вакцинация до", "Файлы"]];
+
+        const staffers = await Staffer.find().populate('position').populate('files');
+
+        let i = 1;
+        staffers.map(staff => {
+            const arr = [
+                i++,
+                staff.name,
+                staff.personnelNumber,
+                (staff.position && staff.position.title) ? staff.position.title : '',
+                staff.skill,
+                staff.passport,
+                staff.birthday,
+                staff.placeOfResidence,
+                staff.contacts,
+                staff.baseCity,
+                staff.bankcardNumber,
+                staff.isBusy ? 'Да' : 'Нет',
+                staff.startDate,
+                staff.status,
+                staff.characteristic,
+                staff.biometricData.coveralls,
+                staff.biometricData.sizeHead,
+                staff.biometricData.height,
+                staff.biometricData.clothingSize,
+                staff.biometricData.shoeSize,
+                staff.vaccination.start,
+                staff.vaccination.end,
+            ];
+            //список прикрепленных файлов
+            if (staff.files.length) {
+                const arrFiles = [];
+                for (let k = 0; k < staff.files.length; k++) {
+                    arrFiles.push(`${k + 1}. ${staff.files[k].alias}`);
+                }
+                arr.push(arrFiles.join("\n"));
+            }
+
+            ws_data.push(arr);
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(ws_data);
+        //Add the worksheet to the workbook
+        XLSX.utils.book_append_sheet(wb, ws, 'Сотрудники');
+
+        await XLSX.writeFile(wb, 'files/staffers.xlsx', {
+            bookType: 'xlsx'
+        });
+
+        ctx.set('content-type', mime.lookup('files/staffers.xlsx'));
+        ctx.set('content-disposition', 'attachment; filename="staffers.xlsx"');
+        ctx.body = fs.createReadStream('files/staffers.xlsx');
+
+        //delete temp file
+        fs.unlink('files/staffers.xlsx', err => {
+            if (err) console.log(err);
+        });
+    }
+    catch (error) {
+        throw error;
+    }
+};
+
 exports.changeAvatar = async ctx => {
     if (!ctx.checkObjectId(ctx.request.body.id_staffer)) {
         return ctx.throw(403, 'не валидный id сотрудника');
@@ -81,10 +151,10 @@ exports.changeAvatar = async ctx => {
 
     //change size
     await sharp(ctx.request.files.avatar.path)
-        .resize({ 
+        .resize({
             width: 160,
             height: 160,
-            })
+        })
         // .toFormat('png')
         .toFile('./components/valdane/scancopy/' + newFileName)
         .catch(err => {
@@ -104,12 +174,12 @@ exports.changeAvatar = async ctx => {
         );
 
         //delete old avatar file
-        if(staffer.avatar){
-            fs.unlink('components/valdane/scancopy/'+staffer.avatar, err => {
+        if (staffer.avatar) {
+            fs.unlink('components/valdane/scancopy/' + staffer.avatar, err => {
                 if (err) console.log(err);
             });
         }
-         
+
         ctx.body = { avatar: newFileName };
     }
     catch (error) {

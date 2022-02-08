@@ -1,3 +1,4 @@
+//пример от google https://developers.google.com/chart/interactive/docs/gallery/timeline?hl=ru
 "use strict"
 class Chart {
     _dateStart;
