@@ -70,6 +70,10 @@ exports.changeAvatar = async ctx => {
     }
 
     if (!/image\/\w+/.test(ctx.request.files.avatar.type)) {
+        //delete temp file
+        fs.unlink(ctx.request.files.avatar.path, err => {
+            if (err) console.log(err);
+        });
         return ctx.throw(400, 'файл должен быть картинкой');
     }
 
@@ -77,7 +81,10 @@ exports.changeAvatar = async ctx => {
 
     //change size
     await sharp(ctx.request.files.avatar.path)
-        .resize({ width: 160 })
+        .resize({ 
+            width: 160,
+            height: 160,
+            })
         // .toFormat('png')
         .toFile('./components/valdane/scancopy/' + newFileName)
         .catch(err => {
@@ -93,9 +100,17 @@ exports.changeAvatar = async ctx => {
         const staffer = await Staffer.findOneAndUpdate(
             { _id: ctx.request.body.id_staffer },
             { avatar: newFileName },
-            { new: true }
+            { new: false }
         );
-        ctx.body = { avatar: staffer.avatar };
+
+        //delete old avatar file
+        if(staffer.avatar){
+            fs.unlink('components/valdane/scancopy/'+staffer.avatar, err => {
+                if (err) console.log(err);
+            });
+        }
+         
+        ctx.body = { avatar: newFileName };
     }
     catch (error) {
         throw error;

@@ -51,7 +51,10 @@
             margin: 35px 0;
         }
 
-        #avatar{cursor: pointer}
+        #avatar {
+            cursor: pointer
+        }
+
         #avatar>svg,
         #avatar>img {
             width: 100%;
@@ -147,8 +150,12 @@
                         const res = await response.json();
                         setValid(avatarImg);
                         hideChangeAvatarModal();
-                        
-                        console.log(res);
+
+                        //avatar
+                        const avatar = document.createElement('img');
+                        avatar.src = '/' + res.avatar;
+                        document.querySelector('#avatar').firstElementChild.replaceWith(avatar);
+
                     }
                     else if (response.status === 400) { //ошибка валидации
                         const res = await response.json();
@@ -351,10 +358,15 @@
     }
     //заполнение страницы
     function fillPage(data) {
+        //avatar
+        if (data.avatar) {
+            const avatar = document.createElement('img');
+            avatar.src = '/' + data.avatar;
+            document.querySelector('#avatar').firstElementChild.replaceWith(avatar);
+        }
+
         document.querySelector('h1').innerHTML = data.name;
         document.querySelector('h4').innerHTML = data.position.title || ''; //должность
-        // console.log(head_p);
-
 
         const paragraph = document.querySelectorAll('.content span');
         paragraph[0].innerHTML = data.contacts || ''; //контакты
@@ -389,19 +401,13 @@
 
 
 
-        //NOT WORKING
-        if(data.avatar) {
-            const avatar = document.createElement('img');
-            avatar.src = '/valdane/scancopy/'+data.avatar;
-            document.querySelector('#avatar > svg').replaceWith(avatar);
-            console.log(avatar.src);
-        }
 
 
 
 
 
-        
+
+
         // const avatar = document.createElement('img');
         // avatar.src = 'http://batona.net/uploads/posts/2018-05/1526324138_001.jpg'; //прикольная фотка
         // document.querySelector('#avatar > svg').replaceWith(avatar);

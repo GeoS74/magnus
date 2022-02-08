@@ -25,13 +25,7 @@ router.prefix('/valdane');
 
 
 
-
-//NOT WORKING
-router.use(require('koa-static')('/valdane/scancopy'));
-
-
-
-
+ 
 
 
 
@@ -85,12 +79,6 @@ router.use((ctx, next) => {
     }
     return next();
 });
-
-
- 
-
-
-
 
 
 //изменение аватара

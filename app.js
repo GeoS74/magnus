@@ -2,7 +2,8 @@ require('module-alias/register');
 const Koa = require('koa');
 const app = new Koa();
 
-app.use(require('koa-static')('client/public'));
+const serve = require('koa-static');
+app.use(serve('client/public'));
 
 app.use(require('@logger'));
 
@@ -10,6 +11,7 @@ app.use(require('@user').routerUser.routes());
 
 app.use(require('@letters').router.routes());
 
+app.use(serve('components/valdane/scancopy')); //статические файлы компоненты
 app.use(require('@valdane').router.routes());
 
 module.exports = app;
