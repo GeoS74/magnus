@@ -13,7 +13,8 @@
         "@logger": "components/logger",
         "@user": "components/user",
         "@letters": "components/letters",
-        "@valdane": "components/valdane"
+        "@valdane": "components/valdane",
+        "@transport": "components/transport"
     },
     "dependencies": {
         "csv-parser": "^3.0.0",
@@ -32,7 +33,7 @@
         "mongoose": "^6.0.12",
         "mongoose-beautiful-unique-validation": "^7.1.1",
         "mongoose-unique-validator": "^3.0.0",
-        "node-fetch": "^2.6.6",
+        "node-fetch": "^2.6.7",
         "node-ssi": "^0.3.2",
         "nodemon": "^2.0.14",
         "passport-local": "^1.0.0",

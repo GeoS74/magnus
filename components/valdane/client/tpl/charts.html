@@ -560,7 +560,7 @@
             hideAddStaffForm();
         };
         //заполнение глобальной коллекции сотрудников + заполнение datalist формы
-        fetch('/valdane/staffer/', { method: 'GET' })
+        fetch('/valdane/stafferWithoutLimit/', { method: 'GET' })
             .then(async response => {
                 const res = await response.json();
                 const stafferDataList = document.querySelector('#staffer-list');

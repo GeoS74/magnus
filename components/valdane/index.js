@@ -5,7 +5,7 @@ const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const { allPositions, addPosition, updPosition, delPosition } = require('@valdane/controllers/positions');
 const { allTechCenter, addTechCenter, updTechCenter, delTechCenter } = require('@valdane/controllers/techcenter');
-const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar, toExcel } = require('@valdane/controllers/staffer');
+const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar, toExcel, allStaffersWithoutLimit } = require('@valdane/controllers/staffer');
 const { addPeriod, updPeriod, delPeriod, allCharts } = require('@valdane/controllers/chart');
 const mongoose = require('mongoose');
 
@@ -127,6 +127,8 @@ router.get('/staffer/:id', async ctx => {
 router.get('/staff/:id', getStaffer);
 // //вернуть всех сотрудников
 router.get('/staffer', allStaffers, searchStaffers);
+// //вернуть всех сотрудников без учёта limitDocs
+router.get('/stafferWithoutLimit', allStaffersWithoutLimit);
 // //добавить сотрудника
 router.post('/staffer', koaBody, checkCredentials, addStaffer);
 // //редактировать сотрудника

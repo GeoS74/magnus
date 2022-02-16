@@ -277,6 +277,27 @@ exports.searchStaffers = async ctx => {
 };
 
 
+exports.allStaffersWithoutLimit = async ctx => {
+    try {
+        const filter = {};
+        const staffers = await Staffer.find(filter)
+            .sort({ _id: -1 })
+            .populate('position');
+
+        ctx.body = staffers.map(staff => ({
+            id: staff._id,
+            name: staff.name,
+            status: staff.status,
+            position: (staff.position && staff.position.title) ? staff.position.title : '',
+            shortName: staff.shortName,
+        }));
+    }
+    catch (error) {
+        throw error;
+    }
+};
+
+
 exports.allStaffers = async (ctx, next) => {
     if (ctx.request.query.needle) return next();
 
