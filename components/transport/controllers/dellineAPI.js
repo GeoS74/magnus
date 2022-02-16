@@ -377,8 +377,13 @@ async function downloadHandbook(url, fname) {
                 //если этого не сделать порядок выполнения операций будет нарушен
                 //при скачивании json файла добавлять спецификацию BOM нельзя - это сломает структуру файла
                 const ws = fs.createWriteStream(path.join(__dirname, `../files/${fname}`), { flags: 'w' });
-                if (~fname.indexOf('json')) {
-                    ws.write("\ufeff");
+                if (!~fname.indexOf('json')) {
+                    await new Promise(res => {
+                        ws.write("\ufeff", err => {
+                            if(err) throw err;
+                            res();
+                        });
+                    });
                 }
                 await new Promise(res => {
                     response.body.pipe(ws);
