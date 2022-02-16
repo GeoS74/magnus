@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 
 const Schema = new mongoose.Schema({
     cityID: { //уникальный идентификатор города в рамках системы Деловых линий
-        type: String,
+        type: Number,
         unique: true
     },
     name: String, //полное наименование населённого пункта

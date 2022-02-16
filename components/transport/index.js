@@ -1,6 +1,6 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
-const {getHandbookLink, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery} = require('@transport/controllers/dellineAPI');
+const {getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery, microCalculation, calculation} = require('@transport/controllers/dellineAPI');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -17,7 +17,7 @@ router.prefix('/transport');
 module.exports.router = router;
 
 //"Деловые Линии" - запрос расчёта стоимости перевозки
-router.get('/calculator', calculationQuery);
+router.get('/calculator', calculation);
 
 
 //"Деловые Линии" - обновление справочника населенных пунктов
@@ -27,7 +27,7 @@ router.get('/handbook/places/update', (ctx, next) => {
         fname: 'places.csv',
     }
     return next();
-}, getHandbookLink, updateHandbookPlaces);
+}, getHandbook, updateHandbookPlaces);
 //"Деловые Линии" - обновление справочника улиц
 router.get('/handbook/streets/update', (ctx, next) => {
     ctx.delline = {
@@ -35,7 +35,7 @@ router.get('/handbook/streets/update', (ctx, next) => {
         fname: 'streets.csv',
     }
     return next();
-}, getHandbookLink, updateHandbookStreets);
+}, getHandbook, updateHandbookStreets);
 //"Деловые Линии" - обновление справочника терминалов
 router.get('/handbook/terminals/update', async (ctx, next) => {
     ctx.delline = {
@@ -43,7 +43,7 @@ router.get('/handbook/terminals/update', async (ctx, next) => {
         fname: 'terminals.json',
     }
     return next();
-}, getHandbookLink, updateHandbookTerminals);
+}, getHandbook, updateHandbookTerminals);
 
 
 

@@ -6,8 +6,154 @@ const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
 const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets');
 
+
+
+module.exports.microCalculation = async ctx => {
+    const data = {
+        appkey: process.env.DELLINE,
+        derival: {
+            city: "7700000000000000000000000"
+        },
+        arrival: {
+            city: "7800000000000000000000000"
+        },
+    }
+
+    await fetch('https://api.dellin.ru/v1/micro_calc.json', {
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                console.log(res);
+            }
+            else {
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log(err);
+            ctx.throw(400, err.message);
+        });
+
+    ctx.body = 'ok';
+}
+
+
+
+
+
+
+// {
+// "appkey":"00000000-0000-0000-0000-000000000000",
+// "sessionID":"00000000-0000-0000-0000-000000000000",
+// "delivery":{
+//     "deliveryType":{
+//         "type":"express"
+//     },
+//     "arrival":{
+//         "variant":"terminal",
+//         "terminalID":"1",
+//         "addressID":238577,
+//         "address":{
+//             "search":"Санкт-Петербург, Невский проспект, 10, литера А",
+//             "street":"7800000000008850000000000"
+//         },
+//         "city":"7800000000000000000000000",
+//         "time":{
+//             "worktimeStart":"9:30",
+//             "worktimeEnd":"19:00",
+//             "breakStart":"12:00",
+//             "breakEnd":"13:00",
+//             "exactTime":false
+//         },
+//         "handling":{
+//             "freightLift":true,
+//             "toFloor":2,
+//             "carry":50
+//         },
+//         "requirements":[
+//             "0x9951e0ff97188f6b4b1b153dfde3cfec",
+//             "0x88f93a2c37f106d94ff9f7ada8efe886"
+//         ]
+//     },
+//     "derival":{
+//         "produceDate":"2019-11-08",
+//         "variant":"address",
+//         "terminalID":"1",
+//         "addressID":238577,
+//         "address":{
+//             "search":"Москва, Юности, 5",
+//             "street":"7700000000004650000000000"
+//         },
+//         "time":{
+//             "worktimeEnd":"19:30",
+//             "worktimeStart":"9:00",
+//             "breakStart":"12:00",
+//             "breakEnd":"13:00",
+//             "exactTime":false
+//         },
+//         "handling":{
+//             "freightLift":true,
+//             "toFloor":40,
+//             "carry":243
+//         },
+//         "requirements":[
+//             "0x9951e0ff97188f6b4b1b153dfde3cfec",
+//             "0x88f93a2c37f106d94ff9f7ada8efe886"
+//         ]
+//     },
+//     "packages":[
+//         {
+//             "uid":"0xa6a7bd2bf950e67f4b2cf7cc3a97c111",
+//             "count":1
+//         }
+//     ],
+//     "accompanyingDocuments":[
+//         {
+//             "action":"send"
+//         },
+//         {
+//             "action":"return"
+//         }
+//     ]
+// },
+// "members":{
+//     "requester":{
+//         "role":"sender",
+//         "uid":"ae62f076-d602-4341-b691-45bf8dfe4a10"
+//     }
+// },
+// "cargo":{
+//     "quantity":4,
+//     "length":1,
+//     "width":1,
+//     "weight":12,
+//     "height":1,
+//     "totalVolume":1,
+//     "totalWeight":12,
+//     "oversizedWeight":0,
+//     "oversizedVolume":0,
+//     "freightUID":"0x82e6000423b423b711da7d15445d42cb",
+//     "hazardClass":7.2,
+//     "insurance":{
+//         "statedValue":15477.34,
+//         "term":false
+//     }
+// },
+// "payment":{
+//     "type":"cash",
+//     "paymentCity":"7700000000000000000000000",
+//     "paymentCitySearch":{
+//         "search":"Москва"
+//             }
+// } 
+// }
+
 //
-module.exports.calculationQuery = async ctx => {
+module.exports.calculation = async ctx => {
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза
@@ -18,17 +164,7 @@ module.exports.calculationQuery = async ctx => {
                 //      "letter" - письмо;
                 //      "avia" - авиадоставка;
                 //      "small" - доставка малогабаритного груза.
-                type: 'express'
-            },
-            arrival: { //Данные по доставке груза до получателя
-                // Способ доставки груза
-                // Возможные значения:
-                //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
-                //      "terminal" - доставка груза от/до терминала;
-                //      "airport" - доставка груза до аэропорта, вариант используется, если в городе, в который необходимо доставить груз, нет терминала "Деловых Линий"
-                variant: 'terminal',
-                // terminalID: '1' //ID терминала отправки/доставки груза из "Справочника терминалов"
-                city: "1000000100000000000000000"
+                type: 'auto'
             },
             derival: { //Данные по доставке груза от отправителя
                 produceDate: '2022-02-25', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
@@ -37,128 +173,69 @@ module.exports.calculationQuery = async ctx => {
                 //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
                 //      "terminal" - доставка груза от/до терминала;
                 variant: 'terminal',
-                // terminalID: '1' //ID терминала отправки/доставки груза из "Справочника терминалов"
+                terminalID: '36', //ID терминала отправки/доставки груза из "Справочника терминалов"
+                // city: "7700000000000000000000000",
             },
-            packages: { //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
+            arrival: { //Данные по доставке груза до получателя
+                // Способ доставки груза
+                // Возможные значения:
+                //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
+                //      "terminal" - доставка груза от/до терминала;
+                //      "airport" - доставка груза до аэропорта, вариант используется, если в городе, в который необходимо доставить груз, нет терминала "Деловых Линий"
+                variant: 'terminal',
+                // terminalID: '1', //ID терминала отправки/доставки груза из "Справочника терминалов"
+                city: "7800000000000000000000000",
+            },
+            // packages: [ //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
 
-            }
+            // ]
         },
         cargo: { //Информация о грузе
-
+            quantity: 1,
+            length: 1,
+            width: 1,
+            height: 1,
+            weight: 100,
+            totalVolume: 1,
+            totalWeight: 100,
+            hazardClass: 0,
+            oversizedWeight: 100,
+            oversizedVolume: 1,
         }
     }
 
-    // {
-    // "appkey":"00000000-0000-0000-0000-000000000000",
-    // "sessionID":"00000000-0000-0000-0000-000000000000",
-    // "delivery":{
-    //     "deliveryType":{
-    //         "type":"express"
-    //     },
-    //     "arrival":{
-    //         "variant":"terminal",
-    //         "terminalID":"1",
-    //         "addressID":238577,
-    //         "address":{
-    //             "search":"Санкт-Петербург, Невский проспект, 10, литера А",
-    //             "street":"7800000000008850000000000"
-    //         },
-    //         "city":"7800000000000000000000000",
-    //         "time":{
-    //             "worktimeStart":"9:30",
-    //             "worktimeEnd":"19:00",
-    //             "breakStart":"12:00",
-    //             "breakEnd":"13:00",
-    //             "exactTime":false
-    //         },
-    //         "handling":{
-    //             "freightLift":true,
-    //             "toFloor":2,
-    //             "carry":50
-    //         },
-    //         "requirements":[
-    //             "0x9951e0ff97188f6b4b1b153dfde3cfec",
-    //             "0x88f93a2c37f106d94ff9f7ada8efe886"
-    //         ]
-    //     },
-    //     "derival":{
-    //         "produceDate":"2019-11-08",
-    //         "variant":"address",
-    //         "terminalID":"1",
-    //         "addressID":238577,
-    //         "address":{
-    //             "search":"Москва, Юности, 5",
-    //             "street":"7700000000004650000000000"
-    //         },
-    //         "time":{
-    //             "worktimeEnd":"19:30",
-    //             "worktimeStart":"9:00",
-    //             "breakStart":"12:00",
-    //             "breakEnd":"13:00",
-    //             "exactTime":false
-    //         },
-    //         "handling":{
-    //             "freightLift":true,
-    //             "toFloor":40,
-    //             "carry":243
-    //         },
-    //         "requirements":[
-    //             "0x9951e0ff97188f6b4b1b153dfde3cfec",
-    //             "0x88f93a2c37f106d94ff9f7ada8efe886"
-    //         ]
-    //     },
-    //     "packages":[
-    //         {
-    //             "uid":"0xa6a7bd2bf950e67f4b2cf7cc3a97c111",
-    //             "count":1
-    //         }
-    //     ],
-    //     "accompanyingDocuments":[
-    //         {
-    //             "action":"send"
-    //         },
-    //         {
-    //             "action":"return"
-    //         }
-    //     ]
-    // },
-    // "members":{
-    //     "requester":{
-    //         "role":"sender",
-    //         "uid":"ae62f076-d602-4341-b691-45bf8dfe4a10"
-    //     }
-    // },
-    // "cargo":{
-    //     "quantity":4,
-    //     "length":1,
-    //     "width":1,
-    //     "weight":12,
-    //     "height":1,
-    //     "totalVolume":1,
-    //     "totalWeight":12,
-    //     "oversizedWeight":0,
-    //     "oversizedVolume":0,
-    //     "freightUID":"0x82e6000423b423b711da7d15445d42cb",
-    //     "hazardClass":7.2,
-    //     "insurance":{
-    //         "statedValue":15477.34,
-    //         "term":false
-    //     }
-    // },
-    // "payment":{
-    //     "type":"cash",
-    //     "paymentCity":"7700000000000000000000000",
-    //     "paymentCitySearch":{
-    //         "search":"Москва"
-    //             }
-    // } 
-    // }
+    await fetch('https://api.dellin.ru/v2/calculator.json', {
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                console.log(res);
+            }
+            else {
+                const res = await response.json();
 
+                for (const err of res.errors) {
+                    console.log(err);
+                }
+
+
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log(err);
+            ctx.throw(400, err.message);
+        });
+
+    ctx.body = 'ok';
 }
 
 
 //получить ссылку на скачивание справочника
-module.exports.getHandbookLink = async (ctx, next) => {
+module.exports.getHandbook = async (ctx, next) => {
     await fetch(ctx.delline.link, {
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
