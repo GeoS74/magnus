@@ -1,6 +1,6 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
-const {getHandbookSettlements, updateHandbookSettlements} = require('@transport/controllers/dellineAPI');
+const {getHandbookLink, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery} = require('@transport/controllers/dellineAPI');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -16,4 +16,37 @@ router.prefix('/transport');
 
 module.exports.router = router;
 
-router.get('/handbook/settlements', /*getHandbookSettlements,*/ updateHandbookSettlements);
+//"Деловые Линии" - запрос расчёта стоимости перевозки
+router.get('/calculator', calculationQuery);
+
+
+//"Деловые Линии" - обновление справочника населенных пунктов
+router.get('/handbook/places/update', (ctx, next) => {
+    ctx.delline = {
+        link: 'https://api.dellin.ru/v1/public/places.json',
+        fname: 'places.csv',
+    }
+    return next();
+}, getHandbookLink, updateHandbookPlaces);
+//"Деловые Линии" - обновление справочника улиц
+router.get('/handbook/streets/update', (ctx, next) => {
+    ctx.delline = {
+        link: 'https://api.dellin.ru/v1/public/streets.json',
+        fname: 'streets.csv',
+    }
+    return next();
+}, getHandbookLink, updateHandbookStreets);
+//"Деловые Линии" - обновление справочника терминалов
+router.get('/handbook/terminals/update', async (ctx, next) => {
+    ctx.delline = {
+        link: 'https://api.dellin.ru/v3/public/terminals.json',
+        fname: 'terminals.json',
+    }
+    return next();
+}, getHandbookLink, updateHandbookTerminals);
+
+
+
+router.get('/test', async ctx => {
+    ctx.body = 'test';
+})

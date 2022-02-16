@@ -20,4 +20,4 @@ const Schema = new mongoose.Schema({
     timestamps: true
 })
 
-module.exports = connection.model('DellineHandbookSettlements', Schema)
+module.exports = connection.model('DellineHandbookPlaces', Schema)
