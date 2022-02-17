@@ -379,10 +379,7 @@ async function downloadHandbook(url, fname) {
                 const ws = fs.createWriteStream(path.join(__dirname, `../files/${fname}`), { flags: 'w' });
                 if (!~fname.indexOf('json')) {
                     await new Promise(res => {
-                        ws.write("\ufeff", err => {
-                            if(err) throw err;
-                            res();
-                        });
+                        ws.write("\ufeff", _ => res());
                     });
                 }
                 await new Promise(res => {
