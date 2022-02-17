@@ -6,7 +6,7 @@ const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const { allPositions, addPosition, updPosition, delPosition } = require('@valdane/controllers/positions');
 const { allTechCenter, addTechCenter, updTechCenter, delTechCenter } = require('@valdane/controllers/techcenter');
 const { addStaffer, updStaffer, getStaffer, delStaffer, allStaffers, searchStaffers, uploadFile, delFile, checkCredentials, changeAvatar, toExcel, allStaffersWithoutLimit } = require('@valdane/controllers/staffer');
-const { addPeriod, updPeriod, delPeriod, allCharts } = require('@valdane/controllers/chart');
+const { addPeriod, updPeriod, delPeriod, allCharts, getStatisticForDate, showStatisticPosition, showStatisticRelax } = require('@valdane/controllers/chart');
 const mongoose = require('mongoose');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
@@ -205,6 +205,12 @@ router.post('/chart/period', koaBody, addPeriod);
 router.del('/chart/period/:id', delPeriod);
 //получить все графики
 router.get('/chart', allCharts);
+//получить статистику по сторудникам на вахтах
+router.get('/chart/statistic', getStatisticForDate);
+//получить список по должности в разрезе тех.центра и даты
+router.get('/chart/statistic/position', showStatisticPosition);
+//получить список людей на меж.вахте
+router.get('/chart/statistic/relax', showStatisticRelax);
 
 
 

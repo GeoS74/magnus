@@ -1,14 +1,15 @@
 const Chart = require('@valdane/models/Chart');
+const Staffer = require('@valdane/models/Staffer');
 
 //редактирование периода
 exports.updPeriod = async ctx => {
-    if( (new Date(+ctx.request.body.endPeriod) - new Date(+ctx.request.body.startPeriod)) < 0 ) {
+    if ((new Date(+ctx.request.body.endPeriod) - new Date(+ctx.request.body.startPeriod)) < 0) {
         return ctx.throw(400, 'Конечная дата не должна быть меньше начальной');
     }
 
     try {
         const timeBlock = await Chart.findOneAndUpdate(
-            {_id: ctx.request.body.blockId.trim()},
+            { _id: ctx.request.body.blockId.trim() },
             {
                 period: {
                     start: new Date(+ctx.request.body.startPeriod),
@@ -16,13 +17,13 @@ exports.updPeriod = async ctx => {
                 }
             },
             {
-                new: true, 
+                new: true,
                 runValidators: true //запускает валидаторы схемы перед записью
             }
         );
 
 
-        const data = await Chart.findOne({_id: timeBlock.id})
+        const data = await Chart.findOne({ _id: timeBlock.id })
             .populate('tech')
             .populate({         //deep populate
                 path: 'staff',
@@ -62,7 +63,7 @@ exports.updPeriod = async ctx => {
 };
 //добавление периода
 exports.addPeriod = async ctx => {
-    if( (new Date(+ctx.request.body.endPeriod) - new Date(+ctx.request.body.startPeriod)) < 0 ) {
+    if ((new Date(+ctx.request.body.endPeriod) - new Date(+ctx.request.body.startPeriod)) < 0) {
         return ctx.throw(400, 'Конечная дата не должна быть меньше начальной');
     }
 
@@ -76,7 +77,7 @@ exports.addPeriod = async ctx => {
             }
         });
 
-        const data = await Chart.findOne({_id: timeBlock._id})
+        const data = await Chart.findOne({ _id: timeBlock._id })
             .populate('tech')
             .populate({         //deep populate
                 path: 'staff',
@@ -161,7 +162,7 @@ exports.allCharts = async ctx => {
 //удаление периода
 exports.delPeriod = async (ctx, next) => {
     try {
-        const data = await Chart.findOne({_id: ctx.params.id})
+        const data = await Chart.findOne({ _id: ctx.params.id })
             .populate('tech')
             .populate({         //deep populate
                 path: 'staff',
@@ -170,7 +171,7 @@ exports.delPeriod = async (ctx, next) => {
                 }
             });
 
-        await Chart.findOneAndDelete({_id: ctx.params.id});
+        await Chart.findOneAndDelete({ _id: ctx.params.id });
 
         ctx.body = {
             blockId: data._id,
@@ -181,13 +182,98 @@ exports.delPeriod = async (ctx, next) => {
             staffPosition: data.staff.position ? data.staff.position.title : '',
         };
     }
-    catch(error) {
+    catch (error) {
         throw error;
     }
 };
+//получить статистику по сторудникам на вахтах
+//
+//проанализировать работу этого middleware!!!
+//
+exports.getStatisticForDate = async ctx => {
+    try {
+        const filter = {
+            'period.start': { $lt: ctx.request.query.start },
+            'period.end': { $gt: ctx.request.query.start }
+        };
+
+        const data = await Chart.find(filter)
+            .sort({ _id: 1 })
+            .populate('tech')
+            .populate({         //deep populate
+                path: 'staff',
+                populate: {
+                    path: 'position'
+                }
+            });
+
+        const charts = {};
+
+        for (const p of data) {
+            charts[p.tech._id] = charts[p.tech._id] || {
+                techCenterId: p.tech._id,
+                techCenterTitle: p.tech.title,
+                techCenterQuantity: p.tech.quantity,
+                staffers: {}
+            };
+
+            charts[p.tech._id].staffers[p.staff._id] = {
+                staffId: p.staff._id,
+                staffName: p.staff.name,
+                staffShortName: p.staff.shortName,
+                staffPosition: p.staff.position ? p.staff.position.title : '',
+                staffPositionId: p.staff.position ? p.staff.position.id : '',
+            }
+        }
+
+        //получить всех работающих сотрудников
+        const workStaff = await Staffer.find({status: 'работает'});
+
+        ctx.body = {
+            techCenters: Object.values(charts),
+            workStaff: workStaff.length,
+            time: ctx.request.query.start,
+        };
+    }
+    catch (error) {
+        throw error;
+    }
+};
+//получить список по должности в разрезе тех.центра и даты
+exports.showStatisticPosition = async ctx => {
+
+};
+//получить список людей на меж.вахте
+exports.showStatisticRelax = async ctx => {
+    //получить всех работающих сотрудников
+    const workStaff = await Staffer.find({status: 'работает'}).populate('position');
+
+    const filter = {
+        'period.start': { $lt: ctx.request.query.start },
+        'period.end': { $gt: ctx.request.query.start }
+    };
+
+    const chart = await Chart.find(filter).populate('staff');
+    
+    //получить разницу между списком всех трудоустроенных и тех кто работает в данный день
+    const worker = new Map();
+    workStaff.map(m => {
+        worker.set(m.id, {
+            id: m.id,
+            name: m.name,
+            shortName: m.shortName,
+            contacts: m.contacts,
+            position: m.position.title
+        });
+    });
+
+    chart.map(c => worker.delete(c.staff.id));
+
+    ctx.body = {relaxers: Object.fromEntries(worker)}
+};
 
 
-function delay(ms){
+function delay(ms) {
     return new Promise(res => {
         setTimeout(_ => res(), ms);
     });

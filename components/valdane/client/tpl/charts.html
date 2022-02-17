@@ -87,8 +87,12 @@
         }
 
         .staff-link:hover {
+            cursor: pointer;
             text-decoration: underline;
+            fill: #2780e3;
+            /*для использования в svg*/
             color: #2780e3;
+            /*для использования в html*/
         }
 
 
@@ -106,7 +110,26 @@
             fill: #2068b9;
         }
 
+        /*временная сетка*/
+        .time-line {
+            cursor: pointer;
+        }
 
+        .time-line:hover {
+            cursor: pointer;
+            fill: #ff0000;
+            opacity: 0.8;
+        }
+
+        .fixed-line {
+            fill: #ff0000;
+            opacity: 0.8;
+        }
+
+        .statistic {}
+
+
+        /*форма смены периода*/
         #formChangePeriodBlock {
             width: 730px;
         }
@@ -150,6 +173,7 @@
                 //фоновый блок должен содержать id сотрудника
                 let result = ` <rect opacity="0"
                                 data-staffer-id="${periods[0][2]}"
+                                class="period-block"
                                 width="${this._width - this._periodPaddingLeft}" height="${this._heightRow}"
                                 x="${this._periodPaddingLeft}" 
                                 y ="${offset}" />`;
@@ -202,6 +226,44 @@
                     i++;
                 }
                 return result;
+            }
+
+            //показать/скрыть временную сетку
+            showTimeLine() {
+                let grid = '';
+
+                for (let i = 1, padding = 0; ; i++) {
+                    //установить date на крайний день месяца
+                    const date = new Date(this._dateStart.getFullYear(), this._dateStart.getMonth() + i, 0);
+                    //если временная метка date превысит крайнюю дату - завершить итерации
+                    if (date.getTime() > this._dateEnd.getTime()) break;
+
+                    const tempDate = new Date(date.getTime()); //объект для получения временной метки дня
+                    for (let k = 0; k < date.getDate(); k++) {
+                        tempDate.setDate(k + 1);
+                        grid += `<g class="time-line-block">
+                            <title>${tempDate.getFullYear()}-${tempDate.getMonth() + 1}-${k + 1}</title>
+                            <rect data-date-time="${tempDate.getTime()}"
+                                class="time-line"
+                                width="${this._step}" 
+                                height="${this._height - this._heightRow}" 
+                                fill="blue" opacity="0"
+                                stroke="red" stroke-width="0"
+                                x="${this._periodPaddingLeft + padding + k * this._step}"
+                                y="${this._heightRow}"
+                                />
+                            </g>`;
+                    }
+
+                    padding += date.getDate() * this._step; //смещение (по нарастающей)
+                }
+
+                this.container.querySelector('svg').insertAdjacentHTML('beforeend', grid);
+            }
+
+            hideTimeLine() {
+                const rows = this.container.querySelectorAll('.time-line-block');
+                for (const r of rows) r.remove();
             }
         }
 
@@ -305,7 +367,8 @@
             <button type="button" class="btn btn-outline-warning mt-4" id="buttonDelPeriodBlock">Удалить период</button>
         </form>
     </div>
-    <script>//виджет календарей
+    <script>//работа с блоками
+        //виджет календарей
         webix.Date.startOnMonday = true; //первый день недели - понедельник (по умолчанию воскресенье)
         webix.i18n.setLocale("ru-RU");
         //левый календарь
@@ -558,6 +621,9 @@
             chart.draw();
             //скрыть форму добавления сотрудника
             hideAddStaffForm();
+
+            //проверить состояние чекбокса для отрисовки временной сетки
+            visualTimeLine(document.querySelector('.form-check-input').checked);
         };
         //заполнение глобальной коллекции сотрудников + заполнение datalist формы
         fetch('/valdane/stafferWithoutLimit/', { method: 'GET' })
@@ -647,6 +713,9 @@
                 charts.set(idTechCenter, chart);
                 //скрыть форму
                 hideCreateChartForm();
+
+                //проверить состояние чекбокса для отрисовки временной сетки
+                visualTimeLine(document.querySelector('.form-check-input').checked);
             };
         </script>
 
@@ -754,6 +823,176 @@
 
 
 
+
+        <div class="form-check mt-4" id="showTimeLine">
+            <input class="form-check-input" type="checkbox" value="" id="showTimeLineCheck" style="cursor:pointer">
+            <label class="form-check-label" for="showTimeLineCheck" style="cursor:pointer">
+                Показать временную сетку
+            </label>
+        </div>
+        <script>
+            //показать/скрыть временную сетку
+            document.querySelector('.form-check').addEventListener('click', event => {
+                if (!event.target.closest('.form-check-input')) return;
+                visualTimeLine(document.querySelector('.form-check-input').checked);
+            });
+            //функция отрисовки временной сетки
+            function visualTimeLine(show) {
+                if (show) {
+                    for (const ch of charts.values()) {
+                        ch.showTimeLine();
+                    }
+                }
+                else {
+                    for (const ch of charts.values()) {
+                        ch.hideTimeLine();
+                    }
+                }
+            }
+            //клик по выбранной дате
+            document.body.addEventListener('click', event => {
+                if (!event.target.closest('.time-line')) return;
+
+                //скрыть выделенные линии
+                const fixedLine = document.querySelectorAll('.fixed-line');
+                for (const fl of fixedLine) {
+                    fl.classList.remove('fixed-line');
+                }
+
+                const timeLine = event.target.closest('.time-line');
+
+                //зафиксировать линии даты
+                for (const line of document.querySelectorAll(`.time-line[data-date-time="${timeLine.dataset.dateTime}"]`)) {
+                    line.classList.add('fixed-line');
+                }
+
+                //получить сводные данные по вахтам на определённую дату
+                getStatisticForDate(new Date(+timeLine.dataset.dateTime));
+
+                // console.log(timeLine.dataset.dateTime);
+                // console.log(new Date(+timeLine.dataset.dateTime));
+                // console.log( document.querySelectorAll(`.time-line[data-date-time="${timeLine.dataset.dateTime}"]`) );
+            });
+
+            //получение статистики от сервера
+            function getStatisticForDate(date) {
+                fetch(`/valdane/chart/statistic?start=${date.getTime()}`, { method: 'GET' })
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                            const res = await response.json();
+                            showStatisticBlock(res);
+                        }
+                        else {
+                            throw new Error('error HTTP ' + response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            }
+            //показать блок со статистикой
+            function showStatisticBlock(data) {
+                //удалить старый блок
+                if (document.querySelector('.statistic')) {
+                    document.querySelector('.statistic').remove();
+                }
+                //отрисовать новый
+                const date = new Date(+data.time);
+                showTimeLine.insertAdjacentHTML('afterend',
+                    `<div class="card mt-4 statistic">
+                        <div class="toast-header">
+                            <strong class="me-auto">Данные по сотрудникам ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}</strong>
+                            <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"
+                                onclick="event.target.parentElement.parentElement.remove()">
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            ${makeStatisticData(data)}
+                        </div>
+                    </div>`
+                );
+            }
+
+            function makeStatisticData(data) {
+                const date = new Date(+data.time);
+                let html = '';
+                // let html = `<h5 class="card-title">Cправка на ${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}</h5>`;
+                // let html = `<small class="text-muted" style="position:absolute; right:18px; top: 18px;">Данные по сотрудникам ${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}</small>`;
+                for (const tc of data.techCenters) {
+                    html += `<h4 class="card-title">${tc.techCenterTitle}</h4>`;
+
+                    //подсчёт сотрудников в разрезе должностей
+                    const pos = new Map();
+                    let countStaff = 0;
+                    for (const k in tc.staffers) {
+                        const p = tc.staffers[k].staffPosition; //должность
+                        const posId = tc.staffers[k].staffPositionId; //id должности
+                        // pos.set(p, (pos.get(p) || 0) + 1);
+                        pos.set(p, {
+                            count: (pos.get(p) ? pos.get(p).count : 0) + 1,
+                            posId: posId
+                        });
+                        countStaff++;
+                    }
+
+                    data.workStaff -= countStaff;
+
+                    if (tc.techCenterQuantity - countStaff > 0) {
+                        html += `<p class="text-warning">Нехватка кадров: ${tc.techCenterQuantity - countStaff} чел</p>`;
+                    }
+
+                    html += `<p>Всего на вахте: ${countStaff}<br><small style="margin-left:15px">из них:</small></p>`;
+                    // html += `<p style="margin-left:15px">из них:</p>`;
+
+                    for (const v of pos) {
+                        html += `<p style="margin-left:30px" class="staff-link"
+                            data-pos-id="${v[1].posId}"
+                            data-tech-id="${tc.techCenterId}"
+                            data-time="${data.time}"
+                            onclick="showStatisticPosition()"
+                        >${(v[0] || 'Должность не указана')}: ${v[1].count}</p>`;
+                    }
+                }
+
+                html += `<p class="staff-link" data-time="${data.time}" onclick="showStatisticRelax()"><b>На меж.вахте:</b> ${data.workStaff}</p>`;
+
+                // console.log(data);
+
+                // html += `<p>${(v[0] || 'Должность не указана')}: ${v[1]}</p>`;
+
+                return html;
+            }
+
+
+            //всплывающее окно со списком людей статистики
+            function showStatisticPosition() {
+                console.log(event.target);
+            }
+
+
+            //всплывающее окно со списком на меж.вахте
+            function showStatisticRelax() {
+                const el = event.target.closest('p');
+                fetch(`/valdane/chart/statistic/relax?start=${el.dataset.time}`, { method: 'GET' })
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                            const res = await response.json();
+                            console.log(res);
+                        }
+                        else {
+                            throw new Error('error HTTP ' + response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            }
+        </script>
+
+
+        <!-- html += `<p class="text-muted" onclick="location= '${'/valdane/staffer/' + tc.staffers[k].staffId}'" >${tc.staffers[k].staffName}</p>`
+html += `<p class="text-muted" onclick="window.open('${'/valdane/staffer/' + tc.staffers[k].staffId}', '_blank')" >${tc.staffers[k].staffName}</p>` -->
+
     </div>
 
 
@@ -802,6 +1041,9 @@
             chart.draw();
             //добавить объект графика в глобальное хранилище
             charts.set(data.techCenterId, chart);
+
+            //проверить состояние чекбокса для отрисовки временной сетки
+            visualTimeLine(document.querySelector('.form-check-input').checked);
         }
     </script>
 </body>
