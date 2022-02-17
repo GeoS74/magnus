@@ -263,13 +263,13 @@ exports.showStatisticRelax = async ctx => {
             name: m.name,
             shortName: m.shortName,
             contacts: m.contacts,
-            position: m.position.title
+            position: m.position ? m.position.title : ''
         });
     });
 
     chart.map(c => worker.delete(c.staff.id));
 
-    ctx.body = {relaxers: Object.fromEntries(worker)}
+    ctx.body = {humans: Object.fromEntries(worker)}
 };
 
 

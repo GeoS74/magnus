@@ -49,6 +49,12 @@
             background: white;
         }
 
+        .modal-statistic {
+            border: 1px solid #ced4da;
+            background: white;
+            width: 70%;
+        }
+
         #formCreateChart {
             width: 80%;
             max-width: 500px;
@@ -662,6 +668,28 @@
 
 
 
+    <!-- модальное окно списка сотрудников статистики -->
+    <div class="modal_layer" id="statisticModal" hidden="hidden">
+        <div class="card border-primary modal-statistic">
+            <div class="toast-header">
+                <strong class="me-auto">Список</strong>
+                <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"
+                    onclick="hideStatisticModal()">
+                </button>
+            </div>
+            <div class="card-body"></div>
+        </div>
+    </div>
+    <script>
+        //показать / окно списка соттрудников статистики
+        function showStatisticModal() {
+            statisticModal.hidden = false;
+        }
+        function hideStatisticModal() {
+            statisticModal.hidden = true;
+        }
+    </script>
+
 
 
 
@@ -849,7 +877,7 @@
                     }
                 }
             }
-            //клик по выбранной дате
+            //клик по выбранной дате на графике
             document.body.addEventListener('click', event => {
                 if (!event.target.closest('.time-line')) return;
 
@@ -912,7 +940,7 @@
                     </div>`
                 );
             }
-
+            //формирование статистики
             function makeStatisticData(data) {
                 const date = new Date(+data.time);
                 let html = '';
@@ -954,7 +982,7 @@
                     }
                 }
 
-                html += `<p class="staff-link" data-time="${data.time}" onclick="showStatisticRelax()"><b>На меж.вахте:</b> ${data.workStaff}</p>`;
+                html += `<p class="staff-link" data-time="${data.time}" onclick="showStatisticRelax()"><b>На меж.вахте:</b> <span>${data.workStaff > 0 ? data.workStaff : 0}</span></p>`;
 
                 // console.log(data);
 
@@ -973,11 +1001,17 @@
             //всплывающее окно со списком на меж.вахте
             function showStatisticRelax() {
                 const el = event.target.closest('p');
+                if (el.querySelector('span').innerHTML == '0') {
+                    alert('На меж.вахте нет людей. Все работают');
+                    return;
+                }
                 fetch(`/valdane/chart/statistic/relax?start=${el.dataset.time}`, { method: 'GET' })
                     .then(async response => {
                         if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                             const res = await response.json();
-                            console.log(res);
+                            // console.log(res);
+                            showStatisticModal();
+                            makeStatisticModalList(res.humans, 'Сотрудники на меж.вахте');
                         }
                         else {
                             throw new Error('error HTTP ' + response.status);
@@ -986,6 +1020,19 @@
                     .catch(error => {
                         console.log(error);
                     });
+            }
+            //формирование списка людей для модального окна статистики
+            function makeStatisticModalList(data, title) {
+                console.log(data);
+                let html = '';
+                for(const k in data) {
+                    const position = data[k].position ? `(${data[k].position})` : '';
+                    html += `<p><span class="staff-link" 
+                        onclick="window.open('${'/valdane/staffer/' + data[k].id}', '_blank')">
+                        ${data[k].shortName} ${position}</span><br><span class="text-muted">${data[k].contacts || ''}</span></p>`;
+                }
+                statisticModal.querySelector('.me-auto').innerHTML = title;
+                statisticModal.querySelector('.card-body').innerHTML = html;
             }
         </script>
 
