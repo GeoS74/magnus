@@ -102,6 +102,9 @@
             color: #2780e3;
             /*для использования в html*/
         }
+        .staff-link-warning{
+            fill: #ff7518;
+        }
 
 
         .bi-person-plus:hover {
@@ -217,9 +220,9 @@
                 return result;
             }
             //@Override
-            _makeText(text, offset, idStaff) {
+            _makeText(text, offset, idStaff, staffStatus) {
                 return `<text x="10" y="${offset}" font-size="${this._fontSize}" fill="${this._colorText}">
-                    <a href="/valdane/staffer/${idStaff}" class="staff-link" target="blank">${text}</a>
+                    <a href="/valdane/staffer/${idStaff}" class="staff-link ${staffStatus != 'работает' ? 'staff-link-warning' : ''}" target="blank">${text}</a>
                     </text>`;
             }
             //@Override
@@ -229,7 +232,7 @@
                 for (const row of this._rows) {
                     const offsetText = i * this._heightRow + this._heightRow / 2 + this._fontSize / 2;
                     const offsetBlock = i * this._heightRow;
-                    result += this._makeText(row[0], offsetText, row[1][0][2]); //добавить id сотрудника
+                    result += this._makeText(row[0], offsetText, row[1][0][2], row[1][0][4]); //добавить id сотрудника + status
                     result += this._makePeriodBlocks(row[1], offsetBlock);
                     i++;
                 }
@@ -1079,7 +1082,7 @@
 
             // //добавить блоки
             for (const p of data.periods) {
-                chart.addRow([`${p.staffShortName} (${p.staffPosition})`, new Date(p.start), new Date(p.end), p.staffId, p.blockId]);
+                chart.addRow([`${p.staffShortName} (${p.staffPosition})`, new Date(p.start), new Date(p.end), p.staffId, p.blockId, p.staffStatus]);
             }
             const svg = chart.container.querySelector('svg');
             if (svg) svg.remove();

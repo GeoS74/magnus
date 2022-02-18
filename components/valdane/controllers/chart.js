@@ -149,7 +149,8 @@ exports.allCharts = async ctx => {
                 staffShortName: p.staff.shortName,
                 staffPosition: p.staff.position ? p.staff.position.title : '',
                 start: p.period.start,
-                end: p.period.end
+                end: p.period.end,
+                staffStatus: p.staff.status
             });
         }
 
