@@ -39,7 +39,7 @@
             top: 0px;
             width: 100%;
             height: 100%;
-            background: rgb(117, 117, 117, 0.5);
+            background: #75757580;
             z-index: 100500;
         }
 
@@ -53,7 +53,9 @@
             border: 1px solid #ced4da;
             background: white;
             width: 70%;
+            max-height: 70%;
         }
+        .modal-statistic > .card-body{overflow-y: scroll;}
 
         #formCreateChart {
             width: 80%;
@@ -672,7 +674,7 @@
     <div class="modal_layer" id="statisticModal" hidden="hidden">
         <div class="card border-primary modal-statistic">
             <div class="toast-header">
-                <strong class="me-auto">Список</strong>
+                <strong class="me-auto"></strong>
                 <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"
                     onclick="hideStatisticModal()">
                 </button>
@@ -944,8 +946,6 @@
             function makeStatisticData(data) {
                 const date = new Date(+data.time);
                 let html = '';
-                // let html = `<h5 class="card-title">Cправка на ${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}</h5>`;
-                // let html = `<small class="text-muted" style="position:absolute; right:18px; top: 18px;">Данные по сотрудникам ${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}</small>`;
                 for (const tc of data.techCenters) {
                     html += `<h4 class="card-title">${tc.techCenterTitle}</h4>`;
 
@@ -970,7 +970,6 @@
                     }
 
                     html += `<p>Всего на вахте: ${countStaff}<br><small style="margin-left:15px">из них:</small></p>`;
-                    // html += `<p style="margin-left:15px">из них:</p>`;
 
                     for (const v of pos) {
                         html += `<p style="margin-left:30px" class="staff-link"
@@ -983,21 +982,27 @@
                 }
 
                 html += `<p class="staff-link" data-time="${data.time}" onclick="showStatisticRelax()"><b>На меж.вахте:</b> <span>${data.workStaff > 0 ? data.workStaff : 0}</span></p>`;
-
-                // console.log(data);
-
-                // html += `<p>${(v[0] || 'Должность не указана')}: ${v[1]}</p>`;
-
                 return html;
             }
-
-
             //всплывающее окно со списком людей статистики
             function showStatisticPosition() {
-                console.log(event.target);
+                const el = event.target.closest('p');
+                fetch(`/valdane/chart/statistic/position?start=${el.dataset.time}&posId=${el.dataset.posId}&techId=${el.dataset.techId}`, { method: 'GET' })
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299 
+                            const res = await response.json();
+                            console.log(res);
+                            showStatisticModal();
+                            makeStatisticModalList(res.humans, 'Сотрудники');
+                        }
+                        else {
+                            throw new Error('error HTTP ' + response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
             }
-
-
             //всплывающее окно со списком на меж.вахте
             function showStatisticRelax() {
                 const el = event.target.closest('p');
@@ -1009,7 +1014,6 @@
                     .then(async response => {
                         if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                             const res = await response.json();
-                            // console.log(res);
                             showStatisticModal();
                             makeStatisticModalList(res.humans, 'Сотрудники на меж.вахте');
                         }
@@ -1023,7 +1027,6 @@
             }
             //формирование списка людей для модального окна статистики
             function makeStatisticModalList(data, title) {
-                console.log(data);
                 let html = '';
                 for(const k in data) {
                     const position = data[k].position ? `(${data[k].position})` : '';
@@ -1035,11 +1038,6 @@
                 statisticModal.querySelector('.card-body').innerHTML = html;
             }
         </script>
-
-
-        <!-- html += `<p class="text-muted" onclick="location= '${'/valdane/staffer/' + tc.staffers[k].staffId}'" >${tc.staffers[k].staffName}</p>`
-html += `<p class="text-muted" onclick="window.open('${'/valdane/staffer/' + tc.staffers[k].staffId}', '_blank')" >${tc.staffers[k].staffName}</p>` -->
-
     </div>
 
 

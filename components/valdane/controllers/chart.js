@@ -210,6 +210,8 @@ exports.getStatisticForDate = async ctx => {
         const charts = {};
 
         for (const p of data) {
+            if(p.staff.status !== 'работает') continue;
+
             charts[p.tech._id] = charts[p.tech._id] || {
                 techCenterId: p.tech._id,
                 techCenterTitle: p.tech.title,
@@ -227,7 +229,7 @@ exports.getStatisticForDate = async ctx => {
         }
 
         //получить всех работающих сотрудников
-        const workStaff = await Staffer.find({status: 'работает'});
+        const workStaff = await Staffer.find({ status: 'работает' });
 
         ctx.body = {
             techCenters: Object.values(charts),
@@ -241,12 +243,42 @@ exports.getStatisticForDate = async ctx => {
 };
 //получить список по должности в разрезе тех.центра и даты
 exports.showStatisticPosition = async ctx => {
+    const filter = {
+        'period.start': { $lt: ctx.request.query.start },
+        'period.end': { $gt: ctx.request.query.start },
+        'tech': ctx.request.query.techId
+    };
 
+    const data = await Chart.find(filter)
+        .populate({         //deep populate
+            path: 'staff',
+            populate: {
+                path: 'position',
+                // match: { _id: ctx.request.query.posId}
+            },
+        });
+
+    //отфильтровать только нужную профессию
+    const worker = new Map();
+    data.map(m => {
+        const mid = m.staff.position ? m.staff.position._id : '';
+        if(mid != ctx.request.query.posId) return;
+
+        worker.set(m.staff._id, {
+            id: m.staff._id,
+            name: m.staff.name,
+            shortName: m.staff.shortName,
+            contacts: m.staff.contacts,
+            position: m.staff.position ? m.staff.position.title : ''
+        });
+    });
+
+    ctx.body = { humans: Object.fromEntries(worker) }
 };
 //получить список людей на меж.вахте
 exports.showStatisticRelax = async ctx => {
     //получить всех работающих сотрудников
-    const workStaff = await Staffer.find({status: 'работает'}).populate('position');
+    const workStaff = await Staffer.find({ status: 'работает' }).populate('position');
 
     const filter = {
         'period.start': { $lt: ctx.request.query.start },
@@ -254,7 +286,7 @@ exports.showStatisticRelax = async ctx => {
     };
 
     const chart = await Chart.find(filter).populate('staff');
-    
+
     //получить разницу между списком всех трудоустроенных и тех кто работает в данный день
     const worker = new Map();
     workStaff.map(m => {
@@ -269,7 +301,7 @@ exports.showStatisticRelax = async ctx => {
 
     chart.map(c => worker.delete(c.staff.id));
 
-    ctx.body = {humans: Object.fromEntries(worker)}
+    ctx.body = { humans: Object.fromEntries(worker) }
 };
 
 
