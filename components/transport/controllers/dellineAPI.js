@@ -5,6 +5,7 @@ const fetch = require('node-fetch'); //https://www.npmjs.com/package/node-fetch#
 const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
 const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets');
+const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
 
 
 
@@ -167,7 +168,7 @@ module.exports.calculation = async ctx => {
                 type: 'auto'
             },
             derival: { //Данные по доставке груза от отправителя
-                produceDate: '2022-02-25', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
+                produceDate: '2022-03-02', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
                 // Способ доставки груза
                 // Возможные значения:
                 //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
@@ -262,7 +263,31 @@ module.exports.getHandbook = async (ctx, next) => {
 //обновить справочник терминалов в БД
 module.exports.updateHandbookTerminals = async ctx => {
     const fpath = path.join(__dirname, `../files/${ctx.delline.fname}`);
-    ctx.body = 'update handbook terminals ' + fpath;
+
+    try {
+        let open = await fs.promises.open(fpath);
+        const cities = await JSON.parse(await open.readFile());
+        await open.close();
+
+        const start = Date.now();
+
+        //очистить коллекцию населённых пунктов
+        await DellineHandbookTerminals.deleteMany();
+        let i = 0;
+
+        for(let city of cities.city) {
+            console.log(city.name, ' code: ', city.code);
+        }
+
+        console.log(cities.city.length);
+
+        console.log('Handbook terminals is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
+        ctx.body = 'Handbook terminals is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+    } catch (error) {
+        throw new Error(error.message);
+    }
+
+    // ctx.body = 'update handbook terminals ' + fpath;
 }
 
 
@@ -377,6 +402,10 @@ async function downloadHandbook(url, fname) {
                 //если этого не сделать порядок выполнения операций будет нарушен
                 //при скачивании json файла добавлять спецификацию BOM нельзя - это сломает структуру файла
                 const ws = fs.createWriteStream(path.join(__dirname, `../files/${fname}`), { flags: 'w' });
+                ws.on('error', error => {
+                    console.log('error writable stream:');
+                    console.log(error);
+                });
                 if (!~fname.indexOf('json')) {
                     await new Promise(res => {
                         ws.write("\ufeff", _ => res());
@@ -388,7 +417,7 @@ async function downloadHandbook(url, fname) {
                 });
             }
             else {
-                throw new Error(`Error download .csv - status: ${response.status}`);
+                throw new Error(`Error download handbook - status: ${response.status}`);
             }
         })
         .catch(err => {

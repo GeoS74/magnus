@@ -43,10 +43,28 @@ router.get('/handbook/terminals/update', async (ctx, next) => {
         fname: 'terminals.json',
     }
     return next();
-}, getHandbook, updateHandbookTerminals);
+}, /*getHandbook,*/ updateHandbookTerminals);
 
 
 
+
+
+
+
+
+
+const path = require('path');
+const fs = require('fs');
 router.get('/test', async ctx => {
-    ctx.body = 'test';
+    return ctx.body = 'test';
+    // const foo = require('./files/test.json');
+
+    // const s = await fs.createReadStream( path.join(__dirname, '/files/test.json'));
+    // const s = await fs.readFile( path.join(__dirname, '/files/test.json'));
+    // const foo = JSON.parse(s);
+
+    let open = await fs.promises.open(path.join(__dirname, '/files/test.json'));
+    const foo = JSON.parse( await open.readFile() );
+    await open.close();
+    ctx.body = foo.city[0].name;
 })
