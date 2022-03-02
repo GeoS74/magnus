@@ -142,7 +142,8 @@ module.exports.calculation = async ctx => {
                 variant: 'address',
                 address: {
                     // search: "1, Береза д (Псковская обл.)"
-                    search: "1, Невская ул, Псков г (Псковская обл.)"
+                    // search: "1, Невская ул, Псков г (Псковская обл.)"
+                    search: "1, Ашинская ул, Аша г (Челябинская обл.)"
                 },
                 time: {
                     worktimeStart: "10:00",
