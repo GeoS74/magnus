@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const connection = require('@root/libs/connection');
 
 const StafferSchema = new mongoose.Schema({
-    avatar: String,              //фото
+    verified: Boolean,          //проверено
+    avatar: String,             //фото
     name: {                     //имя
         type: String,
         required: 'не заполнено обязательное поле {PATH}',

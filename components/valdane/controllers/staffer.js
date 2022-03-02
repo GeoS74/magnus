@@ -273,10 +273,11 @@ exports.searchStaffers = async ctx => {
         status: staff.status,
         position: (staff.position && staff.position.title) ? staff.position.title : '',
         shortName: staff.shortName,
+        verified: staff.verified,
     }));
 };
 
-
+//получение списка всех сотрудников (используется в графиках)
 exports.allStaffersWithoutLimit = async ctx => {
     try {
         const filter = {};
@@ -318,6 +319,7 @@ exports.allStaffers = async (ctx, next) => {
             status: staff.status,
             position: (staff.position && staff.position.title) ? staff.position.title : '',
             shortName: staff.shortName,
+            verified: staff.verified,
         }));
     }
     catch (error) {
@@ -328,6 +330,7 @@ exports.allStaffers = async (ctx, next) => {
 exports.addStaffer = async ctx => {
     try {
         const staffer = await Staffer.create({
+            verified: ctx.request.body.hasOwnProperty('verified') || false,
             name: ctx.request.body.name.trim(),
             personnelNumber: ctx.request.body.personnelNumber.trim() || undefined,
             position: ctx.request.body.position || undefined,
@@ -385,6 +388,7 @@ exports.getStaffer = async ctx => {
 
     ctx.body = {
         id: staffer._id,
+        verified: staffer.verified,
         avatar: staffer.avatar,
         position: staffer.position ? {
             title: staffer.position.title,
@@ -443,6 +447,7 @@ exports.updStaffer = async ctx => {
             { _id: ctx.params.id },
             {
                 name: ctx.request.body.name.trim(),
+                verified: ctx.request.body.hasOwnProperty('verified') || false,
                 personnelNumber: ctx.request.body.personnelNumber.trim() || null,
                 position: ctx.request.body.position || null,
                 skill: ctx.request.body.skill.trim() || null,
