@@ -214,6 +214,7 @@ module.exports.calculation = async ctx => {
             if (response.ok) {
                 const res = await response.json();
                 console.log(res);
+                ctx.body = res;
             }
             else {
                 const res = await response.json();
@@ -231,32 +232,10 @@ module.exports.calculation = async ctx => {
             ctx.throw(400, err.message);
         });
 
-    ctx.body = 'ok';
+    // ctx.body = 'ok';
 }
 
 
-//получить ссылку на скачивание справочника
-module.exports.getHandbook = async (ctx, next) => {
-    await fetch(ctx.delline.link, {
-        headers: { 'Content-Type': 'application/json' },
-        method: 'POST',
-        body: JSON.stringify({ appkey: process.env.DELLINE })
-    })
-        .then(async response => {
-            if (response.ok) {
-                const res = await response.json();
-                await downloadHandbook(res.url, ctx.delline.fname);
-                return next();
-            }
-            else {
-                throw new Error(`Error fetch query - status: ${response.status}`);
-            }
-        })
-        .catch(err => {
-            console.log(err);
-            ctx.throw(400, err.message);
-        });
-}
 
 
 
@@ -275,11 +254,23 @@ module.exports.updateHandbookTerminals = async ctx => {
         await DellineHandbookTerminals.deleteMany();
         let i = 0;
 
-        for(let city of cities.city) {
-            console.log(city.name, ' code: ', city.code);
+        //добавить в БД только терминалы с признаком "по умолчанию для города"
+        for (let city of cities.city) {
+            for (let terminal of city.terminals.terminal) {
+                if (terminal.default !== true) continue;
+                i++;
+                await DellineHandbookTerminals.create({
+                    cityID: city.id,
+                    code: city.code,
+                    terminalID: terminal.id,
+                    name: terminal.name,
+                    addres: terminal.addres,
+                    fullAddress: terminal.fullAddress,
+                    default: terminal.default,
+                    mainPhone: terminal.mainPhone || undefined,
+                })
+            }
         }
-
-        console.log(cities.city.length);
 
         console.log('Handbook terminals is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
         ctx.body = 'Handbook terminals is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
@@ -287,11 +278,10 @@ module.exports.updateHandbookTerminals = async ctx => {
         throw new Error(error.message);
     }
 
-    // ctx.body = 'update handbook terminals ' + fpath;
+    fs.unlink(fpath, err => {
+        if (err) console.log(err);
+    });
 }
-
-
-
 //обновить справочник улиц в БД
 module.exports.updateHandbookStreets = async ctx => {
     const fpath = path.join(__dirname, `../files/${ctx.delline.fname}`);
@@ -389,6 +379,28 @@ module.exports.updateHandbookPlaces = async ctx => {
 
     console.log('Handbook places is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
     ctx.body = 'Handbook places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+}
+//получить ссылку на скачивание справочника
+module.exports.getHandbook = async (ctx, next) => {
+    await fetch(ctx.delline.link, {
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        body: JSON.stringify({ appkey: process.env.DELLINE })
+    })
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                await downloadHandbook(res.url, ctx.delline.fname);
+                return next();
+            }
+            else {
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log(err);
+            ctx.throw(400, err.message);
+        });
 }
 //скачать справочник
 async function downloadHandbook(url, fname) {
