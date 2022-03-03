@@ -1,6 +1,7 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
-const {getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery, microCalculation, calculation} = require('@transport/controllers/dellineAPI');
+const path = require('path');
+const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery, microCalculation, calculation, searchCity } = require('@transport/controllers/dellineAPI');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -17,8 +18,9 @@ router.prefix('/transport');
 module.exports.router = router;
 
 //"Деловые Линии" - запрос расчёта стоимости перевозки
-router.get('/calculator', calculation);
-
+router.get('/calculation', calculation);
+//поиск населенного пункта
+router.post('/search/city', koaBody, searchCity);
 
 //"Деловые Линии" - обновление справочника населенных пунктов
 router.get('/handbook/places/update', (ctx, next) => {
@@ -44,14 +46,50 @@ router.get('/handbook/terminals/update', async (ctx, next) => {
     }
     return next();
 }, getHandbook, updateHandbookTerminals);
+//страница с расчётом стоимости доставки грузов
+router.get('/calculator', async ctx => {
+    ctx.set('content-type', 'text/html');
+    ctx.body = await new Promise(res => {
+        ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {
+            res(html);
+        });
+    });
+});
+
+
+
+function delay(ms) {
+    return new Promise(res => {
+        setTimeout(_ => res(), ms);
+    });
+}
 
 
 
 
-
-
-
-
+const HandbookPlaces = require('@transport/models/DellineHandbookPlaces')
 router.get('/test', async ctx => {
-    return ctx.body = 'test';
+    try {
+        // const city = await HandbookPlaces.find({ searchString: "Челябинск" });
+
+        const regexp = new RegExp("^челя");
+        const city = await HandbookPlaces.aggregate([
+            {
+                $match: {
+                    // searchString: "Челябинск"
+                    searchString: {
+                        $regex: regexp, $options: "i"
+                    }
+                }
+            },
+            {
+                $limit: 2
+            }
+        ]);
+        console.log(city);
+        return ctx.body = city;
+    } catch (error) {
+        console.log(error);
+        ctx.throw(418, error.message);
+    }
 })

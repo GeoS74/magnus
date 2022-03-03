@@ -1,0 +1,119 @@
+<!DOCTYPE HTML>
+<html lang="ru">
+
+<head>
+    <title>MAGNUS | расчёт стоимости доставки грузов</title>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!--https://bootswatch.com/cosmo/-->
+    <!--https://icons.getbootstrap.com/-->
+    <style>
+        .main {
+            margin: 20px;
+            max-width: 500px;
+        }
+
+        h1 {
+            margin: 35px 0
+        }
+
+        #calculateForm {
+            margin: 35px 0
+        }
+        #calculateForm section {
+            display: flex;
+            width: 100%;
+        }
+        #calculateForm section > label,
+        #calculateForm section > input {
+            margin-right: 20px;
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!--#include file="./client/public/tpl/top_menu.html"-->
+
+    <div class="main">
+        <h1>Расчёт стоимости доставки грузов</h1>
+
+        <form id="calculateForm" onsubmit="event.preventDefault()">
+            <div class="form-group">
+                <!-- откуда -->
+                <label for="derival" class="form-label mt-4">Откуда</label>
+                <input list="derival-list" class="form-control" id="derival" placeholder="Населенный пункт" autofocus
+                    autocomplete="off">
+                <datalist id="derival-list"></datalist>
+                <!-- куда -->
+                <label for="arrival" class="form-label mt-4">Куда</label>
+                <input list="arrival-list" class="form-control" id="arrival" placeholder="Населенный пункт"
+                    autocomplete="off">
+                <datalist id="arrival-list"></datalist>
+                <!-- Д х Ш х В -->
+                <section>
+                    <label for="length" class="form-label mt-4">Длина</label>
+                    <label for="width" class="form-label mt-4">Ширина</label>
+                    <label for="height" class="form-label mt-4">Высота</label>
+                </section>
+                <section>
+                    <input type="text" name="length" id="length" class="form-control" placeholder="Длина" value="1">
+                    <input type="text" name="width" id="width" class="form-control" placeholder="Ширина"  value="1">
+                    <input type="text" name="height" id="height" class="form-control" placeholder="Высота"  value="1">
+                </section>
+
+            </div>
+        </form>
+        <script>//подбор населенных пунктов
+            addSearchHandler();
+
+            function searchCity(event) {
+                removeSearchHandler();
+
+                const fd = new FormData();
+                fd.set('city', event.target.value);
+                const options = {
+                    method: 'POST',
+                    body: fd
+                }
+
+                fetch('/transport/search/city', options)
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299
+                            const res = await response.json();
+                            console.log(res);
+                            createOptionList(res, event.target.nextElementSibling);
+                        }
+                        else {
+                            throw new Error('error search status:' + response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error);
+                        ctx.throw(400, 'error search city ' + error.message);
+                    })
+                    .finally(_ => {
+                        addSearchHandler();
+                    });
+            }
+            //генерация выпадающего списка населенных пунктов
+            function createOptionList(cities, list) {
+                list.innerHTML = "";
+                for (const city of cities) {
+                    list.insertAdjacentHTML('afterbegin', `<option value="${city.name}"></option>`);
+                }
+            }
+            //установить/снять слушатель события 'input' подбора населенных пунктов
+            function addSearchHandler() {
+                derival.addEventListener('input', searchCity);
+                arrival.addEventListener('input', searchCity);
+            }
+            function removeSearchHandler() {
+                derival.removeEventListener('input', searchCity);
+                arrival.removeEventListener('input', searchCity);
+            }
+
+        </script>
+    </div>
+</body>

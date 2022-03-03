@@ -200,7 +200,33 @@ module.exports.calculation = async ctx => {
 
 
 
-
+//поиск населенного пункта
+module.exports.searchCity = async ctx => {
+    try {
+        const regexp = new RegExp("^" + ctx.request.body.city);
+        const city = await DellineHandbookPlaces.aggregate([
+            {
+                $match: {
+                    searchString: {
+                        $regex: regexp, $options: "i"
+                    }
+                }
+            },
+            { $limit: 5 },
+            {
+                $project: { 
+                    _id: 0, 
+                    name: 1
+                }
+            }
+        ]);
+        // console.log(city);
+        ctx.body = city;
+    } catch (error) {
+        console.log(error);
+        ctx.throw(400, error.message);
+    }
+};
 
 //обновить справочник терминалов в БД
 module.exports.updateHandbookTerminals = async ctx => {
@@ -398,4 +424,10 @@ async function downloadHandbook(url, fname) {
         .catch(err => {
             throw new Error(err.message);
         });
+}
+
+function delay(ms) {
+    return new Promise(res => {
+        setTimeout(_ => res(), ms);
+    });
 }
