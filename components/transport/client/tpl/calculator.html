@@ -32,6 +32,21 @@
             margin-right: 20px;
             flex: 1;
         }
+
+
+        .card section{
+            display: flex;
+        }
+        .card article{
+            flex: 2;
+        }
+
+        .show-optional {
+            cursor: pointer;
+        }
+        .show-optional:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -73,15 +88,50 @@
                     <label for="quantity" class="form-label mt-4">Кол-во мест</label>
                 </section>
                 <section>
-                    <div><input type="text" name="weight" id="weight" class="form-control" placeholder="Вес" value="10"></div>
+                    <div><input type="text" name="weight" id="weight" class="form-control" placeholder="Вес" value="10">
+                    </div>
                     <div><input type="text" name="quantity" id="quantity" class="form-control" placeholder="Кол-во мест"
-                        value="1"></div>
+                            value="1"></div>
                 </section>
                 <button type="submit" class="btn btn-primary mt-4" id="button">Рассчитать стоимость</button>
             </div>
         </form>
-        <div id="calculations"></div>
+        <div id="calculations">
+            <!-- <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">${data.carrier}</h4>
+                    <section>
+                        <article>
+                            <p class="text-muted">Стоимость перевозки</p>
+                        </article>
+                        <article>
+                            <p class="text-muted">Срок</p>
+                        </article>
+                    </section>
+                    <section>
+                        <article>
+                            <p class="text-muted">${data.data.price}</p>
+                        </article>
+                        <article>
+                            <p class="text-muted">${data.data.price}</p>
+                        </article>
+                    </section>
+                    <p class="show-optional" onclick="toggleHiddenBlock(event)">показать подробный расчет</p>
+
+                    <div class="optional" hidden="true">
+                        фывфывфывфывфывы
+                        фы вфы
+                        в фывфывфывфывфывыфыв фы
+                    </div>
+                </div>
+                </div> -->
+        </div>
         <script>//подбор населенных пунктов
+            //показать/скрыть подробный расчёт
+            function toggleHiddenBlock(event) {
+                event.target.nextElementSibling.hidden = !event.target.nextElementSibling.hidden;
+                event.target.innerHTML = event.target.nextElementSibling.hidden ? 'показать подробный расчет' : 'скрыть подробный расчет';
+            }
             addSearchHandler();
             //обработчик нажатия клавиши при подборе населенного пункта
             function searchCity(event) {
@@ -171,12 +221,11 @@
                 button.disabled = true;
                 calculations.innerHTML = '<img src="/wait.gif" id="wait" style="width: 50px"/>';
                 const fd = new FormData(event.target);
-                let delline = calculate(fd);
+                let delline = calculate(fd, 'delline');
 
                 Promise.all([delline])
                     .then(value => {
                         console.log("well done");
-                        console.log(value);
                     })
                     .catch(error => {
                         console.log(error);
@@ -186,8 +235,9 @@
                         wait.remove();
                     });
             });
-
-            function calculate(fd) {
+            //возвращает промис запроса на расчёт доставки
+            function calculate(fd, carrier) {
+                fd.set('carrier', carrier);
                 const options = {
                     method: 'POST',
                     body: fd
@@ -196,11 +246,11 @@
                     .then(async response => {
                         if (response.ok) { // если HTTP-статус в диапазоне 200-299
                             const res = await response.json();
-                            // console.log(res);
-                            return res;
+                            console.log(res);
+                            calculations.insertAdjacentHTML('afterbegin', makeRow(res));
+                            return true;
                         }
                         else if (response.status === 400) {
-                            // console.log(await response.json());
                             setValid(document.getElementById('derival'));
                             setValid(document.getElementById('arrival'));
                             setValid(document.getElementById('length'));
@@ -215,36 +265,52 @@
                         }
                     });
             }
-
-
-
-
-            // var p1 = new Promise((resolve, reject) => {
-            //     setTimeout(resolve, 1000, "one");
-            // });
-            // var p2 = new Promise((resolve, reject) => {
-            //     setTimeout(resolve, 2000, "two");
-            // });
-            // var p3 = new Promise((resolve, reject) => {
-            //     setTimeout(resolve, 3000, "three");
-            // });
-            // var p4 = new Promise((resolve, reject) => {
-            //     setTimeout(resolve, 2000, "four");
-            // });
-
-            // var p5 = new Promise((resolve, reject) => {
-            //     // Этот промис прервёт Promise.all
-            //     reject("reject");
-            // });
-
-            // Promise.all([p1, p2, p3, p4, p5])
-            // .then(value => {
-            //     console.log(value);
-            // })
-            // .catch(reason => {
-            //     console.log('reason')
-            //     console.log(reason)
-            // });
+            //генерация блоков с данными о расчётах
+            function makeRow(d) {
+                return `
+                    <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">${d.carrier}</h4>
+                        <section class="mt-4">
+                            <article>
+                                <p>Стоимость перевозки</p>
+                            </article>
+                            <article>
+                                <p>Срок</p>
+                            </article>
+                        </section>
+                        <section>
+                            <article>
+                                <p>${d.data.price} р.</p>
+                            </article>
+                            <article>
+                                <p>${diffDate(d.data.orderDates.pickup, d.data.orderDates.derivalFromOspReceiver)} дней</p>
+                            </article>
+                        </section>
+                        <p class="show-optional text-primary" onclick="toggleHiddenBlock(event)">показать подробный расчет</p>
+                        <div class="optional" hidden="true">
+                            <hr>
+                            <p>Терминал отправки: ${d.data.derival.terminal}</p>
+                            <p>Стоимость доставки до терминала отправки: ${d.data.derival.price} р.</p>
+                            <p>Терминал приёма: ${d.data.arrival.terminal}</p>
+                            <p>Стоимость доставки до терминала приёма: ${d.data.arrival.price} р.</p>
+                            <p>Стоимость перевозки: ${d.data.intercity.price} р.</p>
+                            <p>Стоимость страхования груза: ${d.data.insurance} р.</p>
+                            <p>Стоимость информирования о статусе заказа: ${d.data.notify.price} р.</p>
+                        </div>
+                    </div>
+                    </div>
+                `;
+            }
+            //подсчёт разницы дней
+            function diffDate(dateStart, dateEnd) {
+                try {
+                    const diff = new Date( new Date(dateEnd) - new Date(dateStart));
+                    return diff.getTime()/1000/60/60/24;
+                } catch (e) {
+                    return "";
+                }
+            }
         </script>
     </div>
 </body>

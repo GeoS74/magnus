@@ -19,23 +19,31 @@ exports.checkCredentials = (ctx, next) => {
         ctx.status = 400;
         return ctx.body = {path: 'arrival', message: 'Данные не передаются'};
     }
-    if(!ctx.request.body.length) {
+
+    //преобразование входных данных
+    ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
+    ctx.request.body.width  = parseFloat(ctx.request.body.width)  || 0;
+    ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
+    ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
+    ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
+
+    if(ctx.request.body.length <= 0) {
         ctx.status = 400;
         return ctx.body = {path: 'length', message: 'Данные не передаются'};
     }
-    if(!ctx.request.body.width) {
+    if(ctx.request.body.width <= 0) {
         ctx.status = 400;
         return ctx.body = {path: 'width', message: 'Данные не передаются'};
     }
-    if(!ctx.request.body.height) {
+    if(ctx.request.body.height <= 0) {
         ctx.status = 400;
         return ctx.body = {path: 'height', message: 'Данные не передаются'};
     }
-    if(!ctx.request.body.weight) {
+    if(ctx.request.body.weight <= 0) {
         ctx.status = 400;
         return ctx.body = {path: 'weight', message: 'Данные не передаются'};
     }
-    if(!ctx.request.body.quantity) {
+    if(ctx.request.body.quantity <= 0) {
         ctx.status = 400;
         return ctx.body = {path: 'quantity', message: 'Данные не передаются'};
     }
@@ -133,9 +141,127 @@ module.exports.microCalculation = async ctx => {
 
 //
 module.exports.calculation = async ctx => {
-    await delay(1000);
-    return ctx.body = {name: 'GeoS'};
+    try {
+        switch (ctx.request.body.carrier) {
+            case 'delline': 
+                ctx.request.body.produceDate = new Date( Date.now() + 1000*60*60*24 );
+                ctx.body = await calcDelline(ctx.request.body);
+                break;
+        }
+    }
+    catch(error) {
+        ctx.throw(418, error.message);
+    }
 
+
+    // const data = {
+    //     appkey: process.env.DELLINE,
+    //     delivery: { //Информация по перевозке груза
+    //         deliveryType: { //Вид межтерминальной перевозки груза для которого будет рассчитана стоимость
+    //             // Возможные значения:
+    //             //      "auto"- автодоставка;
+    //             //      "express" - экспресс-доставка;
+    //             //      "letter" - письмо;
+    //             //      "avia" - авиадоставка;
+    //             //      "small" - доставка малогабаритного груза.
+    //             type: 'auto'
+    //         },
+    //         derival: { //Данные по доставке груза от отправителя
+    //             produceDate: '2022-03-04', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
+    //             // Способ доставки груза
+    //             // Возможные значения:
+    //             //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
+    //             //      "terminal" - доставка груза от/до терминала;
+    //             // variant: 'terminal',
+    //             // //                      это так тут не работате           city: "7700000000000000000000000",
+    //             // terminalID: '4', //ID терминала отправки/доставки груза из "Справочника терминалов"
+
+    //             variant: 'address',
+    //             address: {
+    //                 search: "1, Береза с (Курская обл.)"
+    //             },
+    //             time: {
+    //                 worktimeStart: "10:00",
+    //                 worktimeEnd: "20:00"
+    //             }
+    //         },
+    //         arrival: { //Данные по доставке груза до получателя
+    //             // Способ доставки груза
+    //             // Возможные значения:
+    //             //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
+    //             //      "terminal" - доставка груза от/до терминала;
+    //             //      "airport" - доставка груза до аэропорта, вариант используется, если в городе, в который необходимо доставить груз, нет терминала "Деловых Линий"
+    //             // variant: 'terminal',
+    //             // city: "7400200300000000000000000",
+
+    //             variant: 'address',
+    //             address: {
+    //                 // search: "1, Береза д (Псковская обл.)"
+    //                 // search: "1, Невская ул, Псков г (Псковская обл.)"
+    //                 search: "1, Ашинская ул, Аша г (Челябинская обл.)"
+    //             },
+    //             time: {
+    //                 worktimeStart: "10:00",
+    //                 worktimeEnd: "20:00"
+    //             }
+    //         },
+    //         // packages: [ //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
+
+    //         // ]
+    //     },
+    //     cargo: { //Информация о грузе
+    //         quantity: 1, //кол-во мест
+    //         length: 1,  //
+    //         width: 1,
+    //         height: 1,
+    //         weight: 100,
+    //         totalVolume: 1,
+    //         totalWeight: 100,
+    //         hazardClass: 0,
+    //         oversizedWeight: 100,
+    //         oversizedVolume: 1,
+    //     }
+    // }
+
+    // await fetch('https://api.dellin.ru/v2/calculator.json', {
+    //     headers: { 'Content-Type': 'application/json' },
+    //     method: 'POST',
+    //     body: JSON.stringify(data)
+    // })
+    //     .then(async response => {
+    //         if (response.ok) {
+    //             const res = await response.json();
+    //             console.log(res);
+    //             ctx.body = res;
+    //         }
+    //         else {
+    //             const res = await response.json();
+
+    //             for (const err of res.errors) {
+    //                 console.log(err);
+    //             }
+
+
+    //             throw new Error(`Error fetch query - status: ${response.status}`);
+    //         }
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         ctx.throw(400, err.message);
+    //     });
+
+    // ctx.body = 'ok';
+}
+
+//получает объект даты и возвращает её в отформатированном виде
+function getFormatDate(date) {
+    return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+}
+
+
+
+
+async function calcDelline(parameters) {
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза
@@ -149,7 +275,7 @@ module.exports.calculation = async ctx => {
                 type: 'auto'
             },
             derival: { //Данные по доставке груза от отправителя
-                produceDate: '2022-03-04', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
+                produceDate: getFormatDate( parameters.produceDate ), //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
                 // Способ доставки груза
                 // Возможные значения:
                 //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
@@ -157,10 +283,10 @@ module.exports.calculation = async ctx => {
                 // variant: 'terminal',
                 // //                      это так тут не работате           city: "7700000000000000000000000",
                 // terminalID: '4', //ID терминала отправки/доставки груза из "Справочника терминалов"
-
                 variant: 'address',
                 address: {
-                    search: "1, Береза с (Курская обл.)"
+                    // search: "1, Береза с (Курская обл.)"
+                    search: "1, Авиационная ул, Челябинск г (Челябинская обл.)"
                 },
                 time: {
                     worktimeStart: "10:00",
@@ -175,7 +301,6 @@ module.exports.calculation = async ctx => {
                 //      "airport" - доставка груза до аэропорта, вариант используется, если в городе, в который необходимо доставить груз, нет терминала "Деловых Линий"
                 // variant: 'terminal',
                 // city: "7400200300000000000000000",
-
                 variant: 'address',
                 address: {
                     // search: "1, Береза д (Псковская обл.)"
@@ -187,25 +312,23 @@ module.exports.calculation = async ctx => {
                     worktimeEnd: "20:00"
                 }
             },
-            // packages: [ //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
-
-            // ]
+            // packages: [] //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
         },
         cargo: { //Информация о грузе
-            quantity: 1, //кол-во мест
-            length: 1,  //
-            width: 1,
-            height: 1,
-            weight: 100,
-            totalVolume: 1,
-            totalWeight: 100,
+            quantity: parameters.quantity, //кол-во мест
+            length: parameters.length,  //длина самого длинного места
+            width: parameters.width, //ширина самого широкого места
+            height: parameters.height, //высота самого высокого места
+            weight: parameters.weight, //вес самого тяжёлого места
+            totalVolume: parameters.length * parameters.width * parameters.height, //общий объем груза
+            totalWeight: parameters.weight, //общий вес груза
             hazardClass: 0,
-            oversizedWeight: 100,
-            oversizedVolume: 1,
+            oversizedWeight: parameters.weight, //вес негабаритных грузовых мест
+            oversizedVolume: parameters.length * parameters.width * parameters.height, //объем негабаритных грузовых мест
         }
     }
 
-    await fetch('https://api.dellin.ru/v2/calculator.json', {
+    return fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
         body: JSON.stringify(data)
@@ -213,29 +336,35 @@ module.exports.calculation = async ctx => {
         .then(async response => {
             if (response.ok) {
                 const res = await response.json();
-                console.log(res);
-                ctx.body = res;
+                // console.log(res);
+                res.carrier = 'Деловые линии';
+                return res;
             }
             else {
+                //180012 Выбранная дата недоступна
                 const res = await response.json();
 
                 for (const err of res.errors) {
                     console.log(err);
-                }
 
+                    if(err.code === 180012) { //Выбранная дата недоступна
+                        if( new Date(parameters.produceDate - Date.now()).getDate() > 7 ){
+                            break;
+                        }
+                        await delay(500);
+                        parameters.produceDate = new Date( parameters.produceDate.getTime() + 1000*60*60*24 );
+                        return await calcDelline(parameters);
+                    }
+                }
 
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
         })
         .catch(err => {
             console.log(err);
-            ctx.throw(400, err.message);
+            throw new Error(err.message);
         });
-
-    // ctx.body = 'ok';
 }
-
-
 
 //поиск населенного пункта
 module.exports.searchCity = async ctx => {
