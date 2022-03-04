@@ -22,7 +22,7 @@ module.exports.router = router;
 router.post('/calculation', koaBody, checkCredentials, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
-            case 'delline': ctx.body = await calculation(ctx.request.body); break;
+            case 'delline': ctx.body = await calculation(ctx.request.body, ctx); break;
         }
     }
     catch(error) {

@@ -17,7 +17,15 @@ const Schema = new mongoose.Schema({
     zonename: String, //наименование района для населённого пункта
     zoncode: String, //код КЛАДР района для населённого пункта
 }, {
-    timestamps: true
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
 })
+
+Schema.virtual('streets', {
+    ref: 'DellineHandbookStreets',
+    localField: 'cityID',
+    foreignField: 'cityID'
+});
 
 module.exports = connection.model('DellineHandbookPlaces', Schema)

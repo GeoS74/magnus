@@ -8,58 +8,83 @@ const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets
 const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
 
 
-exports.checkCredentials = (ctx, next) => {
-    if(!ctx.request.body.derival) {
-        ctx.status = 400;
-        return ctx.body = {path: 'derival', message: 'Данные не передаются'};
-    }
-    if(!ctx.request.body.arrival) {
-        ctx.status = 400;
-        return ctx.body = {path: 'arrival', message: 'Данные не передаются'};
-    }
-
-    //преобразование входных данных
+module.exports.checkCredentials = async (ctx, next) => {
+    // преобразование входных данных
+    ctx.request.body.derival = await DellineHandbookPlaces
+        .findOne({
+            name: ctx.request.body.derival
+        }).populate({
+            path: 'streets',
+            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+            options: { limit: 1 }
+        });
+    ctx.request.body.arrival = await DellineHandbookPlaces
+        .findOne({
+            name: ctx.request.body.arrival
+        }).populate({
+            path: 'streets',
+            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+            options: { limit: 1 }
+        });
     ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
-    ctx.request.body.width  = parseFloat(ctx.request.body.width)  || 0;
+    ctx.request.body.width = parseFloat(ctx.request.body.width) || 0;
     ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
     ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
     ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
 
-    if(ctx.request.body.length <= 0) {
+    if (!ctx.request.body.derival) {
         ctx.status = 400;
-        return ctx.body = {path: 'length', message: 'Данные не передаются'};
+        return ctx.body = { path: 'derival', message: 'Не корректные данные' };
     }
-    if(ctx.request.body.width <= 0) {
+    if (!ctx.request.body.arrival) {
         ctx.status = 400;
-        return ctx.body = {path: 'width', message: 'Данные не передаются'};
+        return ctx.body = { path: 'arrival', message: 'Не корректные данные' };
     }
-    if(ctx.request.body.height <= 0) {
+    if (ctx.request.body.length <= 0) {
         ctx.status = 400;
-        return ctx.body = {path: 'height', message: 'Данные не передаются'};
+        return ctx.body = { path: 'length', message: 'Не корректные данные' };
     }
-    if(ctx.request.body.weight <= 0) {
+    if (ctx.request.body.width <= 0) {
         ctx.status = 400;
-        return ctx.body = {path: 'weight', message: 'Данные не передаются'};
+        return ctx.body = { path: 'width', message: 'Не корректные данные' };
     }
-    if(ctx.request.body.quantity <= 0) {
+    if (ctx.request.body.height <= 0) {
         ctx.status = 400;
-        return ctx.body = {path: 'quantity', message: 'Данные не передаются'};
+        return ctx.body = { path: 'height', message: 'Не корректные данные' };
+    }
+    if (ctx.request.body.weight <= 0) {
+        ctx.status = 400;
+        return ctx.body = { path: 'weight', message: 'Не корректные данные' };
+    }
+    if (ctx.request.body.quantity <= 0) {
+        ctx.status = 400;
+        return ctx.body = { path: 'quantity', message: 'Не корректные данные' };
     }
     return next();
 };
 
+function makeAddress(data) {
+    const street = data.streets.length ? data.streets[0].name+', ' : '';
+    return `1, ${street}${data.name}`;
+}
+
 //расчет доставки
-module.exports.calculation = async parameters => {
+module.exports.calculation = async (parameters, ctx) => {
     //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
     //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
     //при рекурсивном вызове к produceDate добавляются сутки
     //рекурсия прекратится если разница между produceDate и сегодня будет более 7 дней
-    if(!parameters.produceDate) {
-        parameters.produceDate = new Date( Date.now() + 1000*60*60*24);
+    if (!parameters.produceDate) {
+        parameters.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
     }
     else {
-        parameters.produceDate = new Date( parameters.produceDate.getTime() + 1000*60*60*24 );
+        parameters.produceDate = new Date(parameters.produceDate.getTime() + 1000 * 60 * 60 * 24);
     }
+
+    // console.log(parameters);
+    // console.log(makeAddress(parameters.derival));
+    // console.log(makeAddress(parameters.arrival));
+    // throw new Error(`Error fetch query`);
 
     const data = {
         appkey: process.env.DELLINE,
@@ -74,7 +99,7 @@ module.exports.calculation = async parameters => {
                 type: 'auto'
             },
             derival: { //Данные по доставке груза от отправителя
-                produceDate: getFormatDate( parameters.produceDate ), //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
+                produceDate: getFormatDate(parameters.produceDate), //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
                 // Способ доставки груза
                 // Возможные значения:
                 //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
@@ -85,7 +110,8 @@ module.exports.calculation = async parameters => {
                 variant: 'address',
                 address: {
                     // search: "1, Береза с (Курская обл.)"
-                    search: "1, Авиационная ул, Челябинск г (Челябинская обл.)"
+                    // search: "1, Авиационная ул, Челябинск г (Челябинская обл.)"
+                    search: makeAddress(parameters.derival)
                 },
                 time: {
                     worktimeStart: "10:00",
@@ -104,7 +130,8 @@ module.exports.calculation = async parameters => {
                 address: {
                     // search: "1, Береза д (Псковская обл.)"
                     // search: "1, Невская ул, Псков г (Псковская обл.)"
-                    search: "1, Ашинская ул, Аша г (Челябинская обл.)"
+                    // search: "1, Ашинская ул, Аша г (Челябинская обл.)"
+                    search: makeAddress(parameters.arrival)
                 },
                 time: {
                     worktimeStart: "10:00",
@@ -125,7 +152,10 @@ module.exports.calculation = async parameters => {
             oversizedWeight: parameters.weight, //вес негабаритных грузовых мест
             oversizedVolume: parameters.length * parameters.width * parameters.height, //объем негабаритных грузовых мест
         }
-    }
+    };
+
+    // console.log('+++++++++++++++++++++++++++++');
+    // console.log(data);
 
     return fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
@@ -147,8 +177,19 @@ module.exports.calculation = async parameters => {
                 for (const err of res.errors) {
                     console.log(err);
 
-                    if(err.code === 180012) { //Выбранная дата недоступна
-                        if( new Date(parameters.produceDate - Date.now()).getDate() > 7 ){
+                    if (err.code === 180002) { //Выбран некорректный адрес
+                        if(err.fields[0] ==  'delivery.derival.address.search') {
+                            ctx.status = 400;
+                            return { path: 'derival', message: 'Не корректные данные' };
+                        }
+                        if(err.fields[0] ==  'delivery.arrival.address.search') {
+                            ctx.status = 400;
+                            return { path: 'arrival', message: 'Не корректные данные' };
+                        }
+                    }
+
+                    if (err.code === 180012) { //Выбранная дата недоступна
+                        if (new Date(parameters.produceDate - Date.now()).getDate() > 7) {
                             break;
                         }
                         await delay(500);
@@ -160,6 +201,7 @@ module.exports.calculation = async parameters => {
             }
         })
         .catch(err => {
+            console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
             console.log(err);
             throw new Error(err.message);
         });
@@ -179,8 +221,8 @@ module.exports.searchCity = async ctx => {
             },
             { $limit: 5 },
             {
-                $project: { 
-                    _id: 0, 
+                $project: {
+                    _id: 0,
                     name: 1
                 }
             }
@@ -391,7 +433,7 @@ async function downloadHandbook(url, fname) {
 }
 //получает объект даты и возвращает её в отформатированном виде
 function getFormatDate(date) {
-    return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+    return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
 function delay(ms) {
