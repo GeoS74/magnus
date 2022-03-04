@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
 const path = require('path');
-const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery, microCalculation, calculation, searchCity } = require('@transport/controllers/dellineAPI');
+const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculationQuery, microCalculation, calculation, searchCity, checkCredentials } = require('@transport/controllers/dellineAPI');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -19,6 +19,7 @@ module.exports.router = router;
 
 //"Деловые Линии" - запрос расчёта стоимости перевозки
 router.get('/calculation', calculation);
+router.post('/calculation', koaBody, checkCredentials, calculation);
 //поиск населенного пункта
 router.post('/search/city', koaBody, searchCity);
 

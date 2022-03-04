@@ -9,6 +9,40 @@ const DellineHandbookTerminals = require('@transport/models/DellineHandbookTermi
 
 
 
+
+exports.checkCredentials = (ctx, next) => {
+    if(!ctx.request.body.derival) {
+        ctx.status = 400;
+        return ctx.body = {path: 'derival', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.arrival) {
+        ctx.status = 400;
+        return ctx.body = {path: 'arrival', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.length) {
+        ctx.status = 400;
+        return ctx.body = {path: 'length', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.width) {
+        ctx.status = 400;
+        return ctx.body = {path: 'width', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.height) {
+        ctx.status = 400;
+        return ctx.body = {path: 'height', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.weight) {
+        ctx.status = 400;
+        return ctx.body = {path: 'weight', message: 'Данные не передаются'};
+    }
+    if(!ctx.request.body.quantity) {
+        ctx.status = 400;
+        return ctx.body = {path: 'quantity', message: 'Данные не передаются'};
+    }
+    return next();
+};
+
+
 module.exports.microCalculation = async ctx => {
     const data = {
         appkey: process.env.DELLINE,
@@ -99,6 +133,9 @@ module.exports.microCalculation = async ctx => {
 
 //
 module.exports.calculation = async ctx => {
+    await delay(1000);
+    return ctx.body = {name: 'GeoS'};
+
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза

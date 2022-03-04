@@ -14,6 +14,7 @@ app.use(require('@letters').router.routes());
 app.use(serve('components/valdane/scancopy')); //статические файлы компоненты
 app.use(require('@valdane').router.routes());
 
+app.use(serve('components/transport/client/img')); //статические файлы компоненты
 app.use(require('@transport').router.routes());
 
 module.exports = app;

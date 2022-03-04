@@ -28,7 +28,7 @@
         }
 
         #calculateForm section>label,
-        #calculateForm section>input {
+        #calculateForm section>div {
             margin-right: 20px;
             flex: 1;
         }
@@ -45,13 +45,13 @@
             <div class="form-group">
                 <!-- откуда -->
                 <label for="derival" class="form-label">Откуда</label>
-                <input list="derival-list" name="derival" class="form-control" id="derival" placeholder="Населенный пункт" autofocus
-                    autocomplete="off">
+                <input list="derival-list" name="derival" class="form-control" id="derival"
+                    placeholder="Населенный пункт" autofocus autocomplete="off">
                 <datalist id="derival-list"></datalist>
                 <!-- куда -->
                 <label for="arrival" class="form-label mt-4">Куда</label>
-                <input list="arrival-list" name="arrival" class="form-control" id="arrival" placeholder="Населенный пункт"
-                    autocomplete="off">
+                <input list="arrival-list" name="arrival" class="form-control" id="arrival"
+                    placeholder="Населенный пункт" autocomplete="off">
                 <datalist id="arrival-list"></datalist>
                 <!-- Д х Ш х В -->
                 <section>
@@ -60,27 +60,33 @@
                     <label for="height" class="form-label mt-4">Высота</label>
                 </section>
                 <section>
-                    <input type="text" name="length" id="length" class="form-control" placeholder="Длина" value="1">
-                    <input type="text" name="width" id="width" class="form-control" placeholder="Ширина" value="1">
-                    <input type="text" name="height" id="height" class="form-control" placeholder="Высота" value="1">
+                    <div><input type="text" name="length" id="length" class="form-control" placeholder="Длина"
+                            value="1"></div>
+                    <div><input type="text" name="width" id="width" class="form-control" placeholder="Ширина" value="1">
+                    </div>
+                    <div><input type="text" name="height" id="height" class="form-control" placeholder="Высота"
+                            value="1"></div>
                 </section>
                 <!-- вес и количество мест -->
                 <section>
-                    <label for="height" class="form-label mt-4">Вес</label>
-                    <label for="height" class="form-label mt-4">Кол-во мест</label>
+                    <label for="weight" class="form-label mt-4">Вес</label>
+                    <label for="quantity" class="form-label mt-4">Кол-во мест</label>
                 </section>
                 <section>
-                    <input type="text" name="height" id="height" class="form-control" placeholder="Вес" value="10">
-                    <input type="text" name="height" id="height" class="form-control" placeholder="Кол-во мест"
-                        value="1">
+                    <div><input type="text" name="weight" id="weight" class="form-control" placeholder="Вес" value="10"></div>
+                    <div><input type="text" name="quantity" id="quantity" class="form-control" placeholder="Кол-во мест"
+                        value="1"></div>
                 </section>
                 <button type="submit" class="btn btn-primary mt-4" id="button">Рассчитать стоимость</button>
             </div>
         </form>
+        <div id="calculations"></div>
         <script>//подбор населенных пунктов
             addSearchHandler();
             //обработчик нажатия клавиши при подборе населенного пункта
             function searchCity(event) {
+                setValid(document.getElementById('derival'));
+                setValid(document.getElementById('arrival'));
                 removeSearchHandler();
 
                 const fd = new FormData();
@@ -103,7 +109,6 @@
                     })
                     .catch(error => {
                         console.log(error);
-                        ctx.throw(400, 'error search city ' + error.message);
                     })
                     .finally(_ => {
                         addSearchHandler();
@@ -125,11 +130,121 @@
                 derival.removeEventListener('input', searchCity);
                 arrival.removeEventListener('input', searchCity);
             }
+            //показать/скрыть ошибку ввода данных
+            function showMistake(error) {
+                switch (error.path) {
+                    case 'derival': setInvalid(document.getElementById('derival'), error.message); break;
+                    case 'arrival': setInvalid(document.getElementById('arrival'), error.message); break;
+                    case 'length': setInvalid(document.getElementById('length'), error.message); break;
+                    case 'width': setInvalid(document.getElementById('width'), error.message); break;
+                    case 'height': setInvalid(document.getElementById('height'), error.message); break;
+                    case 'weight': setInvalid(document.getElementById('weight'), error.message); break;
+                    case 'quantity': setInvalid(document.getElementById('quantity'), error.message); break;
+                }
+            }
+            function setValid(elem) {
+                elem.classList.remove('is-invalid');
+                if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+                    elem.nextElementSibling.remove();
+                }
+            }
+            function setInvalid(elem, message) {
+                elem.classList.add('is-invalid');
+
+                if (!elem.nextElementSibling || elem.nextElementSibling.tagName !== 'DIV') {
+                    elem.insertAdjacentHTML('afterend', `<div class="invalid-feedback">${message}</div>`);
+                }
+                else {
+                    elem.nextElementSibling.innerHTML = message;
+                }
+            }
             //клик по кнопке расчёта
             calculateForm.addEventListener('submit', event => {
+                setValid(document.getElementById('derival'));
+                setValid(document.getElementById('arrival'));
+                setValid(document.getElementById('length'));
+                setValid(document.getElementById('width'));
+                setValid(document.getElementById('height'));
+                setValid(document.getElementById('weight'));
+                setValid(document.getElementById('quantity'));
+
+                button.disabled = true;
+                calculations.innerHTML = '<img src="/wait.gif" id="wait" style="width: 50px"/>';
                 const fd = new FormData(event.target);
-                console.log(fd.get('derival'));
+                let delline = calculate(fd);
+
+                Promise.all([delline])
+                    .then(value => {
+                        console.log("well done");
+                        console.log(value);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    })
+                    .finally(_ => {
+                        button.disabled = false;
+                        wait.remove();
+                    });
             });
+
+            function calculate(fd) {
+                const options = {
+                    method: 'POST',
+                    body: fd
+                };
+                return fetch('/transport/calculation', options)
+                    .then(async response => {
+                        if (response.ok) { // если HTTP-статус в диапазоне 200-299
+                            const res = await response.json();
+                            // console.log(res);
+                            return res;
+                        }
+                        else if (response.status === 400) {
+                            // console.log(await response.json());
+                            setValid(document.getElementById('derival'));
+                            setValid(document.getElementById('arrival'));
+                            setValid(document.getElementById('length'));
+                            setValid(document.getElementById('width'));
+                            setValid(document.getElementById('height'));
+                            setValid(document.getElementById('weight'));
+                            setValid(document.getElementById('quantity'));
+                            showMistake(await response.json());
+                        }
+                        else {
+                            throw new Error('HTTP error ' + response.status);
+                        }
+                    });
+            }
+
+
+
+
+            // var p1 = new Promise((resolve, reject) => {
+            //     setTimeout(resolve, 1000, "one");
+            // });
+            // var p2 = new Promise((resolve, reject) => {
+            //     setTimeout(resolve, 2000, "two");
+            // });
+            // var p3 = new Promise((resolve, reject) => {
+            //     setTimeout(resolve, 3000, "three");
+            // });
+            // var p4 = new Promise((resolve, reject) => {
+            //     setTimeout(resolve, 2000, "four");
+            // });
+
+            // var p5 = new Promise((resolve, reject) => {
+            //     // Этот промис прервёт Promise.all
+            //     reject("reject");
+            // });
+
+            // Promise.all([p1, p2, p3, p4, p5])
+            // .then(value => {
+            //     console.log(value);
+            // })
+            // .catch(reason => {
+            //     console.log('reason')
+            //     console.log(reason)
+            // });
         </script>
     </div>
 </body>
