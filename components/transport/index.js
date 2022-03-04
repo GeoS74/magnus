@@ -22,7 +22,7 @@ module.exports.router = router;
 router.post('/calculation', koaBody, checkCredentials, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
-            case 'delline': ctx.body = await calculation(ctx.request.body, ctx); break;
+            case 'delline': await calculation(ctx); break;
         }
     }
     catch(error) {
@@ -82,27 +82,10 @@ function delay(ms) {
 
 const HandbookPlaces = require('@transport/models/DellineHandbookPlaces')
 router.get('/test', async ctx => {
-    try {
-        // const city = await HandbookPlaces.find({ searchString: "Челябинск" });
-
-        const regexp = new RegExp("^челя");
-        const city = await HandbookPlaces.aggregate([
-            {
-                $match: {
-                    // searchString: "Челябинск"
-                    searchString: {
-                        $regex: regexp, $options: "i"
-                    }
-                }
-            },
-            {
-                $limit: 2
-            }
-        ]);
-        console.log(city);
-        return ctx.body = city;
-    } catch (error) {
-        console.log(error);
-        ctx.throw(418, error.message);
-    }
+    return foo(ctx);
 })
+
+function foo(ctx) {
+    ctx.status = 418;
+    ctx.body = {name: "GeoS"};
+}

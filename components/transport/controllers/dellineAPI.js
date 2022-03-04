@@ -69,22 +69,19 @@ function makeAddress(data) {
 }
 
 //расчет доставки
-module.exports.calculation = async (parameters, ctx) => {
+module.exports.calculation = async (ctx) => {
     //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
     //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
     //при рекурсивном вызове к produceDate добавляются сутки
-    //рекурсия прекратится если разница между produceDate и сегодня будет более 7 дней
-    if (!parameters.produceDate) {
-        parameters.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    //рекурсия прекратится если разница между produceDate и сегодня будет более определённого количества дней (см. обработку этой ошибки)
+    if (!ctx.request.body.produceDate) {
+        ctx.request.body.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
     }
     else {
-        parameters.produceDate = new Date(parameters.produceDate.getTime() + 1000 * 60 * 60 * 24);
+        ctx.request.body.produceDate = new Date(ctx.request.body.produceDate.getTime() + 1000 * 60 * 60 * 24);
     }
 
-    // console.log(parameters);
-    // console.log(makeAddress(parameters.derival));
-    // console.log(makeAddress(parameters.arrival));
-    // throw new Error(`Error fetch query`);
+    const parameters = ctx.request.body;
 
     const data = {
         appkey: process.env.DELLINE,
@@ -157,7 +154,8 @@ module.exports.calculation = async (parameters, ctx) => {
     // console.log('+++++++++++++++++++++++++++++');
     // console.log(data);
 
-    return fetch('https://api.dellin.ru/v2/calculator.json', {
+
+    await fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
         body: JSON.stringify(data)
@@ -169,7 +167,7 @@ module.exports.calculation = async (parameters, ctx) => {
                 //здесь надо вернуть информацию о перевозчике (тел. терминала, адреса и т.д.)
                 //...
                 res.carrier = 'Деловые линии';
-                return res;
+                ctx.body = res;
             }
             else {
                 const res = await response.json();
@@ -180,20 +178,20 @@ module.exports.calculation = async (parameters, ctx) => {
                     if (err.code === 180002) { //Выбран некорректный адрес
                         if(err.fields[0] ==  'delivery.derival.address.search') {
                             ctx.status = 400;
-                            return { path: 'derival', message: 'Не корректные данные' };
+                            ctx.body = { path: 'derival', message: 'Не корректные данные' };
                         }
                         if(err.fields[0] ==  'delivery.arrival.address.search') {
                             ctx.status = 400;
-                            return { path: 'arrival', message: 'Не корректные данные' };
+                            ctx.body = { path: 'arrival', message: 'Не корректные данные' };
                         }
                     }
 
                     if (err.code === 180012) { //Выбранная дата недоступна
-                        if (new Date(parameters.produceDate - Date.now()).getDate() > 7) {
+                        if (new Date(parameters.produceDate - Date.now()).getDate() > 10) {
                             break;
                         }
-                        await delay(500);
-                        return await this.calculation(parameters);
+                        await delay(1000); //пауза, чтобы не задолбить API деловых линий
+                        return await this.calculation(ctx);
                     }
                 }
 
