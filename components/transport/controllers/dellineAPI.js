@@ -17,7 +17,8 @@ module.exports.checkCredentials = async (ctx, next) => {
             path: 'streets',
             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
             options: { limit: 1 }
-        });
+        })
+        .populate('terminals');
     ctx.request.body.arrival = await DellineHandbookPlaces
         .findOne({
             name: ctx.request.body.arrival
@@ -25,13 +26,15 @@ module.exports.checkCredentials = async (ctx, next) => {
             path: 'streets',
             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
             options: { limit: 1 }
-        });
+        })
+        .populate('terminals');
     ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
     ctx.request.body.width = parseFloat(ctx.request.body.width) || 0;
     ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
     ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
     ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
 
+    //проверка входных данных
     if (!ctx.request.body.derival) {
         ctx.status = 400;
         return ctx.body = { path: 'derival', message: 'Не корректные данные' };
@@ -63,26 +66,8 @@ module.exports.checkCredentials = async (ctx, next) => {
     return next();
 };
 
-function makeAddress(data) {
-    const street = data.streets.length ? data.streets[0].name+', ' : '';
-    return `1, ${street}${data.name}`;
-}
-
-//расчет доставки
-module.exports.calculation = async (ctx) => {
-    //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
-    //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
-    //при рекурсивном вызове к produceDate добавляются сутки
-    //рекурсия прекратится если разница между produceDate и сегодня будет более определённого количества дней (см. обработку этой ошибки)
-    if (!ctx.request.body.produceDate) {
-        ctx.request.body.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
-    }
-    else {
-        ctx.request.body.produceDate = new Date(ctx.request.body.produceDate.getTime() + 1000 * 60 * 60 * 24);
-    }
-
-    const parameters = ctx.request.body;
-
+//формирование параметров запроса для расчёта перевозки
+function makeSearchParameters(parameters) {
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза
@@ -151,8 +136,39 @@ module.exports.calculation = async (ctx) => {
         }
     };
 
+    //если в выбранном населенном пункте есть терминал, то расчёт производится без забора груза от адреса
+    if(parameters.derival.terminals.length) {
+        data.delivery.derival.variant = 'terminal';
+        data.delivery.derival.terminalID = parameters.derival.terminals[0].terminalID;
+        delete(data.delivery.derival.address);
+    }
+    if(parameters.arrival.terminals.length) {
+        data.delivery.arrival.variant = 'terminal';
+        data.delivery.arrival.terminalID = parameters.arrival.terminals[0].terminalID;
+        delete(data.delivery.arrival.address);
+    }
+
+    return data;
+}
+
+//расчет доставки
+module.exports.calculation = async (ctx) => {
+    //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
+    //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
+    //при рекурсивном вызове к produceDate добавляются сутки
+    //рекурсия прекратится если разница между produceDate и сегодня будет более определённого количества дней (см. обработку этой ошибки)
+    if (!ctx.request.body.produceDate) {
+        ctx.request.body.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    }
+    else {
+        ctx.request.body.produceDate = new Date(ctx.request.body.produceDate.getTime() + 1000 * 60 * 60 * 24);
+    }
+
+    const data = makeSearchParameters(ctx.request.body);
     // console.log('+++++++++++++++++++++++++++++');
-    // console.log(data);
+    // console.log(parameters);
+    // console.log(data.delivery.derival.variant, '-', data.delivery.arrival.variant);
+    // throw new Error(err.message);
 
 
     await fetch('https://api.dellin.ru/v2/calculator.json', {
@@ -169,7 +185,7 @@ module.exports.calculation = async (ctx) => {
                 res.carrier = 'Деловые линии';
                 ctx.body = res;
             }
-            else {
+            else if(response.status === 400) {
                 const res = await response.json();
 
                 for (const err of res.errors) {
@@ -178,33 +194,39 @@ module.exports.calculation = async (ctx) => {
                     if (err.code === 180002) { //Выбран некорректный адрес
                         if(err.fields[0] ==  'delivery.derival.address.search') {
                             ctx.status = 400;
-                            ctx.body = { path: 'derival', message: 'Не корректные данные' };
+                            return ctx.body = { path: 'derival', message: 'Выбран некорректный адрес' };
                         }
                         if(err.fields[0] ==  'delivery.arrival.address.search') {
                             ctx.status = 400;
-                            ctx.body = { path: 'arrival', message: 'Не корректные данные' };
+                            return ctx.body = { path: 'arrival', message: 'Выбран некорректный адрес' };
                         }
                     }
 
                     if (err.code === 180012) { //Выбранная дата недоступна
-                        if (new Date(parameters.produceDate - Date.now()).getDate() > 10) {
+                        if (new Date(ctx.request.body.produceDate - Date.now()).getDate() > 10) {
                             break;
                         }
                         await delay(1000); //пауза, чтобы не задолбить API деловых линий
-                        return await this.calculation(ctx);
+                        return await this.calculation(ctx); //recursion
                     }
                 }
-
+                ctx.status = 400;
+                ctx.body = {carrier: 'Деловые линии'};
+            }
+            else {
+                const res = await response.json();
+                for (const err of res.errors) {
+                    console.log(err);
+                }
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
         })
         .catch(err => {
-            console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+            console.log('~~~~~Error API DelLine~~~~~');
             console.log(err);
             throw new Error(err.message);
         });
 }
-
 //поиск населенного пункта
 module.exports.searchCity = async ctx => {
     try {
@@ -432,6 +454,18 @@ async function downloadHandbook(url, fname) {
 //получает объект даты и возвращает её в отформатированном виде
 function getFormatDate(date) {
     return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+}
+//форматирование адреса для запроса
+//API требует, чтобы обязательно был указан номер дома,
+//это вызывает определенные трудности, т.к. улица выбирается рандомно, либо её может вообще не быть
+//чтобы соответствовать требованиям API номер дома устанавливается равным 1, не зависимо от того есть улица или нет
+//это даже забавно, но есть ещё одна проблема, связанная с улицами
+//если в качестве улицы попадается что-то вроде СНТ, или улица начинается с цифры (250-лет...), то это приводит к ошибке
+//поэтому при запросе улицы используется регулярка (см. функцию checkCredentials)
+//
+function makeAddress(data) {
+    const street = data.streets.length ? data.streets[0].name+', ' : '';
+    return `1, ${street}${data.name}`;
 }
 
 function delay(ms) {

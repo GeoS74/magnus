@@ -150,7 +150,7 @@
                     .then(async response => {
                         if (response.ok) { // если HTTP-статус в диапазоне 200-299
                             const res = await response.json();
-                            console.log(res);
+                            // console.log(res);
                             createOptionList(res, event.target.nextElementSibling);
                         }
                         else {
@@ -267,6 +267,8 @@
             }
             //генерация блоков с данными о расчётах
             function makeRow(d) {
+                const dateStart = d.data.orderDates.pickup || d.data.orderDates.arrivalToOspSender;
+                const dateEnd = d.data.orderDates.derivalFromOspReceiver || d.data.orderDates.arrivalToOspReceiver;
                 return `
                     <div class="card">
                     <div class="card-body">
@@ -284,19 +286,21 @@
                                 <p>${d.data.price} р.</p>
                             </article>
                             <article>
-                                <p>${diffDate(d.data.orderDates.pickup, d.data.orderDates.derivalFromOspReceiver)} дней</p>
+                                <p>${diffDate(dateStart, dateEnd)} дней</p>
                             </article>
                         </section>
                         <p class="show-optional text-primary" onclick="toggleHiddenBlock(event)">показать подробный расчет</p>
                         <div class="optional" hidden="true">
                             <hr>
-                            <p>Терминал отправки: ${d.data.derival.terminal}</p>
-                            <p>Стоимость доставки до терминала отправки: ${d.data.derival.price} р.</p>
-                            <p>Терминал приёма: ${d.data.arrival.terminal}</p>
-                            <p>Стоимость доставки до терминала приёма: ${d.data.arrival.price} р.</p>
-                            <p>Стоимость перевозки: ${d.data.intercity.price} р.</p>
-                            <p>Стоимость страхования груза: ${d.data.insurance} р.</p>
-                            <p>Стоимость информирования о статусе заказа: ${d.data.notify.price} р.</p>
+                            <p><span class="text-muted">Терминал отправки:</span> ${d.data.derival.terminal}</p>
+                            <p><span class="text-muted">Стоимость доставки до терминала отправки:</span> ${d.data.derival.price} р.</p>
+                            <p><span class="text-muted">Дата забора груза:</span> ${dateStart}</p>
+                            <p><span class="text-muted">Терминал приёма:</span> ${d.data.arrival.terminal}</p>
+                            <p><span class="text-muted">Стоимость доставки до терминала приёма:</span> ${d.data.arrival.price} р.</p>
+                            <p><span class="text-muted">Дата выдачи груза:</span> ${dateEnd}</p>
+                            <p><span class="text-muted">Стоимость перевозки:</span> ${d.data.intercity.price} р.</p>
+                            <p><span class="text-muted">Стоимость страхования груза:</span> ${d.data.insurance} р.</p>
+                            <p><span class="text-muted">Стоимость информирования о статусе заказа:</span> ${d.data.notify.price} р.</p>
                         </div>
                     </div>
                     </div>

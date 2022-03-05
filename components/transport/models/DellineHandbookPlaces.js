@@ -28,4 +28,10 @@ Schema.virtual('streets', {
     foreignField: 'cityID'
 });
 
+Schema.virtual('terminals', {
+    ref: 'DellineHandbookTerminals',
+    localField: 'code',
+    foreignField: 'code'
+});
+
 module.exports = connection.model('DellineHandbookPlaces', Schema)

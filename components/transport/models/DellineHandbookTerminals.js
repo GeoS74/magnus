@@ -6,7 +6,10 @@ const Schema = new mongoose.Schema({
         type: Number,
         index: true
     },
-    code: String, //код КЛАДР населенного пункта
+    code: { //код КЛАДР населенного пункта
+        type: String,
+        index: true
+    },
 
     terminalID: Number, //id терминала в системе Деловых линий (в json-файле это id с типом String)
     name: String, //наименование терминала
