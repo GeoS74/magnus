@@ -31,6 +31,43 @@ router.post('/calculation', koaBody, checkCredentials, async ctx => {
 });
 
 
+//"Кит"
+const fetch = require('node-fetch');
+const Parser = require('node-dbf').default;
+// import Parser from 'node-dbf';
+router.get('/kit', async ctx => {
+    https://capi.gtdel.com/1.0/geography/email/get-list
+    fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token='+process.env.KIT)
+        .then(async response => {
+            const res = await response.json();
+            console.log(res.length);
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    return;
+
+    const parser = new Parser(path.join(__dirname, './files/KLADR.dbf'), {encoding: 'utf-8'});
+    parser.on('start', (p) => {
+        console.log('dBase file parsing has started');
+    });
+     
+    parser.on('header', (h) => {
+        console.log('dBase file header has been parsed');
+    });
+     
+    parser.on('record', (record) => {
+        console.log(record); // Name: John Smith
+    });
+     
+    parser.on('end', (p) => {
+        console.log('Finished parsing the dBase file');
+    });
+     
+    parser.parse();
+    ctx.body = 'KIT API';
+});
+
 
 //"Деловые Линии"
 //поиск населенного пункта

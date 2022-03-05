@@ -34,6 +34,7 @@
         "mongoose-beautiful-unique-validation": "^7.1.1",
         "mongoose-unique-validator": "^3.0.0",
         "mysql": "^2.18.1",
+        "node-dbf": "^0.4.0",
         "node-fetch": "^2.6.7",
         "node-ssi": "^0.3.2",
         "nodemon": "^2.0.14",
@@ -45,6 +46,8 @@
         "xlsx": "^0.18.0"
     },
     "nodemonConfig": {
-        "ignore": ["files/*"]
+        "ignore": [
+            "files/*"
+        ]
     }
 }
