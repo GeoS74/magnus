@@ -10,3 +10,10 @@
 
 Документация КЛАДР + БД https://www.gnivc.ru/technical_support/classifiers_reference/kladr/
 ...
+
+Для  Ubuntu:
+1) установка MongoDB
+https://stackoverflow.com/questions/48092353/failed-to-start-mongod-service-unit-mongod-service-not-found
+
+Удалить файлы, а дальше следовать инструкциям документации
+https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
