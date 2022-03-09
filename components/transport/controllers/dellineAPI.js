@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const mongoose = require('mongoose');
 const fetch = require('node-fetch'); //https://www.npmjs.com/package/node-fetch#loading-and-configuring-the-module
 const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
