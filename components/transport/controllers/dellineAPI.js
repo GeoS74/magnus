@@ -7,63 +7,63 @@ const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets
 const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
 
 
-module.exports.checkCredentials = async (ctx, next) => {
-    // преобразование входных данных
-    ctx.request.body.derival = await DellineHandbookPlaces
-        .findOne({
-            name: ctx.request.body.derival
-        }).populate({
-            path: 'streets',
-            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-            options: { limit: 1 }
-        })
-        .populate('terminals');
-    ctx.request.body.arrival = await DellineHandbookPlaces
-        .findOne({
-            name: ctx.request.body.arrival
-        }).populate({
-            path: 'streets',
-            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-            options: { limit: 1 }
-        })
-        .populate('terminals');
-    ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
-    ctx.request.body.width = parseFloat(ctx.request.body.width) || 0;
-    ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
-    ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
-    ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
+// module.exports.checkCredentials = async (ctx, next) => {
+//     // преобразование входных данных
+//     ctx.request.body.derival = await DellineHandbookPlaces
+//         .findOne({
+//             name: ctx.request.body.derival
+//         }).populate({
+//             path: 'streets',
+//             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+//             options: { limit: 1 }
+//         })
+//         .populate('terminals');
+//     ctx.request.body.arrival = await DellineHandbookPlaces
+//         .findOne({
+//             name: ctx.request.body.arrival
+//         }).populate({
+//             path: 'streets',
+//             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+//             options: { limit: 1 }
+//         })
+//         .populate('terminals');
+//     ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
+//     ctx.request.body.width = parseFloat(ctx.request.body.width) || 0;
+//     ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
+//     ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
+//     ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
 
-    //проверка входных данных
-    if (!ctx.request.body.derival) {
-        ctx.status = 400;
-        return ctx.body = { path: 'derival', message: 'Не корректные данные' };
-    }
-    if (!ctx.request.body.arrival) {
-        ctx.status = 400;
-        return ctx.body = { path: 'arrival', message: 'Не корректные данные' };
-    }
-    if (ctx.request.body.length <= 0) {
-        ctx.status = 400;
-        return ctx.body = { path: 'length', message: 'Не корректные данные' };
-    }
-    if (ctx.request.body.width <= 0) {
-        ctx.status = 400;
-        return ctx.body = { path: 'width', message: 'Не корректные данные' };
-    }
-    if (ctx.request.body.height <= 0) {
-        ctx.status = 400;
-        return ctx.body = { path: 'height', message: 'Не корректные данные' };
-    }
-    if (ctx.request.body.weight <= 0) {
-        ctx.status = 400;
-        return ctx.body = { path: 'weight', message: 'Не корректные данные' };
-    }
-    if (ctx.request.body.quantity <= 0) {
-        ctx.status = 400;
-        return ctx.body = { path: 'quantity', message: 'Не корректные данные' };
-    }
-    return next();
-};
+//     //проверка входных данных
+//     if (!ctx.request.body.derival) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'derival', message: 'Не корректные данные' };
+//     }
+//     if (!ctx.request.body.arrival) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'arrival', message: 'Не корректные данные' };
+//     }
+//     if (ctx.request.body.length <= 0) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'length', message: 'Не корректные данные' };
+//     }
+//     if (ctx.request.body.width <= 0) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'width', message: 'Не корректные данные' };
+//     }
+//     if (ctx.request.body.height <= 0) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'height', message: 'Не корректные данные' };
+//     }
+//     if (ctx.request.body.weight <= 0) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'weight', message: 'Не корректные данные' };
+//     }
+//     if (ctx.request.body.quantity <= 0) {
+//         ctx.status = 400;
+//         return ctx.body = { path: 'quantity', message: 'Не корректные данные' };
+//     }
+//     return next();
+// };
 
 //формирование параметров запроса для расчёта перевозки
 function makeSearchParameters(parameters) {
@@ -238,7 +238,7 @@ module.exports.searchCity = async ctx => {
                     }
                 }
             },
-            { $limit: 5 },
+            { $limit: 50 },
             {
                 $project: {
                     _id: 0,
@@ -350,13 +350,20 @@ module.exports.updateHandbookPlaces = async ctx => {
     const worksheet = workbook.Sheets[sheetName];
     const arr = XLSX.utils.sheet_to_json(worksheet)
         .map(r => { //преобразование кода в строку (иначе преобразуется в экспоненциальное число)
-            r.code = r.code + '';
-            r.regcode = r.regcode + '';
+            //длина полей code и regcode должна быть 25 символов
+            r.code = '' + r.code;
+            r.regcode = '' + r.regcode;
+
             //обработать значение None
             r.zonename = r.zonename != 'None' ? r.zonename : undefined;
             r.zoncode = r.zoncode != 'None' ? r.zoncode : undefined;
             r.regname = r.regname != 'None' ? r.regname : undefined;
             r.regcode = r.regcode != 'None' ? r.regcode : undefined;
+
+            //длина полей code и regcode должна быть 25 символов
+            if(r.code.length === 24) r.code = '0' + r.code;
+            if(r.regcode.length === 24) r.regcode = '0' + r.code;
+
             return r;
         });
 
@@ -460,7 +467,7 @@ function getFormatDate(date) {
 //чтобы соответствовать требованиям API номер дома устанавливается равным 1, не зависимо от того есть улица или нет
 //это даже забавно, но есть ещё одна проблема, связанная с улицами
 //если в качестве улицы попадается что-то вроде СНТ, или улица начинается с цифры (250-лет...), то это приводит к ошибке
-//поэтому при запросе улицы используется регулярка (см. функцию checkCredentials)
+//поэтому при запросе улицы используется регулярка (см. контроллер checkCredentials)
 //
 function makeAddress(data) {
     const street = data.streets.length ? data.streets[0].name+', ' : '';

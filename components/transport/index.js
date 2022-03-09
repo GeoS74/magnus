@@ -4,6 +4,7 @@ const path = require('path');
 // const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculation, searchCity, checkCredentials } = require('@transport/controllers/dellineAPI');
 const DelLine = require('@transport/controllers/dellineAPI');
 const PEK = require('@transport/controllers/pekAPI');
+const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -20,8 +21,13 @@ router.prefix('/transport');
 module.exports.router = router;
 
 
+
+
+
+
+
 //роутинг запросов расчёта стоимости перевозки
-router.post('/calculation', koaBody, DelLine.checkCredentials, async ctx => {
+router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
             case 'delline': await DelLine.calculation(ctx); break;
@@ -47,7 +53,7 @@ router.get('/calculator', async ctx => {
 
 //"ПЭК"
 //"ПЭК" - обновление справочника населенных пунктов
-router.get('/pek', PEK.updateHandbookPlaces);
+router.get('/pek/handbook/places/update', PEK.updateHandbookPlaces);
 
 
 
@@ -57,7 +63,7 @@ router.get('/pek', PEK.updateHandbookPlaces);
 const Parser = require('node-dbf').default;
 const fetch = require('node-fetch');
 // import Parser from 'node-dbf';
-router.get('/kit', async ctx => {
+router.get('/kit/handbook/places/update', async ctx => {
     https://capi.gtdel.com/1.0/geography/email/get-list
     fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
         .then(async response => {
@@ -105,7 +111,7 @@ router.get('/kit', async ctx => {
 //поиск населенного пункта
 router.post('/search/city', koaBody, DelLine.searchCity);
 //"Деловые Линии" - обновление справочника населенных пунктов
-router.get('/handbook/places/update', (ctx, next) => {
+router.get('/delline/handbook/places/update', (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v1/public/places.json',
         fname: 'places.csv',
@@ -113,7 +119,7 @@ router.get('/handbook/places/update', (ctx, next) => {
     return next();
 }, DelLine.getHandbook, DelLine.updateHandbookPlaces);
 //"Деловые Линии" - обновление справочника улиц
-router.get('/handbook/streets/update', (ctx, next) => {
+router.get('/delline/handbook/streets/update', (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v1/public/streets.json',
         fname: 'streets.csv',
@@ -121,7 +127,7 @@ router.get('/handbook/streets/update', (ctx, next) => {
     return next();
 }, DelLine.getHandbook, DelLine.updateHandbookStreets);
 //"Деловые Линии" - обновление справочника терминалов
-router.get('/handbook/terminals/update', async (ctx, next) => {
+router.get('/delline/handbook/terminals/update', async (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v3/public/terminals.json',
         fname: 'terminals.json',
@@ -140,10 +146,51 @@ function delay(ms) {
 
 
 
+const fs = require('fs');
+var dbf = require('dbf-reader').Dbf;
+var iconv = require('iconv-lite');
 
-const HandbookPlaces = require('@transport/models/DellineHandbookPlaces')
 router.get('/test', async ctx => {
-    return foo(ctx);
+    // console.log( path.join(__dirname, '/files/ALTNAMES.DBF'));
+    // console.log(dbf);
+    let encoder = new TextEncoder();
+
+// let uint8Array = encoder.encode("привет");
+// console.log(new TextDecoder('utf8').decode(uint8Array));
+
+    var buffer = fs.readFileSync(path.join(__dirname, '/files/KLADR.DBF'))
+    // let open = await fs.promises.open( path.join(__dirname, '/files/KLADRutf8.DBF'));
+    //     const buffer =await open.readFile();
+    //     await open.close();
+
+    var datatable = dbf.read(buffer);
+    if (datatable) {
+        datatable.rows.forEach((row) => {
+            // let buf = iconv.encode(row.NAME, 'win1251');
+            // let str = iconv.decode(buf, 'win1251');
+            // console.log("str: ", str);
+
+            console.log(row);
+
+            // let encoder = new TextEncoder();
+            // let uint8Array = encoder.encode(row.NAME);
+            // console.log(new TextDecoder('utf8').decode(uint8Array)); // 72,101,108,108,111
+            // console.log(new TextDecoder('windows-1251').decode(uint8Array)); // 72,101,108,108,111
+            // console.log(new TextDecoder('cp866').decode(uint8Array)); // 72,101,108,108,111
+            // // console.log(new TextDecoder('KOI-8R').decode(uint8Array)); // 72,101,108,108,111
+            // console.log(new TextDecoder('ISO88595').decode(uint8Array)); // 72,101,108,108,111
+
+            // console.log(row);
+            console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+
+            // datatable.columns.forEach((col) => {
+            //     console.log(col);
+            //     // console.log(row[col.name]);
+            //     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            // });
+        });
+    }
+    ctx.body = { name: "GeoS" };
 })
 
 function foo(ctx) {

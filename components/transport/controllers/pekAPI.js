@@ -22,6 +22,7 @@ module.exports.updateHandbookPlaces = async ctx => {
                         await PEKHandbookPlaces.create({
                             cityID: cityID,
                             name: res[region][cityID],
+                            region: region,
                         })
                     }
                     catch (error) {

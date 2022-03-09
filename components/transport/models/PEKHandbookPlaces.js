@@ -6,7 +6,8 @@ const Schema = new mongoose.Schema({
         type: Number,
         unique: true
     },
-    name: String, //полное наименование населённого пункта
+    name: String, //наименование населённого пункта
+    region: String //наименование региона
 }, {
     timestamps: true,
 })
