@@ -59,40 +59,17 @@ router.get('/pek/handbook/places/update', PEK.updateHandbookPlaces);
 
 
 //"Кит"
-// const fetch = require('node-fetch');
-const Parser = require('node-dbf').default;
 const fetch = require('node-fetch');
-// import Parser from 'node-dbf';
 router.get('/kit/handbook/places/update', async ctx => {
     https://capi.gtdel.com/1.0/geography/email/get-list
     fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
         .then(async response => {
             const res = await response.json();
-            console.log(res.length);
+            console.log(res);
         })
         .catch(error => {
             console.log(error);
         });
-    return;
-
-    const parser = new Parser(path.join(__dirname, './files/KLADR.dbf'), { encoding: 'utf-8' });
-    parser.on('start', (p) => {
-        console.log('dBase file parsing has started');
-    });
-
-    parser.on('header', (h) => {
-        console.log('dBase file header has been parsed');
-    });
-
-    parser.on('record', (record) => {
-        console.log(record); // Name: John Smith
-    });
-
-    parser.on('end', (p) => {
-        console.log('Finished parsing the dBase file');
-    });
-
-    parser.parse();
     ctx.body = 'KIT API';
 });
 
@@ -146,50 +123,9 @@ function delay(ms) {
 
 
 
-const fs = require('fs');
-var dbf = require('dbf-reader').Dbf;
-var iconv = require('iconv-lite');
+
 
 router.get('/test', async ctx => {
-    // console.log( path.join(__dirname, '/files/ALTNAMES.DBF'));
-    // console.log(dbf);
-    let encoder = new TextEncoder();
-
-// let uint8Array = encoder.encode("привет");
-// console.log(new TextDecoder('utf8').decode(uint8Array));
-
-    var buffer = fs.readFileSync(path.join(__dirname, '/files/KLADR.DBF'))
-    // let open = await fs.promises.open( path.join(__dirname, '/files/KLADRutf8.DBF'));
-    //     const buffer =await open.readFile();
-    //     await open.close();
-
-    var datatable = dbf.read(buffer);
-    if (datatable) {
-        datatable.rows.forEach((row) => {
-            // let buf = iconv.encode(row.NAME, 'win1251');
-            // let str = iconv.decode(buf, 'win1251');
-            // console.log("str: ", str);
-
-            console.log(row);
-
-            // let encoder = new TextEncoder();
-            // let uint8Array = encoder.encode(row.NAME);
-            // console.log(new TextDecoder('utf8').decode(uint8Array)); // 72,101,108,108,111
-            // console.log(new TextDecoder('windows-1251').decode(uint8Array)); // 72,101,108,108,111
-            // console.log(new TextDecoder('cp866').decode(uint8Array)); // 72,101,108,108,111
-            // // console.log(new TextDecoder('KOI-8R').decode(uint8Array)); // 72,101,108,108,111
-            // console.log(new TextDecoder('ISO88595').decode(uint8Array)); // 72,101,108,108,111
-
-            // console.log(row);
-            console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
-            // datatable.columns.forEach((col) => {
-            //     console.log(col);
-            //     // console.log(row[col.name]);
-            //     console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            // });
-        });
-    }
     ctx.body = { name: "GeoS" };
 })
 

@@ -361,8 +361,13 @@ module.exports.updateHandbookPlaces = async ctx => {
             r.regcode = r.regcode != 'None' ? r.regcode : undefined;
 
             //длина полей code и regcode должна быть 25 символов
-            if(r.code.length === 24) r.code = '0' + r.code;
-            if(r.regcode.length === 24) r.regcode = '0' + r.code;
+            if(r.code){
+                if(r.code.length === 24) r.code = '0' + r.code;
+            }
+            if(r.regcode) {
+                if(r.regcode.length === 24) r.regcode = '0' + r.regcode;
+            }
+            
 
             return r;
         });
