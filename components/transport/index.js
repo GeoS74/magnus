@@ -4,6 +4,7 @@ const path = require('path');
 // const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculation, searchCity, checkCredentials } = require('@transport/controllers/dellineAPI');
 const DelLine = require('@transport/controllers/dellineAPI');
 const PEK = require('@transport/controllers/pekAPI');
+const Kit = require('@transport/controllers/kitAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
@@ -62,19 +63,20 @@ router.get('/pek/handbook/places/update', PEK.updateHandbookPlaces);
 
 
 //"Кит"
-const fetch = require('node-fetch');
-router.get('/kit/handbook/places/update', async ctx => {
-    https://capi.gtdel.com/1.0/geography/email/get-list
-    fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
-        .then(async response => {
-            const res = await response.json();
-            console.log(res);
-        })
-        .catch(error => {
-            console.log(error);
-        });
-    ctx.body = 'KIT API';
-});
+router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
+// const fetch = require('node-fetch');
+// router.get('/kit/handbook/places/update', async ctx => {
+//     https://capi.gtdel.com/1.0/geography/email/get-list
+//     fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
+//         .then(async response => {
+//             const res = await response.json();
+//             console.log(res);
+//         })
+//         .catch(error => {
+//             console.log(error);
+//         });
+//     ctx.body = 'KIT API';
+// });
 
 
 

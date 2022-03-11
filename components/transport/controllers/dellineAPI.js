@@ -7,18 +7,41 @@ const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets
 const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
 
 //принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником Деловых линий
+//API Деловых линий требует, чтобы обязательно был указан номер дома,
+//это вызывает определенные трудности, т.к. улица выбирается рандомно, либо её может вообще не быть
+//чтобы соответствовать требованиям API номер дома устанавливается равным 1, не зависимо от того есть улица или нет
+//это даже забавно, но есть ещё одна проблема, связанная с улицами
+//если в качестве улицы попадается что-то вроде СНТ, или улица начинается с цифры (250-лет...), то это приводит к ошибке
+//поэтому при запросе улицы используется регулярка /^[а-яА-Я]{5}/i
+//
 async function getCity(data) {
-    try{
-        return await DellineHandbookPlaces
-            .findOne({code: data.code + '000000000000'})
+    try {
+        let city = await DellineHandbookPlaces
+            .findOne({ code: data.code + '000000000000' })
             .populate({
                 path: 'streets',
                 match: { name: { $regex: /^[а-яА-Я]{5}/i } },
                 options: { limit: 1 }
             })
             .populate('terminals');
+        if (city) return city;
+
+        city = await DellineHandbookPlaces
+            .findOne({
+                searchString: data.searchString,
+                regcode: data.regcode.slice(0, 2) + "00000000000000000000000"
+            })
+            .populate({
+                path: 'streets',
+                match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+                options: { limit: 1 }
+            })
+            .populate('terminals');
+        
+        if (city) return city;
+        else throw new Error("DelLine: city not found");
     }
-    catch(error) {
+    catch (error) {
         console.log(error.message);
         throw new Error(error.message);
     }
@@ -97,15 +120,15 @@ async function makeSearchParameters(parameters) {
     };
 
     //если в выбранном населенном пункте есть терминал, то расчёт производится без забора груза от адреса
-    if(parameters.derival.terminals.length) {
+    if (parameters.derival.terminals.length) {
         data.delivery.derival.variant = 'terminal';
         data.delivery.derival.terminalID = parameters.derival.terminals[0].terminalID;
-        delete(data.delivery.derival.address);
+        delete (data.delivery.derival.address);
     }
-    if(parameters.arrival.terminals.length) {
+    if (parameters.arrival.terminals.length) {
         data.delivery.arrival.variant = 'terminal';
         data.delivery.arrival.terminalID = parameters.arrival.terminals[0].terminalID;
-        delete(data.delivery.arrival.address);
+        delete (data.delivery.arrival.address);
     }
 
     return data;
@@ -126,9 +149,9 @@ module.exports.calculation = async (ctx) => {
 
     const data = await makeSearchParameters(ctx.request.body);
     // console.log('+++++++++++++++++++++++++++++');
-    // console.log(parameters);
+    // console.log(data);
     // console.log(data.delivery.derival.variant, '-', data.delivery.arrival.variant);
-    // throw new Error(err.message);
+    // throw new Error("hi");
 
     await fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
@@ -144,18 +167,18 @@ module.exports.calculation = async (ctx) => {
                 res.carrier = 'Деловые линии';
                 ctx.body = res;
             }
-            else if(response.status === 400) {
+            else if (response.status === 400) {
                 const res = await response.json();
 
                 for (const err of res.errors) {
                     console.log(err);
 
                     if (err.code === 180002) { //Выбран некорректный адрес
-                        if(err.fields[0] ==  'delivery.derival.address.search') {
+                        if (err.fields[0] == 'delivery.derival.address.search') {
                             ctx.status = 400;
                             return ctx.body = { path: 'derival', message: 'Выбран некорректный адрес' };
                         }
-                        if(err.fields[0] ==  'delivery.arrival.address.search') {
+                        if (err.fields[0] == 'delivery.arrival.address.search') {
                             ctx.status = 400;
                             return ctx.body = { path: 'arrival', message: 'Выбран некорректный адрес' };
                         }
@@ -170,7 +193,7 @@ module.exports.calculation = async (ctx) => {
                     }
                 }
                 ctx.status = 400;
-                ctx.body = {carrier: 'Деловые линии'};
+                ctx.body = { carrier: 'Деловые линии' };
             }
             else {
                 const res = await response.json();
@@ -320,13 +343,13 @@ module.exports.updateHandbookPlaces = async ctx => {
             r.regcode = r.regcode != 'None' ? r.regcode : undefined;
 
             //длина полей code и regcode должна быть 25 символов
-            if(r.code){
-                if(r.code.length === 24) r.code = '0' + r.code;
+            if (r.code) {
+                if (r.code.length === 24) r.code = '0' + r.code;
             }
-            if(r.regcode) {
-                if(r.regcode.length === 24) r.regcode = '0' + r.regcode;
+            if (r.regcode) {
+                if (r.regcode.length === 24) r.regcode = '0' + r.regcode;
             }
-            
+
 
             return r;
         });
@@ -434,7 +457,7 @@ function getFormatDate(date) {
 //поэтому при запросе улицы используется регулярка (см. контроллер checkCredentials)
 //
 function makeAddress(data) {
-    const street = data.streets.length ? data.streets[0].name+', ' : '';
+    const street = data.streets.length ? data.streets[0].name + ', ' : '';
     return `1, ${street}${data.name}`;
 }
 

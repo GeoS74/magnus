@@ -7,7 +7,10 @@ const Schema = new mongoose.Schema({
         unique: true
     },
     name: String, //полное наименование населённого пункта
-    code: String, //код КЛАДР населенного пункта
+    code: { //код КЛАДР населенного пункта
+        type: String,
+        index: true
+    },
     searchString: { //наименование населённого пункта, сформированное специальным образом для поиска. Например, для реализации автодополнения
         type: String,
         index: true

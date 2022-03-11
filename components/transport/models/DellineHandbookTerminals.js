@@ -2,10 +2,8 @@ const connection = require('@root/libs/connection')
 const mongoose = require('mongoose')
 
 const Schema = new mongoose.Schema({
-    cityID: { //уникальный идентификатор города в рамках системы Деловых линий
-        type: Number,
-        index: true
-    },
+    //поле cityID из справочника терминалов не соответствует cityID справочника населенных пунктов
+    cityID: Number, //уникальный идентификатор города в рамках системы Деловых линий
     code: { //код КЛАДР населенного пункта
         type: String,
         index: true

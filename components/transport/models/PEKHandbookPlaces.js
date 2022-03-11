@@ -2,11 +2,11 @@ const connection = require('@root/libs/connection')
 const mongoose = require('mongoose')
 
 const Schema = new mongoose.Schema({
-    cityID: { //уникальный идентификатор города в рамках системы ПЭК
-        type: Number,
-        unique: true
+    cityID: Number, //уникальный идентификатор города в рамках системы ПЭК
+    name: { //наименование населённого пункта
+        type: String,
+        index: true
     },
-    name: String, //наименование населённого пункта
     region: String //наименование региона
 }, {
     timestamps: true,

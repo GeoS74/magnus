@@ -57,7 +57,9 @@ module.exports.update = async ctx => {
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
     const arr = XLSX.utils.sheet_to_json(worksheet)
-        .map(r => { //преобразование кода в строку (иначе преобразуется в экспоненциальное число)
+        .map(r => { //преобразование данных
+            //надо учитывать, что файл .csv готовится руками, поэтому надо обращать внимание на названия ключей
+            //вообще, лучше всего сделать форму загрузки файла с возможностью указать на клиенте где какая колонка заливается
             // console.log(r);
             const name = `${r[1]} ${r[2]}.`;
             const regname = `${r[5]} ${r[6] ? r[6] + "." : ""}`;
