@@ -38,82 +38,144 @@ module.exports.checkCity = async (ctx, next) => {
 
     //тест справочников городов
     const derival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.derival.trim() });
+    const arrival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.arrival.trim() });
     console.log('-------------MainHandbookPlaces----------');
     console.log(derival);
 
-    const dl = await DellineHandbookPlaces
-        // .findOne({ code: derival.code + '000000000000' })
-        .findOne({ 
-            searchString: derival.searchString, 
-            regcode: derival.regcode.slice(0, 2)+"00000000000000000000000" 
-        })
-        .populate({
-            path: 'streets',
-            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-            options: { limit: 1 }
-        })
-        .populate('terminals');
-    console.log('-------------DellineHandbookPlaces----------');
-    console.log(dl);
+    // const dl = await DellineHandbookPlaces
+    //     //попытка найти город по коду
+    //     // .findOne({ code: derival.code + '000000000000' })
+    //     //попытка найти город по названию и коду региона
+    //     .findOne({ 
+    //         searchString: derival.searchString, 
+    //         regcode: derival.regcode.slice(0, 2)+"00000000000000000000000" 
+    //     })
+    //     .populate({
+    //         path: 'streets',
+    //         match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+    //         options: { limit: 1 }
+    //     })
+    //     .populate('terminals');
+    // console.log('-------------DellineHandbookPlaces----------');
+    // console.log(dl);
 
 
     //тест справочника ПЭК
-    try {
-        const regexp = new RegExp("^" + derival.searchString);
-        const pek = await PEKHandbookPlaces.aggregate([
-            {
-                //условие выбора
-                // $match: {
-                //     $or: [
-                //         { name: ctx.request.body.derival.searchString },
-                //         {
-                //             name: {
-                //                 $regex: regexp, $options: "i"
-                //             }
-                //         }
-                //     ]
-                // }
-                //регулярка
-                $match: {
-                    name: {
-                        $regex: regexp, $options: "i"
-                    }
-                }
-                //в лоб
-                // $match: {
-                //     name: ctx.request.body.derival.searchString
-                // }
-            },
-            { $limit: 50 },
-            {
-                $project: {
-                    _id: 0,
-                    name: 1,
-                    region: 1
-                }
-            }
-        ]);
-        console.log('-------------PEKHandbookPlaces----------');
-        console.log(pek);
+    // try {
+    //     const regexp = new RegExp("^" + derival.searchString);
+    //     const pek = await PEKHandbookPlaces.aggregate([
+    //         {
+    //             //условие выбора
+    //             // $match: {
+    //             //     $or: [
+    //             //         { name: ctx.request.body.derival.searchString },
+    //             //         {
+    //             //             name: {
+    //             //                 $regex: regexp, $options: "i"
+    //             //             }
+    //             //         }
+    //             //     ]
+    //             // }
+    //             //регулярка
+    //             $match: {
+    //                 name: {
+    //                     $regex: regexp, $options: "i"
+    //                 }
+    //             }
+    //             //в лоб
+    //             // $match: {
+    //             //     name: ctx.request.body.derival.searchString
+    //             // }
+    //         },
+    //         { $limit: 50 },
+    //         {
+    //             $project: {
+    //                 _id: 0,
+    //                 name: 1,
+    //                 region: 1
+    //             }
+    //         }
+    //     ]);
+    //     console.log('-------------PEKHandbookPlaces----------');
+    //     console.log(pek);
 
 
-         
 
 
-    } catch (error) {
-        console.log(error);
-        ctx.throw(400, error.message);
-    }
+
+    // } catch (error) {
+    //     console.log(error);
+    //     ctx.throw(400, error.message);
+    // }
 
 
     //тест справочника КИТ
-    const kit = await KitHandbookPlaces.findOne({ code: derival.code.slice(0, 2) + derival.code.slice(3) });
+    const kitderrival = await KitHandbookPlaces
+        //попытка найти город по коду
+        // .findOne({ code: derival.code.slice(0, 2) + derival.code.slice(3) });
+        //попытка найти город по названию и коду региона
+        .findOne({
+            name: derival.searchString,
+            regcode: derival.regcode.slice(0, 2),
+        });
+    const kitarrival = await KitHandbookPlaces
+        //попытка найти город по коду
+        // .findOne({ code: derival.code.slice(0, 2) + derival.code.slice(3) });
+        //попытка найти город по названию и коду региона
+        .findOne({
+            name: arrival.searchString,
+            regcode: arrival.regcode.slice(0, 2),
+        });
+
     console.log('-------------KitHandbookPlaces----------');
-    console.log(kit);
+    console.log(kitderrival);
+    console.log(kitarrival);
 
+    console.log('-------------Kit calculate----------');
 
-//7400000100000
-//180000100000
+    const data = {
+        city_pickup_code: kitderrival.code,
+        city_delivery_code: kitarrival.code,
+        declared_price: 100,
+        places: [
+            {
+                count_place: 1,
+                height: 100,
+                width: 100,
+                length: 100,
+                weight: 100
+            }
+        ],
+        insurance: 0,
+    };
+
+    const fetch = require('node-fetch');
+    await fetch('https://capi.gtdel.com/1.0/order/calculate?token=' + process.env.KIT, {
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        body: JSON.stringify(data)
+    })
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                console.log(res);
+
+                for(const e of res[0].standart.detail) {
+                    console.log(e);
+                }
+            }
+            else {
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log('~~~~~Error API Kit~~~~~');
+            console.log(err);
+            throw new Error(err.message);
+        });
+
+    //7400000100000
+    //180000100000
 
     ctx.body = {};
 };

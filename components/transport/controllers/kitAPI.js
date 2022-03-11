@@ -3,7 +3,8 @@ const KitHandbookPlaces = require('@transport/models/KitHandbookPlaces');
 
 //обновить справочник населённых пунктов в БД
 module.exports.updateHandbookPlaces = async ctx => {
-    await fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
+    // await fetch('https://capi.gtdel.com/1.0/geography/city/get-list?token=' + process.env.KIT)
+    await fetch('https://capi.gtdel.com/1.0/tdd/city/get-list?token=' + process.env.KIT)
         .then(async response => {
             const res = await response.json();
             // console.log(res);
@@ -11,15 +12,21 @@ module.exports.updateHandbookPlaces = async ctx => {
             const start = Date.now();
             let i = 0;
 
-            //очистить коллекцию населённых пунктов
+            // очистить коллекцию населённых пунктов
             await KitHandbookPlaces.deleteMany();
 
             for (const city of res) {
-                if (!(++i % 50)) console.log('write: ', i);
+                //API Кита отдаёт не только города России, но также и СНГ
+                if(city.country_code !== "RU") continue;
+                console.log(city);
+                if (!(++i % 1000)) console.log('write: ', i);
                 try {
                     await KitHandbookPlaces.create({
-                        cityID: city.id,
-                        code: city.tdd_city_code,
+                        code: city.code,
+                        name: city.name,
+                        regcode: city.region_code,
+                        requiredPickup: city.required_pickup,
+                        requiredDelivery: city.required_delivery,
                     })
                 }
                 catch (error) {

@@ -16,6 +16,7 @@ const DellineHandbookTerminals = require('@transport/models/DellineHandbookTermi
 //
 async function getCity(data) {
     try {
+        //попытка найти город по коду
         let city = await DellineHandbookPlaces
             .findOne({ code: data.code + '000000000000' })
             .populate({
@@ -26,6 +27,7 @@ async function getCity(data) {
             .populate('terminals');
         if (city) return city;
 
+        //попытка найти город по названию и коду региона
         city = await DellineHandbookPlaces
             .findOne({
                 searchString: data.searchString,
