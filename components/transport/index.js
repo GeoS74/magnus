@@ -4,6 +4,7 @@ const path = require('path');
 // const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculation, searchCity, checkCredentials } = require('@transport/controllers/dellineAPI');
 const DelLine = require('@transport/controllers/dellineAPI');
 const PEK = require('@transport/controllers/pekAPI');
+const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
@@ -111,6 +112,13 @@ router.get('/delline/handbook/terminals/update', async (ctx, next) => {
     }
     return next();
 }, DelLine.getHandbook, DelLine.updateHandbookTerminals);
+
+
+
+
+//обновление основного справочника населенных пунктов системы, основанного на данных КЛАДР
+router.get('/handbook/places/update', mainHandbookPlaces.update);
+
 
 
 

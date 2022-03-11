@@ -350,7 +350,6 @@ module.exports.updateHandbookPlaces = async ctx => {
     const worksheet = workbook.Sheets[sheetName];
     const arr = XLSX.utils.sheet_to_json(worksheet)
         .map(r => { //преобразование кода в строку (иначе преобразуется в экспоненциальное число)
-            //длина полей code и regcode должна быть 25 символов
             r.code = '' + r.code;
             r.regcode = '' + r.regcode;
 
