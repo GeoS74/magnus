@@ -3,6 +3,46 @@ const path = require('path');
 const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
 const MainHandbookPlaces = require('@transport/models/MainHandbookPlaces');
 
+
+//поиск населенного пункта
+module.exports.searchCity = async ctx => {
+    try {
+        const regexp = new RegExp("^" + ctx.request.body.city);
+        const city = await MainHandbookPlaces.aggregate([
+            {
+                // $match: {
+                //     searchString: {
+                //         $regex: regexp, $options: "i"
+                //     }
+                // }
+                $match: {
+                    $or: [
+                        {
+                            name: { $regex: regexp, $options: "i" }
+                        },
+                        {
+                            searchStringEng: { $regex: regexp, $options: "i" }
+                        }
+                    ]
+                }
+            },
+            { $limit: 15 },
+            {
+                $project: {
+                    _id: 0,
+                    fullName: 1
+                }
+            }
+        ]);
+        // console.log(city);
+        ctx.body = city;
+    } catch (error) {
+        console.log(error.message);
+        ctx.throw(400, error.message);
+    }
+};
+
+
 //обновление основного справочника населенных пунктов системы
 //файл .csv создается вручную и должен иметь кодировку UTF-8 with BOM
 //надо проработать возможность загрузки файла через форму (дальнейшие доработки системы)
@@ -19,12 +59,15 @@ module.exports.update = async ctx => {
     const arr = XLSX.utils.sheet_to_json(worksheet)
         .map(r => { //преобразование кода в строку (иначе преобразуется в экспоненциальное число)
             // console.log(r);
+            const name = `${r[1]} ${r[2]}.`;
+            const regname = `${r[5]} ${r[6] ? r[6] + "." : ""}`;
             return {
-                name: `${r[1]} ${r[2]}.`,
+                fullName: `${name} (${regname})`,
+                name: name,
                 code: r[4].slice(1),
                 searchString: r[1],
                 searchStringEng: changeEngSymb(r[1]),
-                regname: `${r[5]} ${r[6] ? r[6]+"." : ""}`,
+                regname: regname,
                 regcode: r[3].slice(1),
             };
         });
@@ -40,6 +83,7 @@ module.exports.update = async ctx => {
 
         try {
             await MainHandbookPlaces.create({
+                fullName: data.fullName,
                 name: data.name,
                 code: data.code,
                 searchString: data.searchString,
@@ -68,7 +112,7 @@ module.exports.update = async ctx => {
 function changeEngSymb(str) {
     const map = new Map(Object.entries(transSymbol));
     let res = '';
-    for(let s of str) {
+    for (let s of str) {
         res += map.get(s.toLowerCase()) ? map.get(s.toLowerCase()) : s;
     }
     return res;

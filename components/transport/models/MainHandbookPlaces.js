@@ -2,7 +2,11 @@ const connection = require('@root/libs/connection')
 const mongoose = require('mongoose')
 
 const Schema = new mongoose.Schema({
-    name: String, //полное наименование населённого пункта
+    fullName: { //полное наименование населённого пункта включая регион
+        type: String,
+        index: true
+    },
+    name: String, //наименование населённого пункта
     code: String, //код КЛАДР населенного пункта
     searchString: { //наименование населённого пункта, сформированное специальным образом для поиска. Например, для реализации автодополнения
         type: String,
@@ -19,5 +23,10 @@ const Schema = new mongoose.Schema({
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
 })
+
+//возвращает полное наименование региона
+// Schema.virtual('fullName').get(function(){
+//     return `${this.name} (${this.regname})`;
+// })
 
 module.exports = connection.model('MainHandbookPlaces', Schema)

@@ -1,3 +1,4 @@
+const MainHandbookPlaces = require('@transport/models/MainHandbookPlaces');
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
 const PEKHandbookPlaces = require('@transport/models/PEKHandbookPlaces');
 
@@ -11,6 +12,30 @@ const PEKHandbookPlaces = require('@transport/models/PEKHandbookPlaces');
 //поэтому при запросе улицы используется регулярка /^[а-яА-Я]{5}/i
 //
 module.exports.checkCity = async (ctx, next) => {
+    try {
+        ctx.request.body.derival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.derival.trim() });
+        ctx.request.body.arrival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.arrival.trim() });
+    }
+    catch (error) {
+        console.log(error.message);
+        ctx.throw(400, error.message);
+    }
+
+    //проверка входных данных
+    if (!ctx.request.body.derival) {
+        ctx.status = 400;
+        return ctx.body = { path: 'derival', message: 'Не корректные данные' };
+    }
+    if (!ctx.request.body.arrival) {
+        ctx.status = 400;
+        return ctx.body = { path: 'arrival', message: 'Не корректные данные' };
+    }
+
+    // console.log(ctx.request.body.derival);
+
+    return next();
+
+
     // преобразование входных данных
     ctx.request.body.derival = await DellineHandbookPlaces
         .findOne({

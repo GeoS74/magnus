@@ -168,7 +168,7 @@
             function createOptionList(cities, list) {
                 list.innerHTML = "";
                 for (const city of cities) {
-                    list.insertAdjacentHTML('afterbegin', `<option value="${city.name}"></option>`);
+                    list.insertAdjacentHTML('afterbegin', `<option value="${city.fullName}"></option>`);
                 }
             }
             //установить/снять слушатель события 'input' подбора населенных пунктов

@@ -23,7 +23,8 @@ module.exports.router = router;
 
 
 
-
+//поиск населенного пункта
+router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 
 
 
@@ -35,6 +36,7 @@ router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
         }
     }
     catch (error) {
+        console.log(error.message);
         ctx.throw(418, error.message);
     }
 });
@@ -87,7 +89,7 @@ router.get('/kit/handbook/places/update', async ctx => {
 
 //"Деловые Линии"
 //поиск населенного пункта
-router.post('/search/city', koaBody, DelLine.searchCity);
+// router.post('/search/city', koaBody, DelLine.searchCity);
 //"Деловые Линии" - обновление справочника населенных пунктов
 router.get('/delline/handbook/places/update', (ctx, next) => {
     ctx.delline = {

@@ -6,67 +6,28 @@ const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces')
 const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets');
 const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
 
-
-// module.exports.checkCredentials = async (ctx, next) => {
-//     // преобразование входных данных
-//     ctx.request.body.derival = await DellineHandbookPlaces
-//         .findOne({
-//             name: ctx.request.body.derival
-//         }).populate({
-//             path: 'streets',
-//             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-//             options: { limit: 1 }
-//         })
-//         .populate('terminals');
-//     ctx.request.body.arrival = await DellineHandbookPlaces
-//         .findOne({
-//             name: ctx.request.body.arrival
-//         }).populate({
-//             path: 'streets',
-//             match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-//             options: { limit: 1 }
-//         })
-//         .populate('terminals');
-//     ctx.request.body.length = parseFloat(ctx.request.body.length) || 0;
-//     ctx.request.body.width = parseFloat(ctx.request.body.width) || 0;
-//     ctx.request.body.height = parseFloat(ctx.request.body.height) || 0;
-//     ctx.request.body.weight = parseFloat(ctx.request.body.weight) || 0;
-//     ctx.request.body.quantity = parseInt(ctx.request.body.quantity) || 0;
-
-//     //проверка входных данных
-//     if (!ctx.request.body.derival) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'derival', message: 'Не корректные данные' };
-//     }
-//     if (!ctx.request.body.arrival) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'arrival', message: 'Не корректные данные' };
-//     }
-//     if (ctx.request.body.length <= 0) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'length', message: 'Не корректные данные' };
-//     }
-//     if (ctx.request.body.width <= 0) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'width', message: 'Не корректные данные' };
-//     }
-//     if (ctx.request.body.height <= 0) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'height', message: 'Не корректные данные' };
-//     }
-//     if (ctx.request.body.weight <= 0) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'weight', message: 'Не корректные данные' };
-//     }
-//     if (ctx.request.body.quantity <= 0) {
-//         ctx.status = 400;
-//         return ctx.body = { path: 'quantity', message: 'Не корректные данные' };
-//     }
-//     return next();
-// };
+//принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником Деловых линий
+async function getCity(data) {
+    try{
+        return await DellineHandbookPlaces
+            .findOne({code: data.code + '000000000000'})
+            .populate({
+                path: 'streets',
+                match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+                options: { limit: 1 }
+            })
+            .populate('terminals');
+    }
+    catch(error) {
+        console.log(error.message);
+        throw new Error(error.message);
+    }
+}
 
 //формирование параметров запроса для расчёта перевозки
-function makeSearchParameters(parameters) {
+async function makeSearchParameters(parameters) {
+    parameters.derival = await getCity(parameters.derival);
+    parameters.arrival = await getCity(parameters.arrival);
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза
@@ -163,12 +124,11 @@ module.exports.calculation = async (ctx) => {
         ctx.request.body.produceDate = new Date(ctx.request.body.produceDate.getTime() + 1000 * 60 * 60 * 24);
     }
 
-    const data = makeSearchParameters(ctx.request.body);
+    const data = await makeSearchParameters(ctx.request.body);
     // console.log('+++++++++++++++++++++++++++++');
     // console.log(parameters);
     // console.log(data.delivery.derival.variant, '-', data.delivery.arrival.variant);
     // throw new Error(err.message);
-
 
     await fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
@@ -227,32 +187,32 @@ module.exports.calculation = async (ctx) => {
         });
 }
 //поиск населенного пункта
-module.exports.searchCity = async ctx => {
-    try {
-        const regexp = new RegExp("^" + ctx.request.body.city);
-        const city = await DellineHandbookPlaces.aggregate([
-            {
-                $match: {
-                    searchString: {
-                        $regex: regexp, $options: "i"
-                    }
-                }
-            },
-            { $limit: 50 },
-            {
-                $project: {
-                    _id: 0,
-                    name: 1
-                }
-            }
-        ]);
-        // console.log(city);
-        ctx.body = city;
-    } catch (error) {
-        console.log(error);
-        ctx.throw(400, error.message);
-    }
-};
+// module.exports.searchCity__ = async ctx => {
+//     try {
+//         const regexp = new RegExp("^" + ctx.request.body.city);
+//         const city = await DellineHandbookPlaces.aggregate([
+//             {
+//                 $match: {
+//                     searchString: {
+//                         $regex: regexp, $options: "i"
+//                     }
+//                 }
+//             },
+//             { $limit: 5 },
+//             {
+//                 $project: {
+//                     _id: 0,
+//                     name: 1
+//                 }
+//             }
+//         ]);
+//         console.log(city);
+//         ctx.body = city;
+//     } catch (error) {
+//         console.log(error);
+//         ctx.throw(400, error.message);
+//     }
+// };
 //обновить справочник терминалов в БД
 module.exports.updateHandbookTerminals = async ctx => {
     const fpath = path.join(__dirname, `../files/${ctx.delline.fname}`);
