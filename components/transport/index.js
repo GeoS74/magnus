@@ -34,6 +34,7 @@ router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
             case 'delline': await DelLine.calculation(ctx); break;
+            case 'kit': await Kit.calculation(ctx); break;
         }
     }
     catch (error) {
