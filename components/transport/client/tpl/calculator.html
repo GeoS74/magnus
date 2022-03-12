@@ -252,7 +252,6 @@
                             const res = await response.json();
                             console.log(res);
                             calculations.insertAdjacentHTML('afterbegin', makeRow(res, carrier));
-                            return true;
                         }
                         else if (response.status === 400) {
                             setValid(document.getElementById('derival'));
@@ -265,7 +264,8 @@
                             showMistake(await response.json());
                         }
                         else {
-                            throw new Error('HTTP error ' + response.status);
+                            // throw new Error('HTTP error ' + response.status);
+                            console.log(carrier, ": HTTP error ", response.status);
                         }
                     });
             }

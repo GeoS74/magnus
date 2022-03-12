@@ -175,6 +175,10 @@ module.exports.calculation = async (ctx) => {
                 for (const err of res.errors) {
                     console.log(err);
 
+                    if (err.code === 180003) { //Выбранный терминал не может принять груз с указанными ВГХ
+                        //...
+                    }
+
                     if (err.code === 180002) { //Выбран некорректный адрес
                         if (err.fields[0] == 'delivery.derival.address.search') {
                             ctx.status = 400;

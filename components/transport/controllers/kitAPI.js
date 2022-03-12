@@ -82,6 +82,10 @@ module.exports.calculation = async (ctx) => {
                 res[0].carrier = 'Кит';
                 ctx.body = res[0];
             }
+            else if(response.status === 429) {
+                console.log('Превышен лимит запросов к API KIT');
+                throw new Error(`KIT API: Rate limit exceeded`);
+            }
             else {
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
