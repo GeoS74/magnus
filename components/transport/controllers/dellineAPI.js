@@ -44,7 +44,7 @@ async function getCity(data) {
         else throw new Error("DelLine: city not found");
     }
     catch (error) {
-        console.log(error.message);
+        // console.log(error.message);
         throw new Error(error.message);
     }
 }

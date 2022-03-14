@@ -225,8 +225,9 @@
                 const fd = new FormData(event.target);
 
                 Promise.all([
-                    calculate(fd, 'delline'),
-                    calculate(fd, 'kit'),
+                    // calculate(fd, 'delline'),
+                    // calculate(fd, 'kit'),
+                    calculate(fd, 'pek'),
                 ])
                     .then(value => {
                         console.log("well done");
@@ -282,6 +283,10 @@
                     case 'kit':
                         mainSection = makeMainSectionKit(data);
                         hiddenSection = makeHiddenSectionKit(data);
+                        break;
+                    case 'pek':
+                        mainSection = makeMainSectionPek(data);
+                        hiddenSection = makeHiddenSectionPek(data);
                         break;
                 }
                 return `
@@ -349,6 +354,26 @@
                     if (data.name == 'Груз') data.name = 'Стоимость перевозки';
                     str += `<p><span class="text-muted">${data.name}:</span> ${data.price} р.</p>`
                 }
+                return str;
+            }
+            //блоки для ПЭК
+            function makeMainSectionPek(d) {
+                return '';
+                // return `
+                //     <article>
+                //         <p>${d.standart.cost} р.</p>
+                //     </article>
+                //     <article>
+                //         <p>${d.standart.time || 1} дней</p>
+                //     </article>
+                // `;
+            }
+            function makeHiddenSectionPek(d) {
+                let str = '';
+                // for (const data of d.standart.detail) {
+                //     if (data.name == 'Груз') data.name = 'Стоимость перевозки';
+                //     str += `<p><span class="text-muted">${data.name}:</span> ${data.price} р.</p>`
+                // }
                 return str;
             }
 

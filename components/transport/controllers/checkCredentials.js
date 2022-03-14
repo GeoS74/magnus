@@ -33,73 +33,24 @@ module.exports.checkCity = async (ctx, next) => {
     const derival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.derival.trim() });
     const arrival = await MainHandbookPlaces.findOne({ fullName: ctx.request.body.arrival.trim() });
     console.log('-------------MainHandbookPlaces----------');
-    console.log(derival);
+    console.log(derival.name);
 
-    // const dl = await DellineHandbookPlaces
-    //     //попытка найти город по коду
-    //     // .findOne({ code: derival.code + '000000000000' })
-    //     //попытка найти город по названию и коду региона
-    //     .findOne({ 
-    //         searchString: derival.searchString, 
-    //         regcode: derival.regcode.slice(0, 2)+"00000000000000000000000" 
-    //     })
-    //     .populate({
-    //         path: 'streets',
-    //         match: { name: { $regex: /^[а-яА-Я]{5}/i } },
-    //         options: { limit: 1 }
-    //     })
-    //     .populate('terminals');
-    // console.log('-------------DellineHandbookPlaces----------');
-    // console.log(dl);
-
-
-    //тест справочника ПЭК
-    // try {
-    //     const regexp = new RegExp("^" + derival.searchString);
-    //     const pek = await PEKHandbookPlaces.aggregate([
-    //         {
-    //             //условие выбора
-    //             // $match: {
-    //             //     $or: [
-    //             //         { name: ctx.request.body.derival.searchString },
-    //             //         {
-    //             //             name: {
-    //             //                 $regex: regexp, $options: "i"
-    //             //             }
-    //             //         }
-    //             //     ]
-    //             // }
-    //             //регулярка
-    //             $match: {
-    //                 name: {
-    //                     $regex: regexp, $options: "i"
-    //                 }
-    //             }
-    //             //в лоб
-    //             // $match: {
-    //             //     name: ctx.request.body.derival.searchString
-    //             // }
-    //         },
-    //         { $limit: 50 },
-    //         {
-    //             $project: {
-    //                 _id: 0,
-    //                 name: 1,
-    //                 region: 1
-    //             }
-    //         }
-    //     ]);
-    //     console.log('-------------PEKHandbookPlaces----------');
-    //     console.log(pek);
-
-
-
-
-
-    // } catch (error) {
-    //     console.log(error);
-    //     ctx.throw(400, error.message);
-    // }
+    const dl = await DellineHandbookPlaces
+        //попытка найти город по коду
+        // .findOne({ code: derival.code + '000000000000' })
+        //попытка найти город по названию и коду региона
+        .findOne({ 
+            searchString: derival.searchString, 
+            regcode: derival.regcode.slice(0, 2)+"00000000000000000000000" 
+        })
+        .populate({
+            path: 'streets',
+            match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+            options: { limit: 1 }
+        })
+        .populate('terminals');
+    console.log('-------------DellineHandbookPlaces----------');
+    console.log(dl.name);
 
 
     //тест справочника КИТ
@@ -113,7 +64,55 @@ module.exports.checkCity = async (ctx, next) => {
         });
 
     console.log('-------------KitHandbookPlaces----------');
-    console.log(kitderrival);
+    console.log(kitderrival.name);
+
+
+    //тест справочника ПЭК
+    try {
+        const regexp = new RegExp("^" + derival.searchString);
+        const pek = await PEKHandbookPlaces.aggregate([
+            {
+                //условие выбора
+                // $match: {
+                //     $or: [
+                //         { name: ctx.request.body.derival.searchString },
+                //         {
+                //             name: {
+                //                 $regex: regexp, $options: "i"
+                //             }
+                //         }
+                //     ]
+                // }
+                //регулярка
+                $match: {
+                    name: {
+                        $regex: regexp, $options: "i"
+                    }
+                }
+                //в лоб
+                // $match: {
+                //     name: ctx.request.body.derival.searchString
+                // }
+            },
+            { $limit: 50 },
+            {
+                $project: {
+                    _id: 0,
+                    name: 1,
+                    region: 1,
+                    cityID: 1
+                }
+            }
+        ]);
+        console.log('-------------PEKHandbookPlaces----------');
+        console.log(pek);
+    } catch (error) {
+        console.log(error);
+        ctx.throw(400, error.message);
+    }
+
+
+     
 
     ctx.body = {};
 };
