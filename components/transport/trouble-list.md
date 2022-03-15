@@ -36,6 +36,7 @@
 22) СДЭК https://www.cdek.ru/ru/integration
 https://api-docs.cdek.ru/29923849.html
 https://www.cdek-calc.ru/
+23) в справочнике СДЭКа не все города имеют код КЛАДР (прим. Петровск)
 
 пример запроса JWT токена:
 'https://api.edu.cdek.ru/v2/oauth/token?grant_type=client_credentials&client_id=EMscd6r9JnFiQ3bLoyjJY6eM78JrJceI&client_secret=PjLZkKBHEiLK3YsjtNrt3TGNG0ahs3kG'
