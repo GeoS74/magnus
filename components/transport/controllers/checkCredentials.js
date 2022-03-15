@@ -2,6 +2,7 @@ const MainHandbookPlaces = require('@transport/models/MainHandbookPlaces');
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
 const PEKHandbookPlaces = require('@transport/models/PEKHandbookPlaces');
 const KitHandbookPlaces = require('@transport/models/KitHandbookPlaces');
+const CdekHandbookPlaces = require('@transport/models/CdekHandbookPlaces');
 
 
 //получение документов о городах из коллекции главного справочника населенных пунктов
@@ -112,6 +113,18 @@ module.exports.checkCity = async (ctx, next) => {
     }
 
 
+    //тест справочника СДЭК
+    const cdekderrival = await CdekHandbookPlaces
+        //попытка найти по коду КЛАДР
+        .find({code: derival.code});
+        //попытка найти по наименованию и коду КЛАДР
+        // .findOne({
+        //     name: derival.searchString,
+        //     regcode: derival.regcode,
+        // });
+
+    console.log('-------------CdekHandbookPlaces----------');
+    console.log(cdekderrival);
      
 
     ctx.body = {};

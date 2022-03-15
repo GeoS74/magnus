@@ -197,9 +197,9 @@
                 const fd = new FormData(event.target);
 
                 Promise.all([
-                    // calculate(fd, 'delline'),
-                    // calculate(fd, 'kit'),
-                    // calculate(fd, 'pek'),
+                    calculate(fd, 'delline'),
+                    calculate(fd, 'kit'),
+                    calculate(fd, 'pek'),
                     calculate(fd, 'cdek'),
                 ])
                     .then(value => console.log("well done"))

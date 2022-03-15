@@ -2,12 +2,112 @@ const fetch = require('node-fetch');
 const CdekHandbookPlaces = require('@transport/models/CdekHandbookPlaces');
 
 
+//принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником СДЭКа
+async function getCity(data) {
+    try {
+        //попытка найти город по коду
+        let city = await CdekHandbookPlaces.findOne({ code: data.code });
+
+        if (city) return city;
+
+        //попытка найти город по названию и коду региона
+        city = await CdekHandbookPlaces
+            .findOne({
+                name: data.searchString,
+                regcode: data.regcode,
+            });
+
+        if (city) return city;
+        else throw new Error("Cdek: city not found");
+    }
+    catch (error) {
+        // console.log(error.message);
+        throw new Error(error.message);
+    }
+}
+
+//формирование параметров запроса для расчёта перевозки
+//параметры должны передаваться GET запросом
+async function makeSearchParameters(parameters) {
+    parameters.derival = await getCity(parameters.derival);
+    parameters.arrival = await getCity(parameters.arrival);
+
+    let arr = [
+        `weight=${parameters.weight}`, //Вес, кг
+        `width=${parameters.width*100}`, //Ширина, см
+        `length=${parameters.length*100}`, //Длина, см
+        `height=${parameters.height*100}`, //Высота, см
+        `from=${parameters.derival.codeCDEK}`, //код города отправителя в системе СДЭК
+        `to=${parameters.arrival.codeCDEK}`, //код города получателя в системе СДЭК
+        `contract=0`, //вид договора СДЭК (0 - нет договора)
+            // pay_to – параметр, указывающий, что оплату доставки производит отправитель. 
+            // Может принимать значения: 0 – доставку оплачивает получатель, 1 – доставку оплачивает отправитель. 
+            // Если параметр не указан, то считается, что доставку оплачивает отправитель. 
+            // Если параметр contract = 0, и доставку оплачивает получатель, то стоимость доставки увеличивается на 20%. 
+            // Если contract = 2, и с получателя берется оплата за товар наложенным платежом, 
+            // то с помощью параметра pay_to можно указать учитывать ли стоимость доставки при расчете комисси за наложенный платеж, 
+            // для это нужно указать pay_to = 0. Если contract = 2, наложенный платеж за товар не взимается, а pay_to = 0, 
+            // то считается что с получателя надо взять оплату за доставку, в этом случае также производится расчет комиссии за наложенный платеж.
+        `pay_to=1`,
+        `tariffs=62`,   //тариф для расчёта стоимости доставки (подходящиеварианты 10,1,15,18)
+                        //тариф 62 - это Магистральный экспресс склад-склад (самый дешевый тариф)
+        `insurance=0`, //Объявленная стоимость отправления
+        `cost=0`, //стоимость отправления, взимаемая с получателя при наложенном платеже (только для Интернет-магазинов), для расчета комиссии за наложенный платеж. 
+    ];
+
+    return arr.join('&');
+}
+
+
+//пост обработка данных перед отдачей клиенту
+//если cityID меньше 0 (основной город), то расчёт на сайте ПЭКа производится без учёта забора груза, хотя информация по забору предоставляется
+//эту ситуацию можно обыграть, но надо ли?
+function postProcessing(res) {
+    if(res[62].error) throw new Error(`Error CDEK: ${res[62].error[0].text}`);
+
+    const data = {
+        main: {
+            carrier: 'СДЭК',
+            price: res[62].result.price,
+            days: `${res[62].result.day_min} - ${res[62].result.day_max}` || '',
+        },
+        detail: []
+    };
+
+    // data.detail.push({
+    //     name: `${res.take[0]} из г. ${res.take[1]}`,
+    //     value: res.take[2] + ' р.'
+    // });
+
+    return data;
+}
+
 //расчет доставки
 module.exports.calculation = async (ctx) => {
+    const data = await makeSearchParameters(ctx.request.body);
+
+    await fetch('https://kit.cdek-calc.ru/api/?' + data)
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                // console.log(res[62].error);
+                ctx.body = postProcessing(res);
+            }
+            else {
+                const res = await response.json();
+                console.log(res);
+
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log(err.message);
+        });
 }
 
 
 //обновить справочник населённых пунктов в БД
+//эта функция вызывается рекурсивно, т.к. максимальное кол-во населенных пунктов в запросе к API составляет 1000
 module.exports.updateHandbookPlaces = async ctx => {
     ctx.page = ++ctx.page || 0;
     if (ctx.page === 0) {
@@ -39,7 +139,7 @@ module.exports.updateHandbookPlaces = async ctx => {
                             regname: d.region,
                             subRegion: d.sub_region,
                             postalCodes: d.postal_codes,
-                            regcode: (d.kladr_code ? d.kladr_code.slice(0,2)+"00000000000" : undefined)
+                            regcode: (d.kladr_code ? d.kladr_code.slice(0, 2) + "00000000000" : undefined)
                         })
                     }
                     catch (error) {
