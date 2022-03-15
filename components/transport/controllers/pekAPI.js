@@ -90,24 +90,65 @@ async function makeSearchParameters(parameters) {
 }
 
 //пост обработка данных перед отдачей клиенту
+//если cityID меньше 0 (основной город), то расчёт на сайте ПЭКа производится без учёта забора груза, хотя информация по забору предоставляется
+//эту ситуацию можно обыграть, но надо ли?
 function postProcessing(res) {
     const data = {
-        main: {},
+        main: {
+            carrier: 'ПЭК',
+            price: res.take[2] + res.auto[2] + (res.ADD ? res.ADD[3] : 0) + (res.ADD_1 ? res.ADD_1[3] : 0) + (res.ADD_2 ? res.ADD_2[3] : 0) + (res.ADD_3 ? res.ADD_3[3] : 0),
+            days: res.periods_days || '',
+        },
         detail: []
     };
+
+    data.detail.push({
+        name: `${res.take[0]} из г. ${res.take[1]}`,
+        value: res.take[2] + ' р.'
+    });
+
+    data.detail.push({
+        name: `${res.auto[0]} ${res.auto[1]}`,
+        value: res.auto[2] + ' р.'
+    });
+
+    if(res.ADD) {
+        data.detail.push({
+            name: res.ADD[1],
+            value: res.ADD[3] + ' р.'
+        });
+    }
+    if(res.ADD_1) {
+        data.detail.push({
+            name: res.ADD_1[1],
+            value: res.ADD_1[3] + ' р.'
+        });
+    }
+    if(res.ADD_2) {
+        data.detail.push({
+            name: res.ADD_2[1],
+            value: res.ADD_2[3] + ' р.'
+        });
+    }
+    if(res.ADD_3) {
+        data.detail.push({
+            name: res.ADD_3[1],
+            value: res.ADD_3[3] + ' р.'
+        });
+    }
+
     return data;
 }
 
 //расчет доставки
 module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
-    // console.log(data);
     
     await fetch('http://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?' + data)
         .then(async response => {
             if (response.ok) {
                 const res = await response.json();
-                console.log(res);
+                // console.log(res);
                 ctx.body = postProcessing(res);
             }
             else {

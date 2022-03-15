@@ -39,7 +39,7 @@ async function getCity(data) {
                 options: { limit: 1 }
             })
             .populate('terminals');
-        
+
         if (city) return city;
         else throw new Error("DelLine: city not found");
     }
@@ -136,6 +136,72 @@ async function makeSearchParameters(parameters) {
     return data;
 }
 
+//пост обработка данных перед отдачей клиенту
+//если cityID меньше 0 (основной город), то расчёт на сайте ПЭКа производится без учёта забора груза, хотя информация по забору предоставляется
+//эту ситуацию можно обыграть, но надо ли?
+function postProcessing(res) {
+    const dateStart = res.data.orderDates.pickup || res.data.orderDates.arrivalToOspSender;
+    const dateEnd = res.data.orderDates.derivalFromOspReceiver || res.data.orderDates.arrivalToOspReceiver;
+
+    const data = {
+        main: {
+            carrier: 'Деловые линии',
+            price: res.data.price,
+            days: diffDate(dateStart, dateEnd),
+        },
+        detail: []
+    };
+
+    data.detail.push({
+        name: 'Терминал отправки',
+        value: res.data.derival.terminal
+    });
+    data.detail.push({
+        name: 'Въезд на терминал',
+        value: res.data.derival.price + ' р.'
+    });
+    data.detail.push({
+        name: 'Дата отправки груза',
+        value: dateStart
+    });
+    data.detail.push({
+        name: 'Терминал приёма',
+        value: res.data.arrival.terminal
+    });
+    data.detail.push({
+        name: 'Услуги на терминале получателе',
+        value: res.data.arrival.price + ' р.'
+    });
+    data.detail.push({
+        name: 'Дата выдачи груза',
+        value: dateEnd
+    });
+    data.detail.push({
+        name: 'Стоимость перевозки',
+        value: res.data.intercity.price + ' р.'
+    });
+    data.detail.push({
+        name: 'Стоимость страхования груза',
+        value: res.data.insurance + ' р.'
+    });
+    data.detail.push({
+        name: 'Стоимость информирования о статусе заказа',
+        value: res.data.notify.price + ' р.'
+    });
+
+    return data;
+}
+
+//подсчёт разницы дней
+function diffDate(dateStart, dateEnd) {
+    try {
+        const diff = new Date(new Date(dateEnd) - new Date(dateStart));
+        return diff.getTime() / 1000 / 60 / 60 / 24;
+    } catch (e) {
+        return "";
+    }
+}
+
 //расчет доставки
 module.exports.calculation = async (ctx) => {
     //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
@@ -163,11 +229,8 @@ module.exports.calculation = async (ctx) => {
         .then(async response => {
             if (response.ok) {
                 const res = await response.json();
-                // console.log(res);
-                //здесь надо вернуть информацию о перевозчике (тел. терминала, адреса и т.д.)
-                //...
-                res.carrier = 'Деловые линии';
-                ctx.body = res;
+
+                ctx.body = postProcessing(res);
             }
             else if (response.status === 400) {
                 const res = await response.json();
@@ -472,92 +535,3 @@ function delay(ms) {
         setTimeout(_ => res(), ms);
     });
 }
-
-
-
-
-
-// const data = {
-//     appkey: process.env.DELLINE,
-//     delivery: { //Информация по перевозке груза
-//         deliveryType: { //Вид межтерминальной перевозки груза для которого будет рассчитана стоимость
-//             // Возможные значения:
-//             //      "auto"- автодоставка;
-//             //      "express" - экспресс-доставка;
-//             //      "letter" - письмо;
-//             //      "avia" - авиадоставка;
-//             //      "small" - доставка малогабаритного груза.
-//             type: 'auto'
-//         },
-//         derival: { //Данные по доставке груза от отправителя
-//             produceDate: '2022-03-02', //Дата выполнения заказа. Формат: "ГГГГ-ММ-ДД" (Используется только для параметра "request.delivery.derival")
-//             // Способ доставки груза
-//             // Возможные значения:
-//             //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
-//             //      "terminal" - доставка груза от/до терминала;
-//             variant: 'terminal',
-//             terminalID: '36', //ID терминала отправки/доставки груза из "Справочника терминалов"
-//             // city: "7700000000000000000000000",
-//         },
-//         arrival: { //Данные по доставке груза до получателя
-//             // Способ доставки груза
-//             // Возможные значения:
-//             //      "address"- доставка груза непосредственно от адреса отправителя/до адреса получателя;
-//             //      "terminal" - доставка груза от/до терминала;
-//             //      "airport" - доставка груза до аэропорта, вариант используется, если в городе, в который необходимо доставить груз, нет терминала "Деловых Линий"
-//             variant: 'terminal',
-//             // terminalID: '1', //ID терминала отправки/доставки груза из "Справочника терминалов"
-//             city: "7800000000000000000000000",
-//         },
-//         // packages: [ //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
-
-//         // ]
-//     },
-//     cargo: { //Информация о грузе
-//         quantity: 1,
-//         length: 1,
-//         width: 1,
-//         height: 1,
-//         weight: 100,
-//         totalVolume: 1,
-//         totalWeight: 100,
-//         hazardClass: 0,
-//         oversizedWeight: 100,
-//         oversizedVolume: 1,
-//     }
-// }
-
-
-
-// module.exports.microCalculation = async ctx => {
-//     const data = {
-//         appkey: process.env.DELLINE,
-//         derival: {
-//             city: "7700000000000000000000000"
-//         },
-//         arrival: {
-//             city: "7800000000000000000000000"
-//         },
-//     }
-
-//     await fetch('https://api.dellin.ru/v1/micro_calc.json', {
-//         headers: { 'Content-Type': 'application/json' },
-//         method: 'POST',
-//         body: JSON.stringify(data)
-//     })
-//         .then(async response => {
-//             if (response.ok) {
-//                 const res = await response.json();
-//                 console.log(res);
-//             }
-//             else {
-//                 throw new Error(`Error fetch query - status: ${response.status}`);
-//             }
-//         })
-//         .catch(err => {
-//             console.log(err);
-//             ctx.throw(400, err.message);
-//         });
-
-//     ctx.body = 'ok';
-// }

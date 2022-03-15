@@ -57,12 +57,33 @@ async function makeSearchParameters(parameters) {
 
 
 
+//пост обработка данных перед отдачей клиенту
+//API отдает не только перевозку standart, но и другие варианты
+function postProcessing(res) {
+    const data = {
+        main: {
+            carrier: 'ТК Кит',
+            price: res[0].standart.cost,
+            days: res[0].standart.time || '',
+        },
+        detail: []
+    };
+
+    for (const d of res[0].standart.detail) {
+        if (d.name === 'Груз') d.name = 'Стоимость перевозки';
+        data.detail.push({
+            name: d.name,
+            value: d.price + ' р.'
+        });
+    }
+
+    return data;
+}
+
+
 //расчет доставки
 module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
-    // console.log('+++++++++++++++++++++++++++++');
-    // console.log(data);
-    // throw new Error("hi");
 
     await fetch('https://capi.gtdel.com/1.0/order/calculate?token=' + process.env.KIT, {
         headers: { 'Content-Type': 'application/json' },
@@ -77,12 +98,9 @@ module.exports.calculation = async (ctx) => {
                 // for(const e of res[0].standart.detail) {
                 //     console.log(e);
                 // }
-                //здесь надо вернуть информацию о перевозчике (тел. терминала, адреса и т.д.)
-                //...
-                res[0].carrier = 'Кит';
-                ctx.body = res[0];
+                ctx.body = postProcessing(res);
             }
-            else if(response.status === 429) {
+            else if (response.status === 429) {
                 console.log('Превышен лимит запросов к API KIT');
                 throw new Error(`KIT API: Rate limit exceeded`);
             }

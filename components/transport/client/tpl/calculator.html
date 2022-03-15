@@ -57,7 +57,7 @@
 
     <div class="main">
         <h1>Расчёт стоимости доставки грузов</h1>
-
+        <!-- форма калькулятора -->
         <form id="calculateForm" onsubmit="event.preventDefault()">
             <div class="form-group">
                 <!-- откуда -->
@@ -98,43 +98,15 @@
                 <button type="submit" class="btn btn-primary mt-4" id="button">Рассчитать стоимость</button>
             </div>
         </form>
-        <div id="calculations">
-            <!-- <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">${data.carrier}</h4>
-                    <section>
-                        <article>
-                            <p class="text-muted">Стоимость перевозки</p>
-                        </article>
-                        <article>
-                            <p class="text-muted">Срок</p>
-                        </article>
-                    </section>
-                    <section>
-                        <article>
-                            <p class="text-muted">${data.data.price}</p>
-                        </article>
-                        <article>
-                            <p class="text-muted">${data.data.price}</p>
-                        </article>
-                    </section>
-                    <p class="show-optional" onclick="toggleHiddenBlock(event)">показать подробный расчет</p>
-
-                    <div class="optional" hidden="true">
-                        фывфывфывфывфывы
-                        фы вфы
-                        в фывфывфывфывфывыфыв фы
-                    </div>
-                </div>
-                </div> -->
-        </div>
-        <script>//подбор населенных пунктов
+        <!-- результаты расчета -->
+        <div id="calculations"></div>
+        <script>
+            addSearchHandler(); //запустить подбор населенных пунктов
             //показать/скрыть подробный расчёт
             function toggleHiddenBlock(event) {
                 event.target.nextElementSibling.hidden = !event.target.nextElementSibling.hidden;
                 event.target.innerHTML = event.target.nextElementSibling.hidden ? 'показать подробный расчет' : 'скрыть подробный расчет';
             }
-            addSearchHandler();
             //обработчик нажатия клавиши при подборе населенного пункта
             function searchCity(event) {
                 setValid(document.getElementById('derival'));
@@ -225,16 +197,12 @@
                 const fd = new FormData(event.target);
 
                 Promise.all([
-                    // calculate(fd, 'delline'),
-                    // calculate(fd, 'kit'),
+                    calculate(fd, 'delline'),
+                    calculate(fd, 'kit'),
                     calculate(fd, 'pek'),
                 ])
-                    .then(value => {
-                        console.log("well done");
-                    })
-                    .catch(error => {
-                        console.log(error);
-                    })
+                    .then(value => console.log("well done"))
+                    .catch(error => console.log(error))
                     .finally(_ => {
                         button.disabled = false;
                         wait.remove();
@@ -271,28 +239,11 @@
                     });
             }
             //генерация блоков с данными о расчётах
-            function makeRow(data, carrier) {
-                let mainSection = '';
-                let hiddenSection = '';
-
-                switch (carrier) {
-                    case 'delline':
-                        mainSection = makeMainSectionDelline(data);
-                        hiddenSection = makeHiddenSectionDelline(data);
-                        break;
-                    case 'kit':
-                        mainSection = makeMainSectionKit(data);
-                        hiddenSection = makeHiddenSectionKit(data);
-                        break;
-                    case 'pek':
-                        mainSection = makeMainSectionPek(data);
-                        hiddenSection = makeHiddenSectionPek(data);
-                        break;
-                }
+            function makeRow(data) {
                 return `
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">${data.carrier}</h4>
+                            <h4 class="card-title">${data.main.carrier}</h4>
                             <section class="mt-4">
                                 <article>
                                     <p>Стоимость перевозки</p>
@@ -301,93 +252,32 @@
                                     <p>Срок</p>
                                 </article>
                             </section>
-                            <section>${mainSection}</section>
+                            <section>${makeMainSection(data)}</section>
                             <p class="show-optional text-primary" onclick="toggleHiddenBlock(event)">показать подробный расчет</p>
-                            <div class="optional" hidden="true"><hr>${hiddenSection}</div>
+                            <div class="optional" hidden="true"><hr>${makeHiddenSection(data)}</div>
                         </div>
                     </div>
                 `;
             }
-
-            //блоки для Деловых линий
-            function makeMainSectionDelline(d) {
-                const dateStart = d.data.orderDates.pickup || d.data.orderDates.arrivalToOspSender;
-                const dateEnd = d.data.orderDates.derivalFromOspReceiver || d.data.orderDates.arrivalToOspReceiver;
+            //блоки главный / скрытый
+            function makeMainSection(data) {
                 return `
                     <article>
-                        <p>${d.data.price} р.</p>
+                        <p>${data.main.price} р.</p>
                     </article>
                     <article>
-                        <p>${diffDate(dateStart, dateEnd)} дней</p>
+                        <p>${data.main.days || 1} дней</p>
                     </article>
                 `;
             }
-            function makeHiddenSectionDelline(d) {
-                const dateStart = d.data.orderDates.pickup || d.data.orderDates.arrivalToOspSender;
-                const dateEnd = d.data.orderDates.derivalFromOspReceiver || d.data.orderDates.arrivalToOspReceiver;
-                return `
-                    <p><span class="text-muted">Терминал отправки:</span> ${d.data.derival.terminal}</p>
-                    <p><span class="text-muted">Стоимость доставки до терминала отправки:</span> ${d.data.derival.price} р.</p>
-                    <p><span class="text-muted">Дата забора груза:</span> ${dateStart}</p>
-                    <p><span class="text-muted">Терминал приёма:</span> ${d.data.arrival.terminal}</p>
-                    <p><span class="text-muted">Стоимость доставки до терминала приёма:</span> ${d.data.arrival.price} р.</p>
-                    <p><span class="text-muted">Дата выдачи груза:</span> ${dateEnd}</p>
-                    <p><span class="text-muted">Стоимость перевозки:</span> ${d.data.intercity.price} р.</p>
-                    <p><span class="text-muted">Стоимость страхования груза:</span> ${d.data.insurance} р.</p>
-                    <p><span class="text-muted">Стоимость информирования о статусе заказа:</span> ${d.data.notify.price} р.</p>
-                `;
-            }
-            //блоки для КИТ
-            function makeMainSectionKit(d) {
-                return `
-                    <article>
-                        <p>${d.standart.cost} р.</p>
-                    </article>
-                    <article>
-                        <p>${d.standart.time || 1} дней</p>
-                    </article>
-                `;
-            }
-            function makeHiddenSectionKit(d) {
+            function makeHiddenSection(data) {
                 let str = '';
-                for (const data of d.standart.detail) {
-                    if (data.name == 'Груз') data.name = 'Стоимость перевозки';
-                    str += `<p><span class="text-muted">${data.name}:</span> ${data.price} р.</p>`
+                for (const d of data.detail) {
+                    str += `<p><span class="text-muted"> ${d.name}:</span>${d.value}</p>`
                 }
                 return str;
             }
-            //блоки для ПЭК
-            function makeMainSectionPek(d) {
-                return '';
-                // return `
-                //     <article>
-                //         <p>${d.standart.cost} р.</p>
-                //     </article>
-                //     <article>
-                //         <p>${d.standart.time || 1} дней</p>
-                //     </article>
-                // `;
-            }
-            function makeHiddenSectionPek(d) {
-                let str = '';
-                // for (const data of d.standart.detail) {
-                //     if (data.name == 'Груз') data.name = 'Стоимость перевозки';
-                //     str += `<p><span class="text-muted">${data.name}:</span> ${data.price} р.</p>`
-                // }
-                return str;
-            }
 
-
-
-            //подсчёт разницы дней
-            function diffDate(dateStart, dateEnd) {
-                try {
-                    const diff = new Date(new Date(dateEnd) - new Date(dateStart));
-                    return diff.getTime() / 1000 / 60 / 60 / 24;
-                } catch (e) {
-                    return "";
-                }
-            }
         </script>
     </div>
 </body>
