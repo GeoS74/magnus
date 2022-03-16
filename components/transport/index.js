@@ -117,7 +117,34 @@ function delay(ms) {
 
 
 const fetch = require('node-fetch');
+const { base64encode, base64decode } = require('nodejs-base64');
 router.get('/test', async ctx => {
+    //https://api2.nrg-tk.ru/v2/cities?lang=ru
+    // await fetch('https://mainapi.nrg-tk.ru/v3/cities?lang=ru')
+    // await fetch('https://api.jde.ru/vD/geo/SearchCity?mode=1')
+    // await fetch('https://api.baikalsr.ru/v2/affiliate', {
+
+    await fetch('https://api.baikalsr.ru/v2/affiliate', {
+        headers: {
+            // 'Content-Type': 'application/json',
+            'Authorization': `Basic ${base64encode("c54b77f390005fc0abe145d824945562:")}`,
+            // 'Host': `api.baikalsr.ru`,
+            // 'apiKey': `c54b77f390005fc0abe145d824945562`
+        },
+        method: 'GET',
+    })
+        .then(async response => {
+            const res = await response.json();
+            console.log(response.status);
+            console.log(res);
+
+            // for(let key in res) {
+            //     console.log(key);
+            // }
+        })
+        .catch(error => {
+            console.log(error);
+        });
     ctx.body = { name: "GeoS" };
 })
 

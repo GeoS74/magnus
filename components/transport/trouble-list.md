@@ -38,30 +38,44 @@ https://api-docs.cdek.ru/29923849.html
 https://www.cdek-calc.ru/
 23) в справочнике СДЭКа не все города имеют код КЛАДР (прим. Петровск)
 24) у СДЭКа разные тарифы для доставки (см. описание). Причём самый дешёвый - это Магистральный экспресс склад-склад
+25) email тех. поддержки СДЭК integrator@cdek.ru
+26) Подробнее про веб-службы и про технологию SOAP можно прочитать, например, здесь:
+http://www.webmascon.com/topics/technologies/8a.asp
+27) у DPD есть ограничение на обращения к калькулятору 50.000 запросов в сутки
+28) скачать список городов DPD можно по FTP
+Server: ftp.dpd.ru
+Login: integration
+Pass: xYUX~7W98
+Порт: 22
+файл называется GeographyDPD, находится в папке integration, в первом столбце таблицы указан параметр cityId, который можно использовать при расчете стоимости доставки по API
+29) код из справочника DPD для г. Челябинск
+RU74000001000
+код из основного справочника
+7400000100000
+30) в запросах Байкала надо передавать такой заголовок:
+'Authorization': `Basic ${base64encode("c54b77f390005fc0abe145d824945562:")}`
+т.е. после токена через двоеточие должен быть указан пустой пароль и всё это добро надо закодировать в base64
+31) в Байкале можно создать не более 20 ключей
 
-пример запроса JWT токена:
-'https://api.edu.cdek.ru/v2/oauth/token?grant_type=client_credentials&client_id=EMscd6r9JnFiQ3bLoyjJY6eM78JrJceI&client_secret=PjLZkKBHEiLK3YsjtNrt3TGNG0ahs3kG'
-Далее при обращении к API использовать заголовок с токеном:
-Authorization: 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJvcmRlcjphbGwiLCJwYXltZW50OmFsbCJdLCJleHAiOjE2NDcyNjYxMTUsImF1dGhvcml0aWVzIjpbInNoYXJkLWlkOnJ1LTAxIiwiZnVsbC1uYW1lOtCi0LXRgdGC0LjRgNC-0LLQsNC90LjQtSDQmNC90YLQtdCz0YDQsNGG0LjQuCDQmNCcLCDQntCR0KnQldCh0KLQktCeINChINCe0JPQoNCQ0J3QmNCn0JXQndCd0J7QmSDQntCi0JLQldCi0KHQotCS0JXQndCd0J7QodCi0KzQriIsImNvbnRyYWN0OtCY0Jwt0KDQpC3Qk9Cb0JMtMjIiLCJhY2NvdW50LWxhbmc6cnVzIiwiYWNjb3VudC11dWlkOmU5MjViZDBmLTA1YTYtNGM1Ni1iNzM3LTRiOTljMTRmNjY5YSIsImFwaS12ZXJzaW9uOjEuMSIsImNsaWVudC1pZC1lYzU6ZWQ3NWVjZjQtMzBlZC00MTUzLWFmZTktZWI4MGJiNTEyZjIyIiwiY2xpZW50LWlkLWVjNDoxNDM0ODIzMSIsImNvbnRyYWdlbnQtdXVpZDplZDc1ZWNmNC0zMGVkLTQxNTMtYWZlOS1lYjgwYmI1MTJmMjIiLCJzb2xpZC1hZGRyZXNzOmZhbHNlIiwiY2xpZW50LWNpdHk60J3QvtCy0L7RgdC40LHQuNGA0YHQuiwg0J3QvtCy0L7RgdC40LHQuNGA0YHQutCw0Y8g0L7QsdC7LiJdLCJqdGkiOiJiMDc4ZGFhMi1lZmIzLTRjNGEtOThiMC0wZDM0YjhhZTc0OTMiLCJjbGllbnRfaWQiOiJFTXNjZDZyOUpuRmlRM2JMb3lqSlk2ZU03OEpySmNlSSJ9.Gva54c3_6hyY1ND3GTx2lPthTLQspCxJzvo7MXLNAXBDUYxH0faHHhoa9vzKPRP5mfYkcP-lzA9p-mn3rLihNkX3x0MKw6IQWbz7wTdWjwxpY6NeA3OjR0Z30USW-ykWwx2g7rZb9fAKyNI7cjXZZdQnPwz8jQqdU0xVYh4pXkg31R6PkU40EhoOo0G5p0a1L6K9Z7Ncbd32dagZHX47XilbcgjlQ4SopfrG8a5AJMeV20aP6QLerpwrphqF4D7CvgE7BPtyRZ9ba7i4NsFZ9_EzmzA9V8LPA-VcpzxmlMvelqMhhzeNitmOpAUUxLUwkcX0qrqhjN8vZxJyAv9pPw'
+
 
 Решено -    Деловые Линии (в том числе FTL-подразделение ДЛ-Транс)
 Решено -    ПЭК
 Решено -    GTD (Кит, Кашалот)
-            ЖелДорЭкспедиция
-            Байкал Сервис
+В работе -  ЖелДорЭкспедиция
+В работе -  Байкал Сервис
             MagicTrans
             Да-Транс
-            Boxberry
-            DPD
+В работе* - Boxberry        (для юр. лиц)
+В работе* - DPD             (для юр. лиц)
             ГлавДоставка
 Решено -    СДЭК
             Согруз
-            Энергия
+В работе -  Энергия (жду окончания работ API v3 для оформления токен, но можно использовать API v2)
             Почта России
             Очаковская Логистическая Компания
             Адамос Логистик
             Возовоз
-            MagicTrans
 
 
 Точки роста:
