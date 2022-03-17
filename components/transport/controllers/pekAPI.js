@@ -24,7 +24,7 @@ async function getCity(data) {
             { $limit: 50 },
             { $project: project }
         ]);
-        if(city.length === 1) return city[0];
+        if (city.length === 1) return city[0];
 
         //попытка найти по названию
         searchParams = {
@@ -38,7 +38,7 @@ async function getCity(data) {
         ]);
         // console.log(city);
 
-        if(city.length === 1) return city[0];
+        if (city.length === 1) return city[0];
         else throw new Error("Pek: city not found");
         //здесь можно дописать 3-ю попытку найти город,
         //при которой составляется Полное назнвание города, включая обл.
@@ -112,25 +112,25 @@ function postProcessing(res) {
         value: res.auto[2] + ' р.'
     });
 
-    if(res.ADD) {
+    if (res.ADD) {
         data.detail.push({
             name: res.ADD[1],
             value: res.ADD[3] + ' р.'
         });
     }
-    if(res.ADD_1) {
+    if (res.ADD_1) {
         data.detail.push({
             name: res.ADD_1[1],
             value: res.ADD_1[3] + ' р.'
         });
     }
-    if(res.ADD_2) {
+    if (res.ADD_2) {
         data.detail.push({
             name: res.ADD_2[1],
             value: res.ADD_2[3] + ' р.'
         });
     }
-    if(res.ADD_3) {
+    if (res.ADD_3) {
         data.detail.push({
             name: res.ADD_3[1],
             value: res.ADD_3[3] + ' р.'
@@ -143,7 +143,7 @@ function postProcessing(res) {
 //расчет доставки
 module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
-    
+
     await fetch('http://calc.pecom.ru/bitrix/components/pecom/calc/ajax.php?' + data)
         .then(async response => {
             if (response.ok) {
@@ -167,35 +167,41 @@ module.exports.calculation = async (ctx) => {
 module.exports.updateHandbookPlaces = async ctx => {
     await fetch('http://www.pecom.ru/ru/calc/towns.php')
         .then(async response => {
-            const res = await response.json();
-            // console.log(res);
+            if (response.ok) {
+                const res = await response.json();
+                // console.log(res);
 
-            const start = Date.now();
-            let i = 0;
+                const start = Date.now();
+                let i = 0;
 
-            //очистить коллекцию населённых пунктов
-            await PEKHandbookPlaces.deleteMany();
+                //очистить коллекцию населённых пунктов
+                await PEKHandbookPlaces.deleteMany();
 
-            for (const region in res) {
-                for (const cityID in res[region]) {
-                    if (!(++i % 50)) console.log('write: ', i);
+                for (const region in res) {
+                    for (const cityID in res[region]) {
+                        if (!(++i % 50)) console.log('write: ', i);
 
-                    try {
-                        await PEKHandbookPlaces.create({
-                            cityID: cityID,
-                            name: res[region][cityID],
-                            region: region,
-                        })
-                    }
-                    catch (error) {
-                        console.log(error)
-                        continue;
+                        try {
+                            await PEKHandbookPlaces.create({
+                                cityID: cityID,
+                                name: res[region][cityID],
+                                region: region,
+                            })
+                        }
+                        catch (error) {
+                            console.log(error)
+                            continue;
+                        }
                     }
                 }
-            }
 
-            console.log('PEK handbook places is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
-            ctx.body = 'PEK handbook places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+                console.log('PEK handbook places is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
+                ctx.body = 'PEK handbook places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+            }
+            else {
+                // console.log(await response.json());
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
         })
         .catch(error => {
             console.log(err);

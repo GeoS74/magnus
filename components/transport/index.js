@@ -6,6 +6,7 @@ const DelLine = require('@transport/controllers/dellineAPI');
 const Pek = require('@transport/controllers/pekAPI');
 const Kit = require('@transport/controllers/kitAPI');
 const Cdek = require('@transport/controllers/cdekAPI');
+const Baikal = require('@transport/controllers/baikalAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
@@ -38,6 +39,7 @@ router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
             case 'kit': await Kit.calculation(ctx); break;
             case 'pek': await Pek.calculation(ctx); break;
             case 'cdek': await Cdek.calculation(ctx); break;
+            case 'baikal': await Baikal.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -69,6 +71,9 @@ router.get('/pek/handbook/places/update', Pek.updateHandbookPlaces);
 
 //"Кит" - обновление справочника населенных пунктов
 router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
+
+//"Байкал" - обновление справочника населенных пунктов
+router.get('/baikal/handbook/places/update', Baikal.updateHandbookPlaces);
 
 
 //"Деловые Линии"
@@ -124,12 +129,10 @@ router.get('/test', async ctx => {
     // await fetch('https://api.jde.ru/vD/geo/SearchCity?mode=1')
     // await fetch('https://api.baikalsr.ru/v2/affiliate', {
 
-    await fetch('https://api.baikalsr.ru/v2/affiliate', {
+    await fetch('https://api.baikalsr.ru/v2/directory/services/0c5b2444-70a0-4932-980c-b4dc0d3f02b5', {
         headers: {
             // 'Content-Type': 'application/json',
-            'Authorization': `Basic ${base64encode("c54b77f390005fc0abe145d824945562:")}`,
-            // 'Host': `api.baikalsr.ru`,
-            // 'apiKey': `c54b77f390005fc0abe145d824945562`
+            'Authorization': `Basic ${base64encode(`${process.env.BAIKAL}:`)}`,
         },
         method: 'GET',
     })

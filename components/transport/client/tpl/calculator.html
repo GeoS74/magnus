@@ -201,6 +201,7 @@
                     calculate(fd, 'kit'),
                     calculate(fd, 'pek'),
                     calculate(fd, 'cdek'),
+                    calculate(fd, 'baikal'),
                 ])
                     .then(value => console.log("well done"))
                     .catch(error => console.log(error))
@@ -274,7 +275,7 @@
             function makeHiddenSection(data) {
                 let str = '';
                 for (const d of data.detail) {
-                    str += `<p><span class="text-muted"> ${d.name}:</span>${d.value}</p>`
+                    str += `<p><span class="text-muted">${d.name}:</span> ${d.value}</p>`
                 }
                 return str;
             }
