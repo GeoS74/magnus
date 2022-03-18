@@ -7,6 +7,7 @@ const Pek = require('@transport/controllers/pekAPI');
 const Kit = require('@transport/controllers/kitAPI');
 const Cdek = require('@transport/controllers/cdekAPI');
 const Baikal = require('@transport/controllers/baikalAPI');
+const Boxberry = require('@transport/controllers/boxberryAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
@@ -40,6 +41,7 @@ router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
             case 'pek': await Pek.calculation(ctx); break;
             case 'cdek': await Cdek.calculation(ctx); break;
             case 'baikal': await Baikal.calculation(ctx); break;
+            case 'boxberry': await Boxberry.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -64,10 +66,8 @@ router.get('/calculator', async ctx => {
 //"СДЭК" - обновление справочника населенных пунктов
 router.get('/cdek/handbook/places/update', Cdek.getJWToken, Cdek.updateHandbookPlaces);
 
-
 //"ПЭК" - обновление справочника населенных пунктов
 router.get('/pek/handbook/places/update', Pek.updateHandbookPlaces);
-
 
 //"Кит" - обновление справочника населенных пунктов
 router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
@@ -75,10 +75,13 @@ router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
 //"Байкал" - обновление справочника населенных пунктов
 router.get('/baikal/handbook/places/update', Baikal.updateHandbookPlaces);
 
+//"Boxberry" - обновление справочника населенных пунктов
+router.get('/boxberry/handbook/places/update', Boxberry.updateHandbookPlaces);
+//"Boxberry" - обновление справочника пунктов выдачи
+router.get('/boxberry/handbook/outputPoints/update', Boxberry.updateHandbookOutputPoints);
+//"Boxberry" - обновление справочника пунктов приёма
+router.get('/boxberry/handbook/inputPoints/update', Boxberry.updateHandbookInputPoints);
 
-//"Деловые Линии"
-//поиск населенного пункта
-// router.post('/search/city', koaBody, DelLine.searchCity);
 //"Деловые Линии" - обновление справочника населенных пунктов
 router.get('/delline/handbook/places/update', (ctx, next) => {
     ctx.delline = {
@@ -120,34 +123,46 @@ function delay(ms) {
 
 
 
+// {
+//     Code: 'Н00038243',
+//     Name: 'Таврово',
+//     ReceptionLaP: '0',
+//     DeliveryLaP: '1',
+//     Reception: '0',
+//     PickupPoint: '0',
+//     CourierDelivery: '1',
+//     ForeignReceptionReturns: '0',
+//     Terminal: '0',
+//     Kladr: '3102200008200',
+//     Region: 'Белгородская',
+//     CountryCode: '643',
+//     UniqName: 'Таврово',
+//     District: 'Белгородский',
+//     Prefix: 'с',
+//     CourierReception: '0'
+//   },
+
 
 const fetch = require('node-fetch');
-const { base64encode, base64decode } = require('nodejs-base64');
 router.get('/test', async ctx => {
-    //https://api2.nrg-tk.ru/v2/cities?lang=ru
-    // await fetch('https://mainapi.nrg-tk.ru/v3/cities?lang=ru')
-    // await fetch('https://api.jde.ru/vD/geo/SearchCity?mode=1')
-    // await fetch('https://api.baikalsr.ru/v2/affiliate', {
+    // await fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=ListCitiesFull&CountryCode=643`, {
+    //     headers: {
+    //         // 'Content-Type': 'application/json',
+    //     },
+    //     method: 'GET',
+    // })
+    //     .then(async response => {
+    //         const res = await response.json();
+    //         console.log(response.status);
+    //         console.log(res);
 
-    await fetch('https://api.baikalsr.ru/v2/directory/services/0c5b2444-70a0-4932-980c-b4dc0d3f02b5', {
-        headers: {
-            // 'Content-Type': 'application/json',
-            'Authorization': `Basic ${base64encode(`${process.env.BAIKAL}:`)}`,
-        },
-        method: 'GET',
-    })
-        .then(async response => {
-            const res = await response.json();
-            console.log(response.status);
-            console.log(res);
-
-            // for(let key in res) {
-            //     console.log(key);
-            // }
-        })
-        .catch(error => {
-            console.log(error);
-        });
+    //         // for(let key in res) {
+    //         //     console.log(key);
+    //         // }
+    //     })
+    //     .catch(error => {
+    //         console.log(error);
+    //     });
     ctx.body = { name: "GeoS" };
 })
 
