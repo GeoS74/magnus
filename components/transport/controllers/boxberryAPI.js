@@ -15,13 +15,13 @@ async function getCity(data) {
     try {
         //попытка найти город по коду
         let city = await BoxberryHandbookPlaces
-            .findOne({ name: data.searchString })
+            .findOne({ searchString: data.searchString })
             .populate('inputPoints')
             .populate('outputPoints');
         // let city = await BoxberryHandbookPlaces.aggregate([
         //     {
         //         $match: {
-        //             name: data.searchString
+        //             searchString: data.searchString
         //         }
         //     },
         //     {
@@ -36,7 +36,7 @@ async function getCity(data) {
         //     { $limit: 50 },
         // ]);
 
-        // console.log(city);
+         
         if (city) return city;
         else throw new Error("Boxberry: city not found");
     }
@@ -48,6 +48,8 @@ async function getCity(data) {
 
 //формирование параметров запроса для расчёта перевозки
 //параметры должны передаваться GET запросом
+//максимальный вес коробки не должен превышать 15 кг
+//размер каждого измерения ДШВ не должен превышать 120 см (хотя API позволяет расчитать превышение лимитов)
 async function makeSearchParameters(parameters) {
     //для корректного расчёта стоимости доставки в качестве отправного пункта надо использовать Код пункта приема заказа
     //в качестве конечной точки Код пункта выдачи заказа
@@ -64,7 +66,7 @@ async function makeSearchParameters(parameters) {
     //необходимо контролировать заявленный вес и объем, т.к.
     //на пунктах выдачи посылок могут быть ограничения
     //
-    // надо посмотреть как boxberry обработает превышение лимитов
+    // boxberry спокойно обрабатывает превышение лимитов
     //
     // if(parameters.arrival.outputPoints.loadLimit < parameters.weight) {
     //     throw new Error("Boxberry: excess max weight limit");
@@ -73,18 +75,20 @@ async function makeSearchParameters(parameters) {
     //     throw new Error("Boxberry: excess max volume limit");
     // }
 
-    let arr = [
-        `width=${parameters.width}`, //Ширина
-        `depth=${parameters.length}`, //Длина (глубина коробки)
-        `height=${parameters.height}`, //Высота
-        `weight=${parameters.weight}`, //Вес
-        `targetstart=${parameters.weight}`, //
-        `target=${parameters.weight}`, //
-        `ordersum=0`, //
-        `deliverysum=0`, //
-        `paysum=0`, //
-    ];
 
+    let arr = [
+        `weight=${parameters.weight*1000}`, //Вес в граммах
+        `targetstart=${parameters.derival.inputPoints[0].code}`, //Код пункта приема заказа
+        `target=${parameters.arrival.outputPoints[0].code}`, //Код пункта выдачи заказа
+        `ordersum=500`, //Объявленная стоимость посылки (страховая стоимость) min=500
+        `deliverysum=0`, //Заявленная стоимость доставки (прим.: хз что это такое)
+        `height=${parameters.length*100}`, //Высота, см
+        `width=${parameters.width*100}`, //Ширина, см
+        `depth=${parameters.height*100}`, //Длина (глубина коробки), см
+        `paysum=500`, //Сумма к оплате с получателя   
+    ];
+// console.log(`${parameters.length*100} x ${parameters.width*100} x ${parameters.height*100}`);
+// console.log(arr);
     return arr.join('&');
 }
 
@@ -93,16 +97,22 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'Boxberry',
-            price: '',
-            days: '' || '',
+            price: res.price,
+            days: res.delivery_period || '',
         },
         detail: []
     };
 
-    // data.detail.push({
-    //     name: s.name,
-    //     value: s.cost + ' р.'
-    // });
+    data.detail.push({
+        name: 'Стоимость базового тарифа',
+        value: res.price_base + ' р.'
+    });
+
+    data.detail.push({
+        name: 'Стоимость дополнительных услуг',
+        value: res.price_service + ' р.'
+    });
+
     return data;
 }
 
@@ -111,33 +121,24 @@ module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
 
     //тип доставки Склад-Склад
-    //https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=DeliveryCosts&weight=500&targetstart=010&target=010&ordersum=0&deliverysum=0&height=120&width=80&depth=50&paysum=100
-
-    // await fetch(`https://api.baikalsr.ru/v2/calculator`, {
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Basic ${base64encode(`${process.env.BAIKAL}:`)}`,
-    //     },
-    //     method: 'POST',
-    //     body: JSON.stringify(data)
-    // })
-    //     .then(async response => {
-    //         if (response.ok) {
-    //             const res = await response.json();
-    //             // console.log(res);
-    //             ctx.body = postProcessing(res);
-    //         }
-    //         else {
-    //             const res = await response.json();
-    //             console.log(res);
-    //             throw new Error(`Error fetch query - status: ${response.status}`);
-    //         }
-    //     })
-    //     .catch(err => {
-    //         console.log('~~~~~Error API Pek~~~~~');
-    //         console.log(err);
-    //         throw new Error(err.message);
-    //     });
+    await fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=DeliveryCosts&${data}`)
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                // console.log(res);
+                ctx.body = postProcessing(res);
+            }
+            else {
+                const res = await response.json();
+                console.log(res);
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(err => {
+            console.log('~~~~~Error API Boxberry~~~~~');
+            console.log(err);
+            throw new Error(err.message);
+        });
 }
 
 
