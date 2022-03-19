@@ -5,6 +5,7 @@ const XLSX = require('xlsx'); //https://github.com/SheetJS/sheetjs
 const DellineHandbookPlaces = require('@transport/models/DellineHandbookPlaces');
 const DellineHandbookStreets = require('@transport/models/DellineHandbookStreets');
 const DellineHandbookTerminals = require('@transport/models/DellineHandbookTerminals');
+const DellineProduceDate = require('@transport/models/DellineProduceDate');
 
 //принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником Деловых линий
 //API Деловых линий требует, чтобы обязательно был указан номер дома,
@@ -51,8 +52,15 @@ async function getCity(data) {
 
 //формирование параметров запроса для расчёта перевозки
 async function makeSearchParameters(parameters) {
-    parameters.derival = await getCity(parameters.derival);
-    parameters.arrival = await getCity(parameters.arrival);
+    //нельзя записывать в объект parameters новые данные о населённых пунктах,
+    // т.к. parameters это по сути объект ctx.request.body, который передаётся по ссылке
+    // метод calculate может вызываться рекурсивно если получит ошибку 180012 (Выбранная дата недоступна)
+    // и чтобы он мог корректно обработать эту ошибку необходимо сохранять ctx.request.body в неизменном виде
+    // parameters.derival = await getCity(parameters.derival);
+    // parameters.arrival = await getCity(parameters.arrival);
+    const derival = await getCity(parameters.derival);
+    const arrival = await getCity(parameters.arrival);
+
     const data = {
         appkey: process.env.DELLINE,
         delivery: { //Информация по перевозке груза
@@ -78,7 +86,7 @@ async function makeSearchParameters(parameters) {
                 address: {
                     // search: "1, Береза с (Курская обл.)"
                     // search: "1, Авиационная ул, Челябинск г (Челябинская обл.)"
-                    search: makeAddress(parameters.derival)
+                    search: makeAddress(derival)
                 },
                 time: {
                     worktimeStart: "10:00",
@@ -98,7 +106,7 @@ async function makeSearchParameters(parameters) {
                     // search: "1, Береза д (Псковская обл.)"
                     // search: "1, Невская ул, Псков г (Псковская обл.)"
                     // search: "1, Ашинская ул, Аша г (Челябинская обл.)"
-                    search: makeAddress(parameters.arrival)
+                    search: makeAddress(arrival)
                 },
                 time: {
                     worktimeStart: "10:00",
@@ -122,14 +130,14 @@ async function makeSearchParameters(parameters) {
     };
 
     //если в выбранном населенном пункте есть терминал, то расчёт производится без забора груза от адреса
-    if (parameters.derival.terminals.length) {
+    if (derival.terminals.length) {
         data.delivery.derival.variant = 'terminal';
-        data.delivery.derival.terminalID = parameters.derival.terminals[0].terminalID;
+        data.delivery.derival.terminalID = derival.terminals[0].terminalID;
         delete (data.delivery.derival.address);
     }
-    if (parameters.arrival.terminals.length) {
+    if (arrival.terminals.length) {
         data.delivery.arrival.variant = 'terminal';
-        data.delivery.arrival.terminalID = parameters.arrival.terminals[0].terminalID;
+        data.delivery.arrival.terminalID = arrival.terminals[0].terminalID;
         delete (data.delivery.arrival.address);
     }
 
@@ -208,18 +216,42 @@ module.exports.calculation = async (ctx) => {
     //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
     //при рекурсивном вызове к produceDate добавляются сутки
     //рекурсия прекратится если разница между produceDate и сегодня будет более определённого количества дней (см. обработку этой ошибки)
+    //
+    // алгоритм установки даты отправки груза:
+    // 1) сходить в БД и попробовать получить запись по коду города
+    // 2) если это первый вызов (до рекурсии), то установить produceDate из БД или установить завтрашний день
+    // 3) если происходит рекурсивный вызов, то прибавить день
+    // 5) проверить есть ли запись в БД
+    // 4) если её нет - записать, если есть - обновить
+    const d = await DellineProduceDate.findOne({ code: ctx.request.body.derival.code });
     if (!ctx.request.body.produceDate) {
-        ctx.request.body.produceDate = new Date(Date.now() + 1000 * 60 * 60 * 24);
+        ctx.request.body.produceDate = (d !== null) ? d.produceDate : new Date(Date.now() + 1000 * 60 * 60 * 24);
     }
     else {
         ctx.request.body.produceDate = new Date(ctx.request.body.produceDate.getTime() + 1000 * 60 * 60 * 24);
+
+        if (d === null) {
+            await DellineProduceDate.create({
+                code: ctx.request.body.derival.code,
+                produceDate: ctx.request.body.produceDate
+            })
+        }
+        else {
+            await DellineProduceDate.findOneAndUpdate(
+                { code: ctx.request.body.derival.code },
+                { produceDate: ctx.request.body.produceDate })
+        }
+
     }
 
     const data = await makeSearchParameters(ctx.request.body);
     // console.log('+++++++++++++++++++++++++++++');
-    // console.log(data);
+    // console.log(ctx.request.body);
     // console.log(data.delivery.derival.variant, '-', data.delivery.arrival.variant);
     // throw new Error("hi");
+
+
+
 
     await fetch('https://api.dellin.ru/v2/calculator.json', {
         headers: { 'Content-Type': 'application/json' },
@@ -254,9 +286,10 @@ module.exports.calculation = async (ctx) => {
                     }
 
                     if (err.code === 180012) { //Выбранная дата недоступна
-                        if (new Date(ctx.request.body.produceDate - Date.now()).getDate() > 10) {
+                        if (new Date(ctx.request.body.produceDate - Date.now()).getDate() > 20) {
                             break;
                         }
+
                         await delay(1000); //пауза, чтобы не задолбить API деловых линий
                         return await this.calculation(ctx); //recursion
                     }

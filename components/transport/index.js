@@ -1,7 +1,6 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
 const path = require('path');
-// const { getHandbook, updateHandbookPlaces, updateHandbookStreets, updateHandbookTerminals, calculation, searchCity, checkCredentials } = require('@transport/controllers/dellineAPI');
 const DelLine = require('@transport/controllers/dellineAPI');
 const Pek = require('@transport/controllers/pekAPI');
 const Kit = require('@transport/controllers/kitAPI');
@@ -122,29 +121,18 @@ function delay(ms) {
 }
 
 
-
-// {
-//     Code: 'Н00038243',
-//     Name: 'Таврово',
-//     ReceptionLaP: '0',
-//     DeliveryLaP: '1',
-//     Reception: '0',
-//     PickupPoint: '0',
-//     CourierDelivery: '1',
-//     ForeignReceptionReturns: '0',
-//     Terminal: '0',
-//     Kladr: '3102200008200',
-//     Region: 'Белгородская',
-//     CountryCode: '643',
-//     UniqName: 'Таврово',
-//     District: 'Белгородский',
-//     Prefix: 'с',
-//     CourierReception: '0'
-//   },
-
-
+const DellineProduceDate = require('@transport/models/DellineProduceDate');
 const fetch = require('node-fetch');
 router.get('/test', async ctx => {
+    DellineProduceDate.create({
+        code: "100500",
+        // produceDate: new Date(Date.now() + 1000 * 60 * 60 * 24)
+        produceDate: new Date(Date.now())
+    })
+
+    // const foo = await DellineProduceDate.findOne({code: "123"})
+    // console.log(foo)
+
     // await fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=ListCitiesFull&CountryCode=643`, {
     //     headers: {
     //         // 'Content-Type': 'application/json',
@@ -165,8 +153,3 @@ router.get('/test', async ctx => {
     //     });
     ctx.body = { name: "GeoS" };
 })
-
-function foo(ctx) {
-    ctx.status = 418;
-    ctx.body = { name: "GeoS" };
-}

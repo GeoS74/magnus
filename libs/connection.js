@@ -9,4 +9,4 @@ const mongoose = require('mongoose');
 
 mongoose.plugin( require('mongoose-unique-validator') );
 
-module.exports = mongoose.createConnection(config.mongodb.uri);
+module.exports = mongoose.createConnection(config.mongodb.uri, { autoIndex: true });
