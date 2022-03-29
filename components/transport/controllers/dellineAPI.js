@@ -115,18 +115,19 @@ async function makeSearchParameters(parameters) {
             },
             // packages: [] //(не обязательно) Данные по упаковке. При отсутствии параметра расчёт производится без учёта услуги
         },
-        cargo: { //Информация о грузе
-            quantity: parameters.quantity, //кол-во мест
-            length: parameters.length,  //длина самого длинного места
-            width: parameters.width, //ширина самого широкого места
-            height: parameters.height, //высота самого высокого места
-            weight: parameters.weight, //вес самого тяжёлого места
-            totalVolume: parameters.length * parameters.width * parameters.height, //общий объем груза
-            totalWeight: parameters.weight, //общий вес груза
-            hazardClass: 0,
-            oversizedWeight: parameters.weight, //вес негабаритных грузовых мест
-            oversizedVolume: parameters.length * parameters.width * parameters.height, //объем негабаритных грузовых мест
-        }
+        cargo: makeCargo(parameters)
+        // cargo: { //Информация о грузе
+        //     quantity: parameters.quantity, //кол-во мест
+        //     length: parameters.length,  //длина самого длинного места
+        //     width: parameters.width, //ширина самого широкого места
+        //     height: parameters.height, //высота самого высокого места
+        //     weight: parameters.weight, //вес самого тяжёлого места
+        //     totalVolume: parameters.length * parameters.width * parameters.height, //общий объем груза
+        //     totalWeight: parameters.weight, //общий вес груза
+        //     hazardClass: 0,
+        //     oversizedWeight: parameters.weight, //вес негабаритных грузовых мест
+        //     oversizedVolume: parameters.length * parameters.width * parameters.height, //объем негабаритных грузовых мест
+        // }
     };
 
     //если в выбранном населенном пункте есть терминал, то расчёт производится без забора груза от адреса
@@ -143,6 +144,42 @@ async function makeSearchParameters(parameters) {
 
     return data;
 }
+
+//параметры груза
+function makeCargo(param) {
+    const cargo = {
+            quantity: 0, //кол-во мест
+            length: 0,  //длина самого длинного места
+            width: 0, //ширина самого широкого места
+            height: 0, //высота самого высокого места
+            weight: 0, //вес самого тяжёлого места
+            totalVolume: 0, //общий объем груза
+            totalWeight: 0, //общий вес груза
+            hazardClass: 0,
+            oversizedWeight: 0, //вес негабаритных грузовых мест
+            oversizedVolume: 0, //объем негабаритных грузовых мест
+    };
+
+    for(let i = 0; i < param.width.length; i++) {
+        cargo.quantity += param.quantity[i];
+        if( param.length[i] > cargo.length) cargo.length = param.length[i];
+        if( param.width[i] > cargo.width) cargo.width = param.width[i];
+        if( param.height[i] > cargo.height) cargo.height = param.height[i];
+        if( param.weight[i] > cargo.weight) cargo.weight = param.weight[i];
+        cargo.totalVolume += (param.length[i]*param.width[i]*param.height[i]) * param.quantity[i];
+        cargo.totalWeight += param.weight[i] * param.quantity[i];
+    }
+
+    cargo.totalVolume = +cargo.totalVolume.toFixed(2);
+    
+    cargo.oversizedWeight = cargo.weight;
+    cargo.oversizedVolume = +(cargo.length * cargo.width * cargo.height).toFixed(2);
+
+    console.log(cargo);
+    return cargo;
+}
+
+
 
 //пост обработка данных перед отдачей клиенту
 //если cityID меньше 0 (основной город), то расчёт на сайте ПЭКа производится без учёта забора груза, хотя информация по забору предоставляется
@@ -212,7 +249,7 @@ function diffDate(dateStart, dateEnd) {
 
 //расчет доставки
 module.exports.calculation = async (ctx) => {
-    //эта фнкция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
+    //эта функция может вызываться рекурсивно в случае если при запросе к API Деловых линий будет получена ошибка 180012 (Выбранная дата недоступна)
     //для первого запроса дата устанавливается "завтрашним днём" относительно сегодня :)
     //при рекурсивном вызове к produceDate добавляются сутки
     //рекурсия прекратится если разница между produceDate и сегодня будет более определённого количества дней (см. обработку этой ошибки)

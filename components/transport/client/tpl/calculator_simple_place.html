@@ -49,20 +49,6 @@
         .show-optional:hover {
             text-decoration: underline;
         }
-
-        .card {
-            margin-top: 30px;
-        }
-
-        .card-header,
-        .card-body {
-            width: 100%;
-        }
-
-        .card-body {
-            padding-top: 0px;
-            padding-bottom: 30px;
-        }
     </style>
 </head>
 
@@ -84,97 +70,38 @@
                 <input list="arrival-list" name="arrival" class="form-control" id="arrival"
                     placeholder="Населенный пункт" autocomplete="off">
                 <datalist id="arrival-list"></datalist>
-
-                <div class="card bg-light" data-count-cargo-box="1">
-                    <div class="card-header">Место 1
+                <!-- Д х Ш х В -->
+                <section>
+                    <label for="length" class="form-label mt-4">Длина</label>
+                    <label for="width" class="form-label mt-4">Ширина</label>
+                    <label for="height" class="form-label mt-4">Высота</label>
+                </section>
+                <section>
+                    <div><input type="text" name="length" id="length" class="form-control" placeholder="Длина"
+                            value="1"></div>
+                    <div><input type="text" name="width" id="width" class="form-control" placeholder="Ширина" value="1">
                     </div>
-                    <div class="card-body">
-                        <!-- Д х Ш х В -->
-                        <section>
-                            <label for="length_1" class="form-label mt-4">Длина</label>
-                            <label for="width_1" class="form-label mt-4">Ширина</label>
-                            <label for="height_1" class="form-label mt-4">Высота</label>
-                        </section>
-                        <section>
-                            <div><input type="text" name="length" id="length_1" class="form-control" placeholder="Длина"
-                                    value="1"></div>
-                            <div><input type="text" name="width" id="width_1" class="form-control" placeholder="Ширина"
-                                    value="1">
-                            </div>
-                            <div><input type="text" name="height" id="height_1" class="form-control"
-                                    placeholder="Высота" value="1"></div>
-                        </section>
-                        <!-- вес и количество мест -->
-                        <section>
-                            <label for="weight_1" class="form-label mt-4">Вес</label>
-                            <label for="quantity_1" class="form-label mt-4">Кол-во мест</label>
-                        </section>
-                        <section>
-                            <div><input type="text" name="weight" id="weight_1" class="form-control" placeholder="Вес"
-                                    value="10">
-                            </div>
-                            <div><input type="text" name="quantity" id="quantity_1" class="form-control"
-                                    placeholder="Кол-во мест" value="1"></div>
-                        </section>
+                    <div><input type="text" name="height" id="height" class="form-control" placeholder="Высота"
+                            value="1"></div>
+                </section>
+                <!-- вес и количество мест -->
+                <section>
+                    <label for="weight" class="form-label mt-4">Вес</label>
+                    <label for="quantity" class="form-label mt-4">Кол-во мест</label>
+                </section>
+                <section>
+                    <div><input type="text" name="weight" id="weight" class="form-control" placeholder="Вес" value="10">
                     </div>
-                </div>
+                    <div><input type="text" name="quantity" id="quantity" class="form-control" placeholder="Кол-во мест"
+                            value="1"></div>
+                </section>
 
                 <button type="submit" class="btn btn-primary mt-4" id="button">Рассчитать стоимость</button>
-                <button type="button" id="addCargoBox" class="btn btn-outline-primary mt-4" style="float:right">Добавить
-                    место</button>
             </div>
         </form>
         <!-- результаты расчета -->
         <div id="calculations"></div>
         <script>
-            //добавить погрузочное место
-            addCargoBox.addEventListener('click', _ => {
-                const boxes = calculateForm.querySelectorAll('.card');
-                let count = +boxes[boxes.length - 1].dataset.countCargoBox;
-                const box = makeCargoBox(++count);
-                boxes[boxes.length - 1].insertAdjacentHTML('afterend', box);
-            });
-            //создать html погрузочного места
-            function makeCargoBox(count) {
-                return `
-                <div class="card bg-light" data-count-cargo-box="${count}">
-                    <div class="card-header">Место ${count}
-                        <button type="button" class="btn-close" aria-label="Close" style="float:right" onclick="this.parentNode.parentNode.remove()"></button>
-                    </div>
-                    <div class="card-body">
-                        <!-- Д х Ш х В -->
-                        <section>
-                            <label for="length_${count}" class="form-label mt-4">Длина</label>
-                            <label for="width_${count}" class="form-label mt-4">Ширина</label>
-                            <label for="height_${count}" class="form-label mt-4">Высота</label>
-                        </section>
-                        <section>
-                            <div><input type="text" name="length" id="length_${count}" class="form-control" placeholder="Длина"
-                                    value="1"></div>
-                            <div><input type="text" name="width" id="width_${count}" class="form-control" placeholder="Ширина"
-                                    value="1">
-                            </div>
-                            <div><input type="text" name="height" id="height_${count}" class="form-control" placeholder="Высота"
-                                    value="1"></div>
-                        </section>
-                        <!-- вес и количество мест -->
-                        <section>
-                            <label for="weight_${count}" class="form-label mt-4">Вес</label>
-                            <label for="quantity_${count}" class="form-label mt-4">Кол-во мест</label>
-                        </section>
-                        <section>
-                            <div><input type="text" name="weight" id="weight_${count}" class="form-control" placeholder="Вес"
-                                    value="10">
-                            </div>
-                            <div><input type="text" name="quantity" id="quantity_${count}" class="form-control"
-                                    placeholder="Кол-во мест" value="1"></div>
-                        </section>
-                    </div>
-                </div>
-                `;
-            }
-
-
             addSearchHandler(); //запустить подбор населенных пунктов
             //показать/скрыть подробный расчёт
             function toggleHiddenBlock(event) {
@@ -183,7 +110,8 @@
             }
             //обработчик нажатия клавиши при подборе населенного пункта
             function searchCity(event) {
-                setValidAll();
+                setValid(document.getElementById('derival'));
+                setValid(document.getElementById('arrival'));
                 removeSearchHandler();
 
                 const fd = new FormData();
@@ -229,7 +157,21 @@
             }
             //показать/скрыть ошибку ввода данных
             function showMistake(error) {
-                setInvalid(document.getElementById(error.path), error.message);
+                switch (error.path) {
+                    case 'derival': setInvalid(document.getElementById('derival'), error.message); break;
+                    case 'arrival': setInvalid(document.getElementById('arrival'), error.message); break;
+                    case 'length': setInvalid(document.getElementById('length'), error.message); break;
+                    case 'width': setInvalid(document.getElementById('width'), error.message); break;
+                    case 'height': setInvalid(document.getElementById('height'), error.message); break;
+                    case 'weight': setInvalid(document.getElementById('weight'), error.message); break;
+                    case 'quantity': setInvalid(document.getElementById('quantity'), error.message); break;
+                }
+            }
+            function setValid(elem) {
+                elem.classList.remove('is-invalid');
+                if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
+                    elem.nextElementSibling.remove();
+                }
             }
             function setInvalid(elem, message) {
                 elem.classList.add('is-invalid');
@@ -241,24 +183,22 @@
                     elem.nextElementSibling.innerHTML = message;
                 }
             }
-            function setValidAll() {
-                for (const elem of document.querySelectorAll('#calculateForm input')) {
-                    elem.classList.remove('is-invalid');
-                    if (elem.nextElementSibling && elem.nextElementSibling.tagName === 'DIV') {
-                        elem.nextElementSibling.remove();
-                    }
-                }
-            }
             //клик по кнопке расчёта
             calculateForm.addEventListener('submit', event => {
-                setValidAll();
+                setValid(document.getElementById('derival'));
+                setValid(document.getElementById('arrival'));
+                setValid(document.getElementById('length'));
+                setValid(document.getElementById('width'));
+                setValid(document.getElementById('height'));
+                setValid(document.getElementById('weight'));
+                setValid(document.getElementById('quantity'));
 
                 button.disabled = true;
                 calculations.innerHTML = '<img src="/wait.gif" id="wait" style="width: 50px"/>';
                 const fd = new FormData(event.target);
 
                 Promise.all([
-                    calculate(fd, 'delline'),
+                    // calculate(fd, 'delline'),
                     // calculate(fd, 'kit'),
                     // calculate(fd, 'pek'),
                     // calculate(fd, 'cdek'),
@@ -287,7 +227,13 @@
                             calculations.insertAdjacentHTML('afterbegin', makeRow(res, carrier));
                         }
                         else if (response.status === 400) {
-                            setValidAll();
+                            setValid(document.getElementById('derival'));
+                            setValid(document.getElementById('arrival'));
+                            setValid(document.getElementById('length'));
+                            setValid(document.getElementById('width'));
+                            setValid(document.getElementById('height'));
+                            setValid(document.getElementById('weight'));
+                            setValid(document.getElementById('quantity'));
                             showMistake(await response.json());
                         }
                         else {
@@ -317,7 +263,7 @@
                     </div>
                 `;
             }
-            //блоки с расчётами главный / скрытый
+            //блоки главный / скрытый
             function makeMainSection(data) {
                 return `
                     <article>
