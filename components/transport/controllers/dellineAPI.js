@@ -178,7 +178,7 @@ function makeCargo(param) {
     //проверка на превышение максимальных характеристик
     checkMaxSize(cargo);
 
-    console.log(cargo);
+    // console.log(cargo);
     return cargo;
 }
 

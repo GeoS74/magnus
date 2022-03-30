@@ -174,7 +174,6 @@
                 `;
             }
 
-
             addSearchHandler(); //запустить подбор населенных пунктов
             //показать/скрыть подробный расчёт
             function toggleHiddenBlock(event) {
@@ -261,8 +260,8 @@
                 const fd = new FormData(event.target);
 
                 Promise.all([
-                    calculate(fd, 'delline'),
-                    // calculate(fd, 'kit'),
+                    // calculate(fd, 'delline'),
+                    calculate(fd, 'kit'),
                     // calculate(fd, 'pek'),
                     // calculate(fd, 'cdek'),
                     // calculate(fd, 'baikal'),

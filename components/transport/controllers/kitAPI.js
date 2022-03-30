@@ -40,18 +40,21 @@ async function makeSearchParameters(parameters) {
     const data = {
         city_pickup_code: parameters.derival.code, //Код города откуда
         city_delivery_code: parameters.arrival.code, //Код города куда
-        declared_price: 1, //Объявленная стоимость груза (руб)
-        places: [
-            {
-                count_place: parameters.quantity, //Количество мест в позиции
-                height: parameters.height * 100, //Высота груза (см) позиции
-                width: parameters.width * 100, //Ширина груза (см) позиции
-                length: parameters.length * 100, //Длина груза (см) позиции
-                weight: parameters.weight, //Масса КГ позиции
-            }
-        ],
+        declared_price: 100, //Объявленная стоимость груза (руб) минимальное значение 100р.
+        places: [],
         insurance: 0, //Услуга страхования груза (1 - да /0 - нет)	Да (если стоимость груза равна или более 10 000 руб.)
     };
+
+    for (let i = 0; i < parameters.width.length; i++) {
+        data.places.push({
+            count_place: parameters.quantity[i], //Количество мест в позиции
+            height: parameters.height[i] * 100, //Высота груза (см) позиции
+            width: parameters.width[i] * 100, //Ширина груза (см) позиции
+            length: parameters.length[i] * 100, //Длина груза (см) позиции
+            weight: parameters.weight[i], //Масса (кг) позиции
+        });
+    }
+
     return data;
 }
 
