@@ -116,6 +116,8 @@ https://stackoverflow.com/questions/48092353/failed-to-start-mongod-service-unit
 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 ...
 
+~~~~~~~~~Прерывание запроса
+https://github.com/simonplend/talks/blob/main/improving-your-applications-with-abortcontroller/examples/node-fetch-with-abortsignal.js
 
 ~~~~~~~~~Создание своего справочника КЛАДР
 БД КЛАДР
