@@ -113,7 +113,7 @@ module.exports.calculation = async (ctx) => {
         })
         .catch(err => {
             console.log('~~~~~Error API Kit~~~~~');
-            console.log(err);
+            // console.log(err);
             throw new Error(err.message);
         });
 }

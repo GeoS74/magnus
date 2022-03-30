@@ -19,6 +19,42 @@ async function getCity(data) {
     }
 }
 
+
+
+// SummaryCargo: {
+//     Length: parameters.length,//м
+//     Width: parameters.width,//м
+//     Height: parameters.height,//м
+//     Volume: (parameters.length * parameters.width * parameters.height),//м3 Объем груза (в кубических метрах)
+//     Weight: parameters.weight,//кг
+//     Units: parameters.quantity,//Количество мест
+//     Oversized: 0, //Габарит (0 - габарит, 1 – негабарит)
+//     EstimatedCost: 0, //Оценочная стоимость груза (в рублях)
+//     // Services: [25] //Массив id - услуг из справочника
+// }
+
+//параметры груза
+function makeCargo(param) {
+    const cargo = [];
+    for (let i = 0; i < param.width.length; i++) {
+        if ( param.length[i] > 13) throw new Error('Baikal: превышение максимальной длины');
+        if (param.width[i] > 2.4) throw new Error('Baikal: превышение максимальной ширины');
+        if (param.height[i] > 2.4) throw new Error('Baikal: превышение максимальной высоты');
+
+        cargo.push({
+            Length: param.length[i],//м
+            Width: param.width[i],//м
+            Height: param.height[i],//м
+            Volume: +(param.length[i] * param.width[i] * param.height[i]).toFixed(2),//м3 Объем груза (в кубических метрах)
+            Weight: param.weight[i],//кг
+            Units: param.quantity[i],//Количество мест
+            Oversized: 0, //Габарит (0 - габарит, 1 – негабарит)
+            EstimatedCost: 0, //Оценочная стоимость груза (в рублях)
+        });
+    }
+    return cargo;
+}
+
 //формирование параметров запроса для расчёта перевозки
 //параметры должны передаваться GET запросом
 async function makeSearchParameters(parameters) {
@@ -47,17 +83,18 @@ async function makeSearchParameters(parameters) {
             // }
         },
         Cargo: {
-            SummaryCargo: {
-                Length: parameters.length,//м
-                Width: parameters.width,//м
-                Height: parameters.height,//м
-                Volume: (parameters.length * parameters.width * parameters.height),//м3 Объем груза (в кубических метрах)
-                Weight: parameters.weight,//кг
-                Units: parameters.quantity,//Количество мест
-                Oversized: 0, //Габарит (0 - габарит, 1 – негабарит)
-                EstimatedCost: 0, //Оценочная стоимость груза (в рублях)
-                // Services: [25] //Массив id - услуг из справочника
-            }
+            CargoList: makeCargo(parameters)
+            // SummaryCargo: {
+            //     Length: parameters.length,//м
+            //     Width: parameters.width,//м
+            //     Height: parameters.height,//м
+            //     Volume: (parameters.length * parameters.width * parameters.height),//м3 Объем груза (в кубических метрах)
+            //     Weight: parameters.weight,//кг
+            //     Units: parameters.quantity,//Количество мест
+            //     Oversized: 0, //Габарит (0 - габарит, 1 – негабарит)
+            //     EstimatedCost: 0, //Оценочная стоимость груза (в рублях)
+            //     // Services: [25] //Массив id - услуг из справочника
+            // }
         }
     };
     return data;
@@ -65,6 +102,8 @@ async function makeSearchParameters(parameters) {
 
 //пост обработка данных перед отдачей клиенту
 function postProcessing(res) {
+    if(!res.total) throw new Error('Baikal: ошибка в расчётах. API не расчитал доставку');
+
     const data = {
         main: {
             carrier: 'Байкал Сервис',
@@ -124,7 +163,7 @@ module.exports.calculation = async (ctx) => {
         })
         .catch(err => {
             console.log('~~~~~Error API Pek~~~~~');
-            console.log(err);
+            // console.log(err);
             throw new Error(err.message);
         });
 }
