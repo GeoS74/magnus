@@ -175,8 +175,21 @@ function makeCargo(param) {
     cargo.oversizedWeight = cargo.weight;
     cargo.oversizedVolume = +(cargo.length * cargo.width * cargo.height).toFixed(2);
 
+    //проверка на превышение максимальных характеристик
+    checkMaxSize(cargo);
+
     console.log(cargo);
     return cargo;
+}
+
+//проверка на превышение максимальных характеристик
+//при этом не все терминалы могут принять и/или выдать груз с максимальными характеристиками
+//возвращается ошибка 180003
+function checkMaxSize(cargo){
+    if(cargo.length > 13.6) throw new Error('DelLine: превышение максимальной длины');
+    if(cargo.width > 2.4) throw new Error('DelLine: превышение максимальной ширины');
+    if(cargo.height > 2.4) throw new Error('DelLine: превышение максимальной высоты');
+    if(cargo.totalVolume > 80) throw new Error('DelLine: превышение максимального объёма');
 }
 
 
@@ -278,7 +291,6 @@ module.exports.calculation = async (ctx) => {
                 { code: ctx.request.body.derival.code },
                 { produceDate: ctx.request.body.produceDate })
         }
-
     }
 
     const data = await makeSearchParameters(ctx.request.body);

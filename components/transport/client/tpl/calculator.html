@@ -229,7 +229,10 @@
             }
             //показать/скрыть ошибку ввода данных
             function showMistake(error) {
-                setInvalid(document.getElementById(error.path), error.message);
+                const elem = document.getElementById(error.path);
+                if(elem) {
+                    setInvalid(document.getElementById(error.path), error.message);
+                }
             }
             function setInvalid(elem, message) {
                 elem.classList.add('is-invalid');
