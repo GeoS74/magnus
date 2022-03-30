@@ -52,6 +52,29 @@ async function getCity(data) {
     }
 }
 
+
+//параметры груза
+function makeCargo(parameters) {
+    const cargo = [];
+
+    let index = 0; //индекс места
+    for (let i = 0; i < parameters.width.length; i++) {
+        for(let n = 0; n < parameters.quantity[i]; n++) {
+            cargo.push(...[
+                `places[${index}][]=${parameters.width[i]}`, //Ширина
+                `places[${index}][]=${parameters.length[i]}`, //Длина
+                `places[${index}][]=${parameters.height[i]}`, //Высота
+                `places[${index}][]=${+(parameters.width[i] * parameters.length[i] * parameters.height[i]).toFixed(2)}`, //Объем
+                `places[${index}][]=${parameters.weight[i]}`, //Вес
+                `places[${index}][]=1`, //Признак негабаритности груза
+                `places[${index}][]=1`, //Признак ЗУ
+            ]);
+            index++;
+        }
+    }
+    return cargo.join('&');
+}
+
 //формирование параметров запроса для расчёта перевозки
 //параметры должны передаваться GET запросом
 async function makeSearchParameters(parameters) {
@@ -59,13 +82,7 @@ async function makeSearchParameters(parameters) {
     parameters.arrival = await getCity(parameters.arrival);
 
     let arr = [
-        `places[0][]=${parameters.width}`, //Ширина
-        `places[0][]=${parameters.length}`, //Длина
-        `places[0][]=${parameters.height}`, //Высота
-        `places[0][]=${(parameters.width * parameters.length * parameters.height)}`, //Объем
-        `places[0][]=${parameters.weight}`, //Вес
-        `places[0][]=1`, //Признак негабаритности груза
-        `places[0][]=1`, //Признак ЗУ
+        makeCargo(parameters),
         `take[town]=${parameters.derival.cityID}`, //ID города забора 
         `take[tent]=0`, //требуется растентровка при заборе 
         `take[gidro]=0`, //требуется гидролифт при заборе 
@@ -85,7 +102,6 @@ async function makeSearchParameters(parameters) {
         `pal:0`, //Требуется Запалечивание груза (0 - не требуется, значение больше нуля - количество палет)
         `pallets:0`, //Кол-во палет для расчет услуги палетной перевозки (только там, где эта услуга предоставляется)
     ];
-
     return arr.join('&');
 }
 
@@ -96,7 +112,7 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'ПЭК',
-            price: res.take[2] + res.auto[2] + (res.ADD ? res.ADD[3] : 0) + (res.ADD_1 ? res.ADD_1[3] : 0) + (res.ADD_2 ? res.ADD_2[3] : 0) + (res.ADD_3 ? res.ADD_3[3] : 0),
+            price: +(res.take[2] + res.auto[2] + (res.ADD ? res.ADD[3] : 0) + (res.ADD_1 ? res.ADD_1[3] : 0) + (res.ADD_2 ? res.ADD_2[3] : 0) + (res.ADD_3 ? res.ADD_3[3] : 0)).toFixed(2),
             days: res.periods_days || '',
         },
         detail: []
