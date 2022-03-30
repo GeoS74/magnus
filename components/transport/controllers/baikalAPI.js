@@ -19,20 +19,6 @@ async function getCity(data) {
     }
 }
 
-
-
-// SummaryCargo: {
-//     Length: parameters.length,//м
-//     Width: parameters.width,//м
-//     Height: parameters.height,//м
-//     Volume: (parameters.length * parameters.width * parameters.height),//м3 Объем груза (в кубических метрах)
-//     Weight: parameters.weight,//кг
-//     Units: parameters.quantity,//Количество мест
-//     Oversized: 0, //Габарит (0 - габарит, 1 – негабарит)
-//     EstimatedCost: 0, //Оценочная стоимость груза (в рублях)
-//     // Services: [25] //Массив id - услуг из справочника
-// }
-
 //параметры груза
 function makeCargo(param) {
     const cargo = [];

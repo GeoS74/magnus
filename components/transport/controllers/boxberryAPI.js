@@ -4,7 +4,6 @@ const BoxberryHandbookInputPoints = require('@transport/models/BoxberryHandbookI
 const BoxberryHandbookOutputPoints = require('@transport/models/BoxberryHandbookOutputPoints');
 const { base64encode, base64decode } = require('nodejs-base64');
 
-
 //принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником Boxberry
 //
 //проблема: в коллекции пунктов выдачи разные пункты могут иметь отличающиеся ограничения по максимальному весу и объему
@@ -50,45 +49,24 @@ async function getCity(data) {
 //параметры должны передаваться GET запросом
 //максимальный вес коробки не должен превышать 15 кг
 //размер каждого измерения ДШВ не должен превышать 120 см (хотя API позволяет расчитать превышение лимитов)
-async function makeSearchParameters(parameters) {
-    //для корректного расчёта стоимости доставки в качестве отправного пункта надо использовать Код пункта приема заказа
-    //в качестве конечной точки Код пункта выдачи заказа
-    //поэтому надо контролировать наличие таких пунктов в выбранных городах
-    parameters.derival = await getCity(parameters.derival);
-    if(!parameters.derival.inputPoints.length) {
-        throw new Error("Boxberry: inputPoints not found");
-    }
-    parameters.arrival = await getCity(parameters.arrival);
-    if(!parameters.arrival.outputPoints.length) {
-        throw new Error("Boxberry: outputPoints not found");
-    }
-
-    //необходимо контролировать заявленный вес и объем, т.к.
-    //на пунктах выдачи посылок могут быть ограничения
-    //
-    // boxberry спокойно обрабатывает превышение лимитов
-    //
-    // if(parameters.arrival.outputPoints.loadLimit < parameters.weight) {
-    //     throw new Error("Boxberry: excess max weight limit");
-    // }
-    // if(parameters.arrival.outputPoints.volumeLimit < (parameters.length * parameters.width * parameters.height)) {
-    //     throw new Error("Boxberry: excess max volume limit");
-    // }
-
+function makeSearchParameters(parameters, index) {
+    if(parameters.length[index] > 1.2) throw new Error('Boxberry: превышение максимальной длины');
+    if(parameters.width[index] > 1.2) throw new Error('Boxberry: превышение максимальной ширины');
+    if(parameters.height[index] > 1.2) throw new Error('Boxberry: превышение максимальной высоты');
+    if(parameters.weight[index] > 15) throw new Error('Boxberry: превышение максимального веса');
 
     let arr = [
-        `weight=${parameters.weight*1000}`, //Вес в граммах
+        `weight=${parameters.weight[index]*1000}`, //Вес в граммах
         `targetstart=${parameters.derival.inputPoints[0].code}`, //Код пункта приема заказа
         `target=${parameters.arrival.outputPoints[0].code}`, //Код пункта выдачи заказа
         `ordersum=500`, //Объявленная стоимость посылки (страховая стоимость) min=500
         `deliverysum=0`, //Заявленная стоимость доставки (прим.: хз что это такое)
-        `height=${parameters.length*100}`, //Высота, см
-        `width=${parameters.width*100}`, //Ширина, см
-        `depth=${parameters.height*100}`, //Длина (глубина коробки), см
+        `height=${parameters.length[index]*100}`, //Высота, см
+        `width=${parameters.width[index]*100}`, //Ширина, см
+        `depth=${parameters.height[index]*100}`, //Длина (глубина коробки), см
         `paysum=500`, //Сумма к оплате с получателя   
     ];
-// console.log(`${parameters.length*100} x ${parameters.width*100} x ${parameters.height*100}`);
-// console.log(arr);
+
     return arr.join('&');
 }
 
@@ -97,50 +75,91 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'Boxberry',
-            price: res.price,
-            days: res.delivery_period || '',
+            price: 0,
+            days: '',
         },
         detail: []
     };
 
-    data.detail.push({
-        name: 'Стоимость базового тарифа',
-        value: res.price_base + ' р.'
-    });
+    for(let i = 0; i < res.length; i++) {
+        data.main.price += +res[i].price;
 
-    data.detail.push({
-        name: 'Стоимость дополнительных услуг',
-        value: res.price_service + ' р.'
-    });
+        data.detail.push({
+            name: `Место ${i+1} базовый тариф`,
+            value: +res[i].price_base + ' р.'
+        });
+
+        data.detail.push({
+            name: `Место ${i+1} доп. услуги`,
+            value: +res[i].price_service + ' р.'
+        });
+    }
+
+    data.main.price = +data.main.price.toFixed(2);
+    data.main.days = `${res[0].delivery_period}` || '';
 
     return data;
 }
 
-//расчет доставки
-module.exports.calculation = async (ctx) => {
-    const data = await makeSearchParameters(ctx.request.body);
-
-    //тип доставки Склад-Склад
-    await fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=DeliveryCosts&${data}`)
+//возвращает запрос к API Boxberry
+function getQuery(data) {
+    return fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=DeliveryCosts&${data}`)
         .then(async response => {
             if (response.ok) {
-                const res = await response.json();
-                // console.log(res);
-                ctx.body = postProcessing(res);
+                return await response.json();
             }
             else {
                 const res = await response.json();
                 console.log(res);
+
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
         })
         .catch(err => {
-            console.log('~~~~~Error API Boxberry~~~~~');
-            console.log(err);
             throw new Error(err.message);
         });
 }
 
+//расчет доставки
+//API Boxberry, как и калькулятор не позволяет расчитывать доставку с указанием разных мест
+//при этом суммировать ДШВ и вес нельзя, т.к. на расчёт есть ограничение (120см х 120см х 120см и макс. вес: 15кг)
+//поэтому, для подсчёта стоимости доставки формируется отдельный запрос на каждое место
+//забавно, но API Boxberry спокойно обрабатывает превышение лимитов
+//
+//чтобы снизить нагрузку на БД при формировании параметров запроса получение городов Boxberry вынесено из makeSearchParameters()
+module.exports.calculation = async (ctx) => {
+    //для корректного расчёта стоимости доставки в качестве отправного пункта надо использовать Код пункта приема заказа
+    //в качестве конечной точки Код пункта выдачи заказа
+    //поэтому надо контролировать наличие таких пунктов в выбранных городах
+    //обработка происходит здесь, чтобы можно было понять в каком пункте (приём/отправка) нет точки Boxberry
+    //и чтобы не нагружать БД однотипными запросами при формировании параметров
+    ctx.request.body.derival = await getCity(ctx.request.body.derival);
+    if(!ctx.request.body.derival.inputPoints.length) {
+        throw new Error("Boxberry: inputPoints not found");
+    }
+    ctx.request.body.arrival = await getCity(ctx.request.body.arrival);
+    if(!ctx.request.body.arrival.outputPoints.length) {
+        throw new Error("Boxberry: outputPoints not found");
+    }
+
+    //сформировать массив с запросами
+    const queries = [];
+    for (let i = 0; i < ctx.request.body.width.length; i++) {
+        for (let n = 0; n < ctx.request.body.quantity[i]; n++) {
+            queries.push(getQuery(makeSearchParameters(ctx.request.body, i)));
+        }
+    }
+
+    await Promise.all(queries)
+        .then(res => {
+            // console.log(res);
+            ctx.body = postProcessing(res);
+        })
+        .catch(err => {
+            // console.log(err.message);
+            throw new Error(err.message);
+        });
+}
 
 //обновить справочник населённых пунктов в БД
 //коды КЛАДР Boxberry совпадают с нормальными кодами
