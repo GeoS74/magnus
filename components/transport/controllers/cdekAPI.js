@@ -1,7 +1,6 @@
 const fetch = require('node-fetch');
 const CdekHandbookPlaces = require('@transport/models/CdekHandbookPlaces');
 
-
 //принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником СДЭКа
 async function getCity(data) {
     try {
@@ -28,29 +27,32 @@ async function getCity(data) {
 
 //формирование параметров запроса для расчёта перевозки
 //параметры должны передаваться GET запросом
-async function makeSearchParameters(parameters) {
-    parameters.derival = await getCity(parameters.derival);
-    parameters.arrival = await getCity(parameters.arrival);
+//ограничения параметров (15м х 15м х 15м и макс. вес: 10 000кг)
+function makeSearchParameters(parameters, index) {
+    if(parameters.length[index] > 15) throw new Error('CDEK: превышение максимальной длины');
+    if(parameters.width[index] > 15) throw new Error('CDEK: превышение максимальной ширины');
+    if(parameters.height[index] > 15) throw new Error('CDEK: превышение максимальной высоты');
+    if(parameters.weight[index] > 10000) throw new Error('CDEK: превышение максимального веса');
 
     let arr = [
-        `weight=${parameters.weight}`, //Вес, кг
-        `width=${parameters.width*100}`, //Ширина, см
-        `length=${parameters.length*100}`, //Длина, см
-        `height=${parameters.height*100}`, //Высота, см
+        `weight=${parameters.weight[index]}`, //Вес, кг
+        `width=${parameters.width[index] * 100}`, //Ширина, см
+        `length=${parameters.length[index] * 100}`, //Длина, см
+        `height=${parameters.height[index] * 100}`, //Высота, см
         `from=${parameters.derival.codeCDEK}`, //код города отправителя в системе СДЭК
         `to=${parameters.arrival.codeCDEK}`, //код города получателя в системе СДЭК
         `contract=0`, //вид договора СДЭК (0 - нет договора)
-            // pay_to – параметр, указывающий, что оплату доставки производит отправитель. 
-            // Может принимать значения: 0 – доставку оплачивает получатель, 1 – доставку оплачивает отправитель. 
-            // Если параметр не указан, то считается, что доставку оплачивает отправитель. 
-            // Если параметр contract = 0, и доставку оплачивает получатель, то стоимость доставки увеличивается на 20%. 
-            // Если contract = 2, и с получателя берется оплата за товар наложенным платежом, 
-            // то с помощью параметра pay_to можно указать учитывать ли стоимость доставки при расчете комисси за наложенный платеж, 
-            // для это нужно указать pay_to = 0. Если contract = 2, наложенный платеж за товар не взимается, а pay_to = 0, 
-            // то считается что с получателя надо взять оплату за доставку, в этом случае также производится расчет комиссии за наложенный платеж.
+        // pay_to – параметр, указывающий, что оплату доставки производит отправитель. 
+        // Может принимать значения: 0 – доставку оплачивает получатель, 1 – доставку оплачивает отправитель. 
+        // Если параметр не указан, то считается, что доставку оплачивает отправитель. 
+        // Если параметр contract = 0, и доставку оплачивает получатель, то стоимость доставки увеличивается на 20%. 
+        // Если contract = 2, и с получателя берется оплата за товар наложенным платежом, 
+        // то с помощью параметра pay_to можно указать учитывать ли стоимость доставки при расчете комисси за наложенный платеж, 
+        // для это нужно указать pay_to = 0. Если contract = 2, наложенный платеж за товар не взимается, а pay_to = 0, 
+        // то считается что с получателя надо взять оплату за доставку, в этом случае также производится расчет комиссии за наложенный платеж.
         `pay_to=1`,
         `tariffs=62`,   //тариф для расчёта стоимости доставки (подходящиеварианты 10,1,15,18)
-                        //тариф 62 - это Магистральный экспресс склад-склад (самый дешевый тариф)
+        //тариф 62 - это Магистральный экспресс склад-склад (самый дешевый тариф)
         `insurance=0`, //Объявленная стоимость отправления
         `cost=0`, //стоимость отправления, взимаемая с получателя при наложенном платеже (только для Интернет-магазинов), для расчета комиссии за наложенный платеж. 
     ];
@@ -58,40 +60,39 @@ async function makeSearchParameters(parameters) {
     return arr.join('&');
 }
 
-
 //пост обработка данных перед отдачей клиенту
-//если cityID меньше 0 (основной город), то расчёт на сайте ПЭКа производится без учёта забора груза, хотя информация по забору предоставляется
-//эту ситуацию можно обыграть, но надо ли?
 function postProcessing(res) {
-    if(res[62].error) throw new Error(`Error CDEK: ${res[62].error[0].text}`);
-
     const data = {
         main: {
             carrier: 'СДЭК',
-            price: res[62].result.price,
-            days: `${res[62].result.day_min} - ${res[62].result.day_max}` || '',
+            price: 0,
+            days: '',
         },
         detail: []
     };
 
-    // data.detail.push({
-    //     name: `${res.take[0]} из г. ${res.take[1]}`,
-    //     value: res.take[2] + ' р.'
-    // });
+    for(let i = 0; i < res.length; i++) {
+        if (res[i][62].error) throw new Error(`Error CDEK: ${res[i][62].error[0].text}`);
+
+        data.main.price += +res[i][62].result.price.replace(',', '');
+
+        data.detail.push({
+            name: `Место ${i+1}`,
+            value: +res[i][62].result.price.replace(',', '') + ' р.'
+        });
+    }
+
+    data.main.days = `${res[0][62].result.day_min} - ${res[0][62].result.day_max}` || '';
 
     return data;
 }
 
-//расчет доставки
-module.exports.calculation = async (ctx) => {
-    const data = await makeSearchParameters(ctx.request.body);
-
-    await fetch('https://kit.cdek-calc.ru/api/?' + data)
+//возвращает запрос к API СДЭКа
+function getQuery(data) {
+    return fetch('https://kit.cdek-calc.ru/api/?' + data)
         .then(async response => {
             if (response.ok) {
-                const res = await response.json();
-                // console.log(res[62].error);
-                ctx.body = postProcessing(res);
+                return await response.json();
             }
             else {
                 const res = await response.json();
@@ -101,10 +102,40 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(err => {
-            console.log(err.message);
+            throw new Error(err.message);
         });
 }
 
+//расчет доставки
+//API СДЭКа, как и калькулятор не позволяет расчитывать доставку с указанием разных мест
+// при этом суммировать ДШВ и вес нельзя, т.к. на расчёт есть ограничение (15м х 15м х 15м и макс. вес: 10 000кг)
+// поэтому, для подсчёта стоимости доставки формируется отдельный запрос на каждое место
+// в ответе СДЭКа нет развёрнутых данных по доставке, поэтому при формировании ответа 
+// в качестве дополнительных данных указывается стоимость перевозки каждого места
+//
+//чтобы снизить нагрузку на БД при формировании параметров запроса получение городов СДЭКа вынесено из makeSearchParameters()
+module.exports.calculation = async (ctx) => {
+    ctx.request.body.derival = await getCity(ctx.request.body.derival);
+    ctx.request.body.arrival = await getCity(ctx.request.body.arrival);
+
+    //сформировать массив с запросами
+    const queries = [];
+    for (let i = 0; i < ctx.request.body.width.length; i++) {
+        for (let n = 0; n < ctx.request.body.quantity[i]; n++) {
+            queries.push(getQuery(makeSearchParameters(ctx.request.body, i)));
+        }
+    }
+
+    await Promise.all(queries)
+        .then(res => {
+            // console.log(res);
+            ctx.body = postProcessing(res);
+        })
+        .catch(err => {
+            // console.log(err.message);
+            throw new Error(err.message);
+        });
+}
 
 //обновить справочник населённых пунктов в БД
 //эта функция вызывается рекурсивно, т.к. максимальное кол-во населенных пунктов в запросе к API составляет 1000
