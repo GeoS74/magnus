@@ -7,6 +7,7 @@ const Kit = require('@transport/controllers/kitAPI');
 const Cdek = require('@transport/controllers/cdekAPI');
 const Baikal = require('@transport/controllers/baikalAPI');
 const Boxberry = require('@transport/controllers/boxberryAPI');
+const Jeldor = require('@transport/controllers/jeldorAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 
@@ -41,6 +42,7 @@ router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
             case 'cdek': await Cdek.calculation(ctx); break;
             case 'baikal': await Baikal.calculation(ctx); break;
             case 'boxberry': await Boxberry.calculation(ctx); break;
+            case 'jeldor': await Jeldor.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -73,6 +75,9 @@ router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
 
 //"Байкал" - обновление справочника населенных пунктов
 router.get('/baikal/handbook/places/update', Baikal.updateHandbookPlaces);
+
+//"ЖелДорЭкспедиция" - обновление справочника населенных пунктов
+router.get('/jeldor/handbook/places/update', Jeldor.updateHandbookPlaces);
 
 //"Boxberry" - обновление справочника населенных пунктов
 router.get('/boxberry/handbook/places/update', Boxberry.updateHandbookPlaces);

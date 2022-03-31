@@ -1,5 +1,6 @@
 <!DOCTYPE HTML>
 <html lang="ru">
+
 <head>
     <title>MAGNUS | новый сотрудник</title>
     <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
@@ -38,7 +39,7 @@
 </head>
 
 <body>
- <!--#include file="./client/public/tpl/top_menu.html"-->
+    <!--#include file="./client/public/tpl/top_menu.html"-->
 
 
     <form id="form" class="border-primary">
@@ -250,7 +251,7 @@
     </div>
 </body>
 <script>//отправка данных на сервер
-    function addStaffer(event){
+    function addStaffer(event) {
         event.preventDefault();
 
         button.disabled = true; //деактивировать кнопку отправки данных
@@ -388,6 +389,9 @@
                 position.insertAdjacentHTML('beforeend', makeOption(pos));
             }
         })
+        .then(_ => { //заполнение полей формы данными сотрудника
+            insertPersonalInfo();
+        })
         .catch(error => {
             console.log(error);
         });
@@ -403,24 +407,24 @@
         document.querySelector('#form > button').insertAdjacentHTML('afterend', '<button type="button" class="btn btn-outline-warning mt-3" style="margin-left: 20px">Удалить профиль</button>');
 
         document.querySelector('.btn-outline-warning').addEventListener('click', event => {
-            if( !confirm('Вы точно хотите удалить этот профиль?') ) return;
+            if (!confirm('Вы точно хотите удалить этот профиль?')) return;
 
             event.target.disabled = true; //деактивировать кнопку удаления профиля
 
             fetch('/valdane/staffer/' + location.pathname.split('/').pop(), { method: 'DELETE' })
-            .then(async response => {
-                location = '/valdane/staffers';
-            })
-            .catch(error => {
-                console.log(error);
-            })
-            .finally(_ => event.target.disabled = false);
+                .then(async response => {
+                    location = '/valdane/staffers';
+                })
+                .catch(error => {
+                    console.log(error);
+                })
+                .finally(_ => event.target.disabled = false);
         });
 
         document.querySelector('#verified').checked = !!data.verified; //проверено
         document.querySelector('#name').value = data.name || ''; //Ф.И.О.
         document.querySelector('#personnelNumber').value = data.personnelNumber || ''; //табельный номер
-        if(data.position.id) document.querySelector(`#position option[value="${data.position.id}"]`).selected = true; //должность
+        if (data.position.id) document.querySelector(`#position option[value="${data.position.id}"]`).selected = true; //должность
         document.querySelector('#contacts').value = data.contacts || ''; //контакты
         document.querySelector('#skill').value = data.skill || ''; //разряд
         document.querySelector('#passport').value = data.passport || ''; //паспорт
@@ -441,19 +445,22 @@
         document.querySelector('#vaccinationEnd').value = setFormatDate(data.vaccination.end);//Сертификат о вакцинации
     }
 
-    function setFormatDate(data){
-        if(!data) return '';
+    function setFormatDate(data) {
+        if (!data) return '';
 
         const date = new Date(data);
         const arr = [];
-        arr.push( date.getDate() < 10 ? '0'+date.getDate() : date.getDate() );
-        arr.push( (date.getMonth()+1) < 10 ? '0'+(date.getMonth()+1) : (date.getMonth()+1)  );
-        arr.push( date.getFullYear() );
+        arr.push(date.getDate() < 10 ? '0' + date.getDate() : date.getDate());
+        arr.push((date.getMonth() + 1) < 10 ? '0' + (date.getMonth() + 1) : (date.getMonth() + 1));
+        arr.push(date.getFullYear());
         return arr.join('.');
     }
 
-    const pathname = location.pathname.split('/');
-    if (pathname[3] === 'upd') {
+    //заполнение полей формы, должно вызываться после формирования списка должностей
+    function insertPersonalInfo() {
+        const pathname = location.pathname.split('/');
+        if (pathname[3] !== 'upd') return;
+
         //запрос данных пользователя
         fetch('/valdane/staff/' + location.pathname.split('/').pop(), { method: 'GET' })
             .then(async response => {
@@ -461,24 +468,26 @@
                     const res = await response.json();
                     fillPage(res);
                 }
-                else if(response.status === 400){
+                else if (response.status === 400) {
                     alert('пользователь не найден');
                     location = '/valdane/staffers';
                 }
                 else throw new Error('error HTTP ' + response.status);
             })
             .catch(error => {
+                alert('ошибка получения данных пользователя');
                 console.log(error);
             });
-        
+
         //изменение обработчика отправки данных
         form.removeEventListener('submit', addStaffer);
         form.addEventListener('submit', updStaffer);
     }
 
-    function updStaffer(event){
+
+    function updStaffer(event) {
         event.preventDefault();
-        
+
         button.disabled = true; //деактивировать кнопку отправки данных
         fetch('/valdane/staffer/' + location.pathname.split('/').pop(), {
             method: 'PUT',

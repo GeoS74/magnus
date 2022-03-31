@@ -190,9 +190,9 @@ module.exports.updateHandbookPlaces = async ctx => {
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
         })
-        .catch(err => {
-            console.log(err);
-            throw new Error(err.message);
+        .catch(error => {
+            console.log(error);
+            throw new Error(error.message);
         });
 }
 

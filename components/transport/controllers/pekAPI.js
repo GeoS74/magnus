@@ -220,7 +220,7 @@ module.exports.updateHandbookPlaces = async ctx => {
             }
         })
         .catch(error => {
-            console.log(err);
-            ctx.throw(400, err.message);
+            console.log(error);
+            ctx.throw(400, error.message);
         });
 };
