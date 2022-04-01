@@ -63,7 +63,6 @@ router.get('/calculator', async ctx => {
 
 
 
-
 //"СДЭК" - обновление справочника населенных пунктов
 router.get('/cdek/handbook/places/update', Cdek.getJWToken, Cdek.updateHandbookPlaces);
 
