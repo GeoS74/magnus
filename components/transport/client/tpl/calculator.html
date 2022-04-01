@@ -50,7 +50,7 @@
             text-decoration: underline;
         }
 
-        .card {
+        .bg-light {
             margin-top: 30px;
         }
 
@@ -61,7 +61,15 @@
 
         .card-body {
             padding-top: 0px;
-            padding-bottom: 30px;
+            padding-bottom: 10px;
+        }
+
+        #calculations{
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .calculate{
+            padding-top:20px;
         }
     </style>
 </head>
@@ -294,6 +302,7 @@
                             showMistake(await response.json());
                         }
                         else {
+                            console.log(await response.json());
                             // throw new Error('HTTP error ' + response.status);
                             console.log(carrier, ": HTTP error ", response.status);
                         }
@@ -302,7 +311,7 @@
             //генерация блоков с данными о расчётах
             function makeRow(data) {
                 return `
-                    <div class="card">
+                    <div class="card calculate">
                         <div class="card-body">
                             <h4 class="card-title">${data.main.carrier}</h4>
                             <section class="mt-4">

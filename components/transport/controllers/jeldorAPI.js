@@ -94,7 +94,7 @@ module.exports.calculation = async (ctx) => {
         .then(async response => {
             if (response.ok) {
                 const res = await response.json();
-                console.log(res);
+                // console.log(res);
 
                 if(res.error) {
                     throw new Error(`Error fetch query: ${res.error}`);
