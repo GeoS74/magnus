@@ -125,35 +125,27 @@ function delay(ms) {
 }
 
 
-const DellineProduceDate = require('@transport/models/DellineProduceDate');
+
 const fetch = require('node-fetch');
 router.get('/test', async ctx => {
-    DellineProduceDate.create({
-        code: "100500",
-        // produceDate: new Date(Date.now() + 1000 * 60 * 60 * 24)
-        produceDate: new Date(Date.now())
+    // await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=385000`, {
+    await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=190005`, {
+        headers: {
+            // 'Content-Type': 'application/json',
+        },
+        method: 'GET',
     })
+        .then(async response => {
+            const res = await response.json();
+            console.log(response.status);
+            console.log(res);
 
-    // const foo = await DellineProduceDate.findOne({code: "123"})
-    // console.log(foo)
-
-    // await fetch(`https://api.boxberry.ru/json.php?token=${process.env.BOXBERRY}&method=ListCitiesFull&CountryCode=643`, {
-    //     headers: {
-    //         // 'Content-Type': 'application/json',
-    //     },
-    //     method: 'GET',
-    // })
-    //     .then(async response => {
-    //         const res = await response.json();
-    //         console.log(response.status);
-    //         console.log(res);
-
-    //         // for(let key in res) {
-    //         //     console.log(key);
-    //         // }
-    //     })
-    //     .catch(error => {
-    //         console.log(error);
-    //     });
+            // for(let key in res) {
+            //     console.log(key);
+            // }
+        })
+        .catch(error => {
+            console.log(error);
+        });
     ctx.body = { name: "GeoS" };
 })
