@@ -188,11 +188,43 @@ php.ini
 для XAMPP
     в файле: xampp\phpMyAdmin\libraries\config.default.php
     ` $cfg['ExecTimeLimit'] = 10000; - максимальное время для импорта
-2) импортировать .csv файл с улицами частями по 200К записей (примерно 3,3 мин на транзакцию) - разделитель ";"
-3) импортировать .csv файл с городами - разделитель ";"
+2) создать таблицы 'cities' и 'streets'
+3) импортировать .csv файл с улицами частями по 200К записей (примерно 3,3 мин на транзакцию) - разделитель ";" 
+импортировать .csv файл с городами - разделитель ";"
 4) удалить из таблицы улиц записи с пустыми индексами
-    DELETE FROM `streets` WHERE column_index='';
-
+    DELETE FROM `streets` WHERE postal_index='';
+Все элементы верхнего уровня (обл., края и т.д.) + города с актуальными кодами
+    SELECT * FROM `cities` WHERE code LIKE "__00000000000" OR (socr='г' AND code LIKE "___________00");
+5) поле STATUS из КЛАДР содержит только '0', поэтому его можно использовать.
+    заполнить '1' для элементов верхнего уровня и '2' для городов
+    UPDATE `cities` SET `status`='1' WHERE code LIKE "__00000000000";
+    UPDATE `cities` SET `status`='2' WHERE socr='г' AND code LIKE "___________00";
+6) удалить лишние записи
+    DELETE FROM `cities` WHERE `status`='0';
+7) добавить индекс для оптимизации
+    CREATE INDEX postal_index ON streets(postal_index);
+8) поле postal_index пустое, поэтому для заполнения почтовыми индексами используем его
+    Важно: поле postal_index по-умолчанию должно принимать значение NULL, иначе будет ошибка на строчках с элементами верхнего уровня
+    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `streets` S WHERE S.CODE LIKE CONCAT(LEFT(C.CODE, 8), '%') AND S.postal_index!='' LIMIT 1)
+    после этого запроса некоторым элементам верхнего уровня возможно будет присвоен индекс
+    можно это исправить:
+    UPDATE `cities` SET `postal_index`='' WHERE STATUS='1';
+    проверка того, что все индексы записаны:
+    SELECT * FROM `cities` WHERE STATUS='2' AND postal_index='NULL';
+9) нормализовать код КЛАДР городи и региона перед выгрузкой в формат .csv
+    ALTER TABLE `cities` 
+        ADD COLUMN normalCode VARCHAR(20) NOT NULL AFTER STATUS, 
+        ADD COLUMN normalRegionCode VARCHAR(20) NOT NULL AFTER normalCode,
+        ADD COLUMN normalName VARCHAR(255) NOT NULL AFTER normalRegionCode, 
+        ADD COLUMN fullName VARCHAR(255) NULL AFTER normalName
+    UPDATE `cities` SET `normalCode`=CONCAT('`', CODE), `normalRegionCode`=CONCAT('`', LEFT(CODE,2), '00000000000');
+10) нормализовать названия и записать полное название
+    UPDATE `cities` SET `normalName`=CONCAT(NAME, ' ', LOWER(SOCR), '.')
+    заполнение полного названия
+    CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
+    UPDATE `cities` C SET `fullName`=CONCAT(C.normalName, ' (', (SELECT normalName FROM `temptable` T WHERE T.CODE=CONCAT(LEFT(C.CODE, 2), '00000000000') ), ')') WHERE C.STATUS='2';
+11) экспортировать в .csv
+    ВАЖНО!!! кодировка файла .csv должна быть UTF-8 with BOM
 
 
 Код из КЛАДР г.Долгопрудный
