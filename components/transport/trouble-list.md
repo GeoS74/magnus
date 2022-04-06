@@ -195,6 +195,16 @@ php.ini
 для XAMPP
     в файле: xampp\phpMyAdmin\libraries\config.default.php
     ` $cfg['ExecTimeLimit'] = 10000; - максимальное время для импорта
+найти phpmyadmin в ubuntu: find / -iname "phpmyadmin*" -type d
+
+ускоренная загрузка через MariaDB:
+- MariaDB загружает из директории /var/...
+    надо скопировать файлы в любую папку внутри /var
+- создать таблицу в БД с кол-ом полей расным кол-ву столбцов в .csv
+- в терминале MariaDB вызвать команду:
+    LOAD DATA INFILE '/var/testupload/STREET.csv' INTO TABLE streets FIELDS TERMINATED BY ';' ENCLOSED BY '"' LINES TERMINATED BY '\r\n' IGNORE 1 LINES;
+https://dev.mysql.com/doc/refman/5.7/en/load-data.html#load-data-file-location
+
 2) создать таблицы 'cities' и 'streets'
 3) импортировать .csv файл с улицами частями по 200К записей (примерно 3,3 мин на транзакцию) - разделитель ";" 
 импортировать .csv файл с городами - разделитель ";"
