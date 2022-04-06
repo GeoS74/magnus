@@ -50,7 +50,7 @@ module.exports.update = async ctx => {
     // console.log(changeEngSymb("привет"))
     // return;
 
-    const fpath = path.join(__dirname, `../files/cities.csv`);
+    const fpath = path.join(__dirname, `../files/kladr2.csv`);
     const workbook = XLSX.readFile(fpath, {
         raw: true
     });
@@ -60,45 +60,46 @@ module.exports.update = async ctx => {
         .map(r => { //преобразование данных
             //надо учитывать, что файл .csv готовится руками, поэтому надо обращать внимание на названия ключей
             //вообще, лучше всего сделать форму загрузки файла с возможностью указать на клиенте где какая колонка заливается
-            console.log(r);
-            // const name = `${r[1]} ${r[2]}.`;
-            // const regname = `${r[5]} ${r[6] ? r[6] + "." : ""}`;
-            // return {
-            //     fullName: `${name} (${regname})`,
-            //     name: name,
-            //     code: r[4].slice(1),
-            //     searchString: r[1],
-            //     searchStringEng: changeEngSymb(r[1]),
-            //     regname: regname,
-            //     regcode: r[3].slice(1),
-            // };
+            // console.log(r);
+            return {
+                fullName: r[12],
+                name: r[11],
+                code: r[13].slice(1),
+                searchString: r[1],
+                searchStringEng: changeEngSymb(r[1]),
+                regname: r[9],
+                regcode: r[14].slice(1),
+                postalIndex: r[4],
+            };
         });
+        return;
 
     const start = Date.now();
 
     //очистить коллекцию населённых пунктов
-    // await MainHandbookPlaces.deleteMany();
+    await MainHandbookPlaces.deleteMany();
 
     let i = 0;
-    // for (const data of arr) {
-    //     if (!(++i % 100)) console.log('write: ', i);
+    for (const data of arr) {
+        if (!(++i % 100)) console.log('write: ', i);
 
-    //     try {
-    //         await MainHandbookPlaces.create({
-    //             fullName: data.fullName,
-    //             name: data.name,
-    //             code: data.code,
-    //             searchString: data.searchString,
-    //             searchStringEng: data.searchStringEng,
-    //             regname: data.regname,
-    //             regcode: data.regcode,
-    //         })
-    //     }
-    //     catch (error) {
-    //         console.log(error)
-    //         continue;
-    //     }
-    // }
+        try {
+            await MainHandbookPlaces.create({
+                fullName: data.fullName,
+                name: data.name,
+                code: data.code,
+                searchString: data.searchString,
+                searchStringEng: data.searchStringEng,
+                regname: data.regname,
+                regcode: data.regcode,
+                postalIndex: data.postalIndex,
+            })
+        }
+        catch (error) {
+            console.log(error)
+            continue;
+        }
+    }
 
     //нужно ли удалять файл пока не понятно
     // fs.unlink(fpath, err => {

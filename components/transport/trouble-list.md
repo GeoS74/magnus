@@ -136,6 +136,8 @@ https://fias.nalog.ru/Updates
 https://sourceforge.net/projects/kladr-viewer/
 описание:
 https://www.sitebill.ru/s/topic/2288-%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B6%D0%B0%D0%B5%D0%BC-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D0%B5-%D0%B8%D0%B7-%D0%BA%D0%BB%D0%B0%D0%B4%D1%80-%D0%B2-excel-%D0%B8%D0%BD%D1%81%D1%82%D1%80%D1%83%D0%BA%D1%86%D0%B8%D1%8F/
+расшифровка КЛАДР
+https://sites.google.com/site/vbnav037/poleznosti-1/kladr/opisaniestrukturykladr
 
 ~~~~~~~~~Вариант короткий:
 1) скачать БД КЛАДР (см. ссылку выше), в архиве несколько файлов .DBF
@@ -180,6 +182,11 @@ https://www.sitebill.ru/s/topic/2288-%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B6%D0%B0%
 11) отфильтровать, оставив те, которых нет в новом списке и убрать дубликаты
 
 
+
+
+
+
+
 ~~~~~~~~~Вариант - Загрузка файла .csv из КЛАДР в MySQL
 1) увеличчть лимиты БД:
 php.ini
@@ -191,40 +198,98 @@ php.ini
 2) создать таблицы 'cities' и 'streets'
 3) импортировать .csv файл с улицами частями по 200К записей (примерно 3,3 мин на транзакцию) - разделитель ";" 
 импортировать .csv файл с городами - разделитель ";"
-4) удалить из таблицы улиц записи с пустыми индексами
+4) не обязательно: удалить из таблицы улиц записи с пустыми индексами
     DELETE FROM `streets` WHERE postal_index='';
 Все элементы верхнего уровня (обл., края и т.д.) + города с актуальными кодами
     SELECT * FROM `cities` WHERE code LIKE "__00000000000" OR (socr='г' AND code LIKE "___________00");
 5) поле STATUS из КЛАДР содержит только '0', поэтому его можно использовать.
     заполнить '1' для элементов верхнего уровня и '2' для городов
     UPDATE `cities` SET `status`='1' WHERE code LIKE "__00000000000";
-    UPDATE `cities` SET `status`='2' WHERE socr='г' AND code LIKE "___________00";
-6) удалить лишние записи
-    DELETE FROM `cities` WHERE `status`='0';
-7) добавить индекс для оптимизации
-    CREATE INDEX postal_index ON streets(postal_index);
-8) поле postal_index пустое, поэтому для заполнения почтовыми индексами используем его
-    Важно: поле postal_index по-умолчанию должно принимать значение NULL, иначе будет ошибка на строчках с элементами верхнего уровня
-    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `streets` S WHERE S.CODE LIKE CONCAT(LEFT(C.CODE, 8), '%') AND S.postal_index!='' LIMIT 1)
-    после этого запроса некоторым элементам верхнего уровня возможно будет присвоен индекс
-    можно это исправить:
-    UPDATE `cities` SET `postal_index`='' WHERE STATUS='1';
-    проверка того, что все индексы записаны:
-    SELECT * FROM `cities` WHERE STATUS='2' AND postal_index='NULL';
-9) нормализовать код КЛАДР городи и региона перед выгрузкой в формат .csv
-    ALTER TABLE `cities` 
-        ADD COLUMN normalCode VARCHAR(20) NOT NULL AFTER STATUS, 
-        ADD COLUMN normalRegionCode VARCHAR(20) NOT NULL AFTER normalCode,
-        ADD COLUMN normalName VARCHAR(255) NOT NULL AFTER normalRegionCode, 
-        ADD COLUMN fullName VARCHAR(255) NULL AFTER normalName
-    UPDATE `cities` SET `normalCode`=CONCAT('`', CODE), `normalRegionCode`=CONCAT('`', LEFT(CODE,2), '00000000000');
-10) нормализовать названия и записать полное название
-    UPDATE `cities` SET `normalName`=CONCAT(NAME, ' ', LOWER(SOCR), '.')
-    заполнение полного названия
+    Важно:
+        города Москва, Санкт-Петербург, Севастополь, Байконур имеют код КЛАДР такой же как и в регионе,
+        т.е. они являются обособленными городами, представляющими собой и город и регион, они должны отображаться прмерно так: г. Москва (г. Москва)
+    UPDATE `cities` SET `status`='2' WHERE socr='г' AND code LIKE "___________00" AND searchString NOT IN ('Москва', 'Байконур', 'Санкт-Петербург', 'Севастополь');
+
+на этом этапе должно быть 85 записей со статусом 1 и 1131 со статусом 2. Таким образом, если учесть специальные 
+города типа Москва, Санкт-Петербург, Байконур и Севастополь, то в справочник должно попасть 1135 записей.
+
+6) добавить новые поля
+ALTER TABLE `cities` 
+        ADD COLUMN regname VARCHAR(255) NULL AFTER status, 
+        ADD COLUMN regcode VARCHAR(20) NULL AFTER regname, 
+        ADD COLUMN name VARCHAR(255) NULL AFTER regcode, 
+        ADD COLUMN fullName VARCHAR(255) NULL AFTER name,
+        ADD COLUMN normalCode VARCHAR(20) NULL AFTER fullName, 
+        ADD COLUMN normalRegionCode VARCHAR(20) NULL AFTER normalCode
+
+SELECT * FROM `cities` WHERE searchString IN ('Москва', 'Байконур', 'Санкт-Петербург', 'Севастополь');
+
+7) удалить лишние записи
+    DELETE FROM `cities` WHERE status NOT IN ('1', '2');
+8) обновить код региона
     CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
-    UPDATE `cities` C SET `fullName`=CONCAT(C.normalName, ' (', (SELECT normalName FROM `temptable` T WHERE T.CODE=CONCAT(LEFT(C.CODE, 2), '00000000000') ), ')') WHERE C.STATUS='2';
-11) экспортировать в .csv
+    UPDATE `cities` C SET regcode=CONCAT(LEFT((SELECT code FROM `temptable` T WHERE T.code=C.code LIMIT 1), 2), '00000000000')
+9) обновить название региона
+    CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
+    UPDATE `cities` C SET regname=(SELECT CONCAT(searchString, ' ', LOWER(socr), IF(socr!='Край', '.', '')) as regname FROM `temptable` T WHERE T.code=C.regcode LIMIT 1)
+10) обновить название населённого пункта
+CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
+UPDATE `cities` C SET name=(SELECT CONCAT(searchString, ' ', socr,'.') FROM `temptable` T WHERE T.code=C.code AND socr='г' LIMIT 1);
+11) на этом этапе поле name не будет заполнено только у регионов, все города, включая Москву, Байконур и т.д. будут готовы к дальнейшему заполнению данных.
+Вывести список регионов:
+    SELECT * FROM `cities` WHERE name IS NULL;
+Регионы можно удалить
+    DELETE FROM `cities` WHERE name IS NULL;
+
+
+
+12) заполнение полного наименования
+    CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
+    UPDATE `cities` C SET fullName=(SELECT CONCAT(searchString, ' г. (', regname, ')') FROM `temptable` T WHERE T.code=C.code LIMIT 1);
+13) нормализация кода КЛАДР и регионального кода КЛАДР
+    CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
+    UPDATE `cities` C SET normalCode=(SELECT CONCAT('`', code) FROM `temptable` T WHERE T.code=C.code LIMIT 1);
+    UPDATE `cities` C SET normalRegionCode=(SELECT CONCAT('`', regcode) FROM `temptable` T WHERE T.code=C.code LIMIT 1);
+14) добавить индекс в таблицу улиц для оптимизации
+    CREATE INDEX postal_index ON streets(postal_index);
+15) поле postal_index пустое, поэтому для заполнения почтовыми индексами используем его
+оптимизация для запроса индексов
+    DELETE FROM `streets` WHERE postal_index='';
+    CREATE INDEX code ON cities(code);
+
+Рабочий запрос, отрабатывает быстро (примерно за 30 сек)
+Особенности: при создании временной таблицы для поля opt_code надо брать первые 11 цифр кода КЛАДР и добивать двумя 0-ми, иначе не будет совпадений по, около 100 записям. Код КЛАДР у улицы может использовать 12-ю и 13-ю позицию кода КЛАДР города, хз зачем... Также, при этом запросе не будут записаны индексы в следующие города:
+    - Ахтубинск-7
+    - Воронеж-45
+    - Чехов-3
+    - Чехов-8
+    - Балаклава
+Балаклава имеет 5-ти значный индекс и его почему-то нет в списке улиц КЛАДР, индекс Ахтубинска-7 не гуглится, у остальных код КЛАДР сильно отличается от кодов городов.
+Пример Чехов-3:
+    50000053000001600
+    5003700300000
+
+    CREATE TEMPORARY TABLE `temptable` SELECT CONCAT(LEFT(code, 11), '00') as opt_code, postal_index FROM `streets` GROUP BY opt_code;
+    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `temptable` S WHERE S.opt_code=C.code ORDER BY S.opt_code LIMIT 1);
+
+16) экспортировать в .csv. Разделитель ';'
     ВАЖНО!!! кодировка файла .csv должна быть UTF-8 with BOM
+
+
+
+=============Плохо работающие запросы
+    этот запрос зависает на очень долго
+        UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `streets` S WHERE S.code LIKE CONCAT(C.code, '____') ORDER BY S.code LIMIT 1);
+
+    этот запрос увеличивает время с каждым кругом
+    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `streets` S WHERE S.code LIKE CONCAT(C.code, '____') ORDER BY S.code LIMIT 1) WHERE id > 250 ORDER BY id LIMIT 50;
+
+    Рабочий запрос, отрабатывает быстро но не по всем строчкам, необходимо создать PRIMARY id в `cities`
+    CREATE TEMPORARY TABLE `temptable` SELECT postal_index, code FROM `streets` GROUP BY postal_index;
+    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `temptable` S WHERE S.code LIKE CONCAT(C.code, '____') ORDER BY S.code LIMIT 1) WHERE id > 350 ORDER BY id LIMIT 150;
+=============Плохо работающие запросы
+
+
 
 
 Код из КЛАДР г.Долгопрудный
