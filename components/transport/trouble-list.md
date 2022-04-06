@@ -84,7 +84,7 @@ RU74000001000
     ещё есть интернет-посылка и курьерская доставка
 41) ЖелДорЭкспедиция надо разобраться с расчётом негабаритного груза
 42) ЖелДорЭкспедиция в расчёте надо учитывать наличие терминала в городах приёма/отправки и исходя из этого устанавливать забор и доставку груза
-
+43) в БД КЛАДР в файле КЛАДР с городами и населенными пунктами есть города из Северной Осетии, но нет самой Северной Осетии как региона. Надо проверить как считается туда доставка (Владикавказ, Алагир, Ардон, Дигора, Моздок, Беслан)
 
 
 ----------Вставить эту фразу на клиенте----------
@@ -195,6 +195,7 @@ php.ini
 для XAMPP
     в файле: xampp\phpMyAdmin\libraries\config.default.php
     ` $cfg['ExecTimeLimit'] = 10000; - максимальное время для импорта
+
 найти phpmyadmin в ubuntu: find / -iname "phpmyadmin*" -type d
 
 ускоренная загрузка через MariaDB:
@@ -239,9 +240,14 @@ SELECT * FROM `cities` WHERE searchString IN ('Москва', 'Байконур'
 8) обновить код региона
     CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
     UPDATE `cities` C SET regcode=CONCAT(LEFT((SELECT code FROM `temptable` T WHERE T.code=C.code LIMIT 1), 2), '00000000000')
+
 9) обновить название региона
     CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
     UPDATE `cities` C SET regname=(SELECT CONCAT(searchString, ' ', LOWER(socr), IF(socr!='Край', '.', '')) as regname FROM `temptable` T WHERE T.code=C.regcode LIMIT 1)
+
+BUG DETECTED: в БД КЛАДР в файле КЛАДР с городами и населенными пунктами есть города из Северной Осетии, но нет самой Северной Осетии как региона. Надо проверить как считается туда доставка (Владикавказ, Алагир, Ардон, Дигора, Моздок, Беслан)
+    UPDATE `cities` C SET regname='Северная Осетия - Алания респ.' WHERE code LIKE '15%'
+
 10) обновить название населённого пункта
 CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
 UPDATE `cities` C SET name=(SELECT CONCAT(searchString, ' ', socr,'.') FROM `temptable` T WHERE T.code=C.code AND socr='г' LIMIT 1);
@@ -250,8 +256,6 @@ UPDATE `cities` C SET name=(SELECT CONCAT(searchString, ' ', socr,'.') FROM `tem
     SELECT * FROM `cities` WHERE name IS NULL;
 Регионы можно удалить
     DELETE FROM `cities` WHERE name IS NULL;
-
-
 
 12) заполнение полного наименования
     CREATE TEMPORARY TABLE `temptable` SELECT * FROM `cities`;
@@ -268,7 +272,12 @@ UPDATE `cities` C SET name=(SELECT CONCAT(searchString, ' ', socr,'.') FROM `tem
     CREATE INDEX code ON cities(code);
 
 Рабочий запрос, отрабатывает быстро (примерно за 30 сек)
-Особенности: при создании временной таблицы для поля opt_code надо брать первые 11 цифр кода КЛАДР и добивать двумя 0-ми, иначе не будет совпадений по, около 100 записям. Код КЛАДР у улицы может использовать 12-ю и 13-ю позицию кода КЛАДР города, хз зачем... Также, при этом запросе не будут записаны индексы в следующие города:
+Особенности: при создании временной таблицы для поля opt_code надо брать первые 11 цифр кода КЛАДР и добивать двумя 0-ми, иначе не будет совпадений по, около 100 записям. Код КЛАДР у улицы может использовать 12-ю и 13-ю позицию кода КЛАДР города, хз зачем...
+
+    CREATE TEMPORARY TABLE `temptable` SELECT CONCAT(LEFT(code, 11), '00') as opt_code, postal_index FROM `streets` GROUP BY opt_code;
+    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `temptable` T WHERE T.opt_code=C.code ORDER BY T.opt_code LIMIT 1)
+
+16) Теперь не будут записаны индексы в следующие города:
     - Ахтубинск-7
     - Воронеж-45
     - Чехов-3
@@ -278,11 +287,9 @@ UPDATE `cities` C SET name=(SELECT CONCAT(searchString, ' ', socr,'.') FROM `tem
 Пример Чехов-3:
     50000053000001600
     5003700300000
+Рабочий вариант на сейчас - записать 5 индексов руками :)
 
-    CREATE TEMPORARY TABLE `temptable` SELECT CONCAT(LEFT(code, 11), '00') as opt_code, postal_index FROM `streets` GROUP BY opt_code;
-    UPDATE `cities` C SET `postal_index`=(SELECT `postal_index` FROM `temptable` S WHERE S.opt_code=C.code ORDER BY S.opt_code LIMIT 1);
-
-16) экспортировать в .csv. Разделитель ';'
+17) экспортировать в .csv. Разделитель ';'
     ВАЖНО!!! кодировка файла .csv должна быть UTF-8 with BOM
 
 
