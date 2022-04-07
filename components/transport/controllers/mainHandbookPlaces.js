@@ -50,7 +50,7 @@ module.exports.update = async ctx => {
     // console.log(changeEngSymb("привет"))
     // return;
 
-    const fpath = path.join(__dirname, `../files/kladr2.csv`);
+    const fpath = path.join(__dirname, `../kladr/kladr.csv`);
     const workbook = XLSX.readFile(fpath, {
         raw: true
     });
@@ -62,17 +62,16 @@ module.exports.update = async ctx => {
             //вообще, лучше всего сделать форму загрузки файла с возможностью указать на клиенте где какая колонка заливается
             // console.log(r);
             return {
-                fullName: r[12],
-                name: r[11],
-                code: r[13].slice(1),
-                searchString: r[1],
-                searchStringEng: changeEngSymb(r[1]),
-                regname: r[9],
-                regcode: r[14].slice(1),
-                postalIndex: r[4],
+                fullName: r[13],
+                name: r[12],
+                code: r[14].slice(1),
+                searchString: r[2],
+                searchStringEng: changeEngSymb(r[2]),
+                regname: r[12],
+                regcode: r[15].slice(1),
+                postalIndex: r[5],
             };
         });
-        return;
 
     const start = Date.now();
 
