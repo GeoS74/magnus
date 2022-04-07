@@ -137,7 +137,7 @@ module.exports.updateHandbookPlaces = async ctx => {
                 for (const city of res) {
                     //API Кита отдаёт не только города России, но также и СНГ
                     if (city.country_code !== "RU") continue;
-                    console.log(city);
+                    // console.log(city);
                     if (!(++i % 1000)) console.log('write: ', i);
                     try {
                         await KitHandbookPlaces.create({

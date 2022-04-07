@@ -14,9 +14,6 @@ async function requiredDelivery(city) {
 //надо разобраться с расчётом негабаритного груза
 //расчёт проводится исходя из общего объёма и веса груза
 async function makeSearchParameters(parameters) {
-
-    await requiredDelivery(parameters.derival.searchString);
-
     let arr = [
         // `from_kladr=${parameters.derival.code}`, //Идентификатор КЛАДР населенного пункта отправления
         // `to_kladr=${parameters.arrival.code}`, //Идентификатор КЛАДР населенного пункта назначения
@@ -149,7 +146,7 @@ module.exports.updateHandbookPlaces = async ctx => {
                 ctx.body = 'Jeldor handbook places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
             }
             else {
-                // console.log(await response.json());
+                console.log(await response.json());
                 throw new Error(`Error fetch query - status: ${response.status}`);
             }
         })
