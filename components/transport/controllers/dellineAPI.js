@@ -22,7 +22,7 @@ async function getCity(data) {
             .findOne({ code: data.code + '000000000000' })
             .populate({
                 path: 'streets',
-                match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+                match: { name: { $regex: /^[а-яА-Я]{5} ул/i } }, //обязательно указывать, что ищем улицу
                 options: { limit: 1 }
             })
             .populate('terminals');
@@ -36,7 +36,7 @@ async function getCity(data) {
             })
             .populate({
                 path: 'streets',
-                match: { name: { $regex: /^[а-яА-Я]{5}/i } },
+                match: { name: { $regex: /^[а-яА-Я]{5} ул/i } }, //обязательно указывать, что ищем улицу
                 options: { limit: 1 }
             })
             .populate('terminals');
@@ -323,16 +323,18 @@ module.exports.calculation = async (ctx) => {
                         //...
                     }
 
-                    if (err.code === 180002) { //Выбран некорректный адрес
-                        if (err.fields[0] == 'delivery.derival.address.search') {
-                            ctx.status = 400;
-                            return ctx.body = { path: 'derival', message: 'Выбран некорректный адрес' };
-                        }
-                        if (err.fields[0] == 'delivery.arrival.address.search') {
-                            ctx.status = 400;
-                            return ctx.body = { path: 'arrival', message: 'Выбран некорректный адрес' };
-                        }
-                    }
+                    //это сбивает с толку, т.к. у остальных перевозчиков расчёт может пройти нормально,
+                    //а Деловые засветят ошибкой поле ввода адреса
+                    // if (err.code === 180002) { //Выбран некорректный адрес
+                    //     if (err.fields[0] == 'delivery.derival.address.search') {
+                    //         ctx.status = 400;
+                    //         return ctx.body = { path: 'derival', message: 'Выбран некорректный адрес' };
+                    //     }
+                    //     if (err.fields[0] == 'delivery.arrival.address.search') {
+                    //         ctx.status = 400;
+                    //         return ctx.body = { path: 'arrival', message: 'Выбран некорректный адрес' };
+                    //     }
+                    // }
 
                     if (err.code === 180012) { //Выбранная дата недоступна
                         if (new Date(ctx.request.body.produceDate - Date.now()).getDate() > 20) {
