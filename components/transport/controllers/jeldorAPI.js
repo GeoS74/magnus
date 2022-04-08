@@ -18,8 +18,10 @@ async function makeSearchParameters(parameters) {
         // `from_kladr=${parameters.derival.code}`, //Идентификатор КЛАДР населенного пункта отправления
         // `to_kladr=${parameters.arrival.code}`, //Идентификатор КЛАДР населенного пункта назначения
 
-        `addr_from=${parameters.derival.searchString}`, //Адрес населенного пункта отправления
-        `addr_to=${parameters.arrival.searchString}`, //Адрес населенного пункта назначения
+        //здесь жёстко прописано, что это город, иначе Челябинск не просчитывается
+        //этот баг надо исправить внеся изменения в mainHandbookPlaces
+        `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
+        `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}`, //Адрес населенного пункта назначения
         `type=1`, //Тип вида доставки. Список типов доставки можно получить запросом /calculator/PriceTypeListAvailable
         makeCargo(parameters),
         // `weight=100`, //Вес груза в кг.
