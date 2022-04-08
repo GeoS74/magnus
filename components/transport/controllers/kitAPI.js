@@ -23,7 +23,7 @@ async function getCity(data) {
             });
 
         if (city) return city;
-        else throw new Error("Kit: city not found");
+        else throw new Error(`Kit: city ${data.searchString} not found`);
     }
     catch (error) {
         // console.log(error.message);

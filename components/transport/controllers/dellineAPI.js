@@ -42,7 +42,7 @@ async function getCity(data) {
             .populate('terminals');
 
         if (city) return city;
-        else throw new Error("DelLine: city not found");
+        else throw new Error(`DelLine: city ${data.searchString} not found`);
     }
     catch (error) {
         // console.log(error.message);

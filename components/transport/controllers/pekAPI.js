@@ -39,7 +39,7 @@ async function getCity(data) {
         // console.log(city);
 
         if (city.length === 1) return city[0];
-        else throw new Error("Pek: city not found");
+        else throw new Error(`Pek: city ${data.searchString} not found`);
         //здесь можно дописать 3-ю попытку найти город,
         //при которой составляется Полное назнвание города, включая обл.
         //для примера попробуй найти г. Дубна (Моск. обл.)

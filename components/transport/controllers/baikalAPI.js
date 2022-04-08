@@ -11,7 +11,7 @@ async function getCity(data) {
         let city = await BaikalHandbookPlaces.findOne({ name: data.searchString });
 
         if (city) return city;
-        else throw new Error("Baikal: city not found");
+        else throw new Error(`Baikal: city ${data.searchString} not found`);
     }
     catch (error) {
         // console.log(error.message);
