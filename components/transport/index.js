@@ -10,6 +10,7 @@ const Boxberry = require('@transport/controllers/boxberryAPI');
 const Jeldor = require('@transport/controllers/jeldorAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
+const { counter } = require('@transport/controllers/metrics');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -33,7 +34,7 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 
 
 //роутинг запросов расчёта стоимости перевозки
-router.post('/calculation', koaBody, checkCity, checkParameters, async ctx => {
+router.post('/calculation', koaBody, counter, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
             case 'delline': await DelLine.calculation(ctx); break;
@@ -127,25 +128,25 @@ function delay(ms) {
 
 
 const fetch = require('node-fetch');
-router.get('/test', async ctx => {
-    // await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=385000`, {
-    await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=190005`, {
-        headers: {
-            // 'Content-Type': 'application/json',
-        },
-        method: 'GET',
-    })
-        .then(async response => {
-            const res = await response.json();
-            console.log(response.status);
-            console.log(res);
+// router.get('/test', async ctx => {
+//     // await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=385000`, {
+//     await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=190005`, {
+//         headers: {
+//             // 'Content-Type': 'application/json',
+//         },
+//         method: 'GET',
+//     })
+//         .then(async response => {
+//             const res = await response.json();
+//             console.log(response.status);
+//             console.log(res);
 
-            // for(let key in res) {
-            //     console.log(key);
-            // }
-        })
-        .catch(error => {
-            console.log(error);
-        });
-    ctx.body = { name: "GeoS" };
-})
+//             // for(let key in res) {
+//             //     console.log(key);
+//             // }
+//         })
+//         .catch(error => {
+//             console.log(error);
+//         });
+//     ctx.body = { name: "GeoS" };
+// })
