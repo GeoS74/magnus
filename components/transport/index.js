@@ -8,6 +8,7 @@ const Cdek = require('@transport/controllers/cdekAPI');
 const Baikal = require('@transport/controllers/baikalAPI');
 const Boxberry = require('@transport/controllers/boxberryAPI');
 const Jeldor = require('@transport/controllers/jeldorAPI');
+const Pochta = require('@transport/controllers/pochtaAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 const { counter } = require('@transport/controllers/metrics');
@@ -44,6 +45,7 @@ router.post('/calculation', koaBody, counter, checkCity, checkParameters, async 
             case 'baikal': await Baikal.calculation(ctx); break;
             case 'boxberry': await Boxberry.calculation(ctx); break;
             case 'jeldor': await Jeldor.calculation(ctx); break;
+            case 'pochta': await Pochta.calculation(ctx); break;
         }
     }
     catch (error) {

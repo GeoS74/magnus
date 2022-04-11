@@ -42,7 +42,6 @@ function makeCargo(param) {
 }
 
 //формирование параметров запроса для расчёта перевозки
-//параметры должны передаваться GET запросом
 async function makeSearchParameters(parameters) {
     parameters.derival = await getCity(parameters.derival);
     parameters.arrival = await getCity(parameters.arrival);

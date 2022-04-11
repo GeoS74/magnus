@@ -111,7 +111,7 @@ function normalizeArray(arr, maxCount) {
 //привести значения массива к float
 function toFloat(arr) {
     for(let k in arr) {
-        arr[k] = parseFloat(arr[k]) || 0;
+        arr[k] = parseFloat(arr[k].replace(',', '.')) || 0;
     }
     return arr;
 }
