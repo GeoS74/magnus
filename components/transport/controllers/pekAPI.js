@@ -112,16 +112,11 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'ПЭК',
-            price: +(res.take[2] + res.auto[2] + (res.ADD ? res.ADD[3] : 0) + (res.ADD_1 ? res.ADD_1[3] : 0) + (res.ADD_2 ? res.ADD_2[3] : 0) + (res.ADD_3 ? res.ADD_3[3] : 0)).toFixed(2),
+            price: +(res.auto[2] + (res.ADD ? res.ADD[3] : 0) + (res.ADD_2 ? res.ADD_2[3] : 0) + (res.ADD_3 ? res.ADD_3[3] : 0)).toFixed(2),
             days: res.periods_days || '',
         },
         detail: []
     };
-
-    data.detail.push({
-        name: `${res.take[0]} из г. ${res.take[1]}`,
-        value: res.take[2] + ' р.'
-    });
 
     data.detail.push({
         name: `${res.auto[0]} ${res.auto[1]}`,
@@ -132,12 +127,6 @@ function postProcessing(res) {
         data.detail.push({
             name: res.ADD[1],
             value: res.ADD[3] + ' р.'
-        });
-    }
-    if (res.ADD_1) {
-        data.detail.push({
-            name: res.ADD_1[1],
-            value: res.ADD_1[3] + ' р.'
         });
     }
     if (res.ADD_2) {
@@ -153,6 +142,21 @@ function postProcessing(res) {
         });
     }
 
+    data.detail.push({
+        name: `Не включено в расчёт`,
+        value: ''
+    });
+
+    data.detail.push({
+        name: `${res.take[0]} из г. ${res.take[1]}`,
+        value: res.take[2] + ' р.'
+    });
+    if (res.ADD_1) {
+        data.detail.push({
+            name: res.ADD_1[1],
+            value: res.ADD_1[3] + ' р.'
+        });
+    }
     return data;
 }
 
