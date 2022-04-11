@@ -9,6 +9,7 @@ const Baikal = require('@transport/controllers/baikalAPI');
 const Boxberry = require('@transport/controllers/boxberryAPI');
 const Jeldor = require('@transport/controllers/jeldorAPI');
 const Pochta = require('@transport/controllers/pochtaAPI');
+const Luch = require('@transport/controllers/luchAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 const { counter } = require('@transport/controllers/metrics');
@@ -38,14 +39,15 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 router.post('/calculation', koaBody, counter, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
-            case 'delline': await DelLine.calculation(ctx); break;
-            case 'kit': await Kit.calculation(ctx); break;
-            case 'pek': await Pek.calculation(ctx); break;
-            case 'cdek': await Cdek.calculation(ctx); break;
-            case 'baikal': await Baikal.calculation(ctx); break;
-            case 'boxberry': await Boxberry.calculation(ctx); break;
-            case 'jeldor': await Jeldor.calculation(ctx); break;
-            case 'pochta': await Pochta.calculation(ctx); break;
+            // case 'delline': await DelLine.calculation(ctx); break;
+            // case 'kit': await Kit.calculation(ctx); break;
+            // case 'pek': await Pek.calculation(ctx); break;
+            // case 'cdek': await Cdek.calculation(ctx); break;
+            // case 'baikal': await Baikal.calculation(ctx); break;
+            // case 'boxberry': await Boxberry.calculation(ctx); break;
+            // case 'jeldor': await Jeldor.calculation(ctx); break;
+            // case 'pochta': await Pochta.calculation(ctx); break;
+            case 'luch': await Luch.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -65,6 +67,8 @@ router.get('/calculator', async ctx => {
 });
 
 
+//"Луч" - обновление справочника населенных пунктов
+router.get('/luch/handbook/places/update', Luch.updateHandbookPlaces);
 
 //"СДЭК" - обновление справочника населенных пунктов
 router.get('/cdek/handbook/places/update', Cdek.getJWToken, Cdek.updateHandbookPlaces);
@@ -130,25 +134,65 @@ function delay(ms) {
 
 
 const fetch = require('node-fetch');
-// router.get('/test', async ctx => {
-//     // await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=385000`, {
-//     await fetch(`https://tariff.pochta.ru/v2/calculate/tariff/delivery?object=2000&weight=20&from=101000&to=190005`, {
-//         headers: {
-//             // 'Content-Type': 'application/json',
-//         },
-//         method: 'GET',
-//     })
-//         .then(async response => {
-//             const res = await response.json();
-//             console.log(response.status);
-//             console.log(res);
+router.get('/test', async ctx => {
+    const obj = {
+        order: {
+            b_pickup: false,
+            b_delivery: false,
+            city_from: "Челябинск",
+            t_waiting_pickup: "0",
+            t_waiting_delivery: "0",
+            city_to: "Абзаково",
+            value_order: 100, 
+            cash_on_delivery:0, 
+            repurchase:0,
+            b_return_docs:false, 
+            cargos: [
+                {
+                    diameter_load: 0,
+                    length_load: 0.5,
+                    width_load: 0.5,
+                    height_load: 0.5, 
+                    mass_load: 10,
+                    number_of_identical_load: 1, 
+                    b_box_30x30x30: false, 
+                    b_box_50x50x50 :false,
+                    b_box_250x180x100: false, 
+                    b_box_380x300x230: false, 
+                    b_hot_box: false, 
+                    b_lathing: false, 
+                    b_namatrasnik_220x140x40: false, 
+                    b_namatrasnik_220x220x40: false, 
+                    b_palleting: false, 
+                    b_poddoning: false, 
+                    b_stretch_film: false, 
+                    b_tire: false
+                }]
+        },
+        from_order:"order_from_web"};
 
-//             // for(let key in res) {
-//             //     console.log(key);
-//             // }
-//         })
-//         .catch(error => {
-//             console.log(error);
-//         });
-//     ctx.body = { name: "GeoS" };
-// })
+
+
+    await fetch(`https://api.tk-luch.ru/api_calc_for_test`, {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        method: 'POST',
+        // mode: 'no-cors',
+        body: 'json_order='+encodeURIComponent(JSON.stringify(obj))
+        // body: JSON.stringify(obj)
+    })
+        .then(async response => {
+            const res = await response.json();
+            console.log(response.status);
+            console.log(res);
+
+            // for(let key in res) {
+            //     console.log(key);
+            // }
+        })
+        .catch(error => {
+            console.log(error);
+        });
+    ctx.body = { name: "GeoS" };
+})
