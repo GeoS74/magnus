@@ -108,6 +108,12 @@ function postProcessing(res) {
             value: +res[i].sum_carrying + ' р.'
         });
     }
+
+    //Луч может выдать стоимость перевозки 0 р., к примеру маршрут Нижневартовск - Лангепас
+    if(data.main.price === 0) {
+        throw new Error('Luch: could not calculate delivery');
+    }
+
     return data;
 }
 
@@ -125,7 +131,7 @@ module.exports.calculation = async (ctx) => {
 
     await Promise.all(queries)
         .then(res => {
-            // console.log(res);
+            console.log(res);
             ctx.body = postProcessing(res);
         })
         .catch(err => {
