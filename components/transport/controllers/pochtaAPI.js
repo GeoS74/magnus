@@ -7,18 +7,18 @@ const fetch = require('node-fetch');
 // Тип XL: 530×360×220 мм - код 40
 function getTypeBox(length, width, height){
     if(length*1000 <= 261 && width*1000 <= 170 && height*1000 <= 80) {
-        return 10
+        return 10;
     }
     if(length*1000 <= 300 && width*1000 <= 200 && height*1000 <= 150) {
-        return 20
+        return 20;
     }
     if(length*1000 <= 400 && width*1000 <= 270 && height*1000 <= 180) {
-        return 30
+        return 30;
     }
     if(length*1000 <= 530 && width*1000 <= 360 && height*1000 <= 220) {
-        return 40
+        return 40;
     }
-    throw new Error('Почта России: не габаритный размер посылки');
+    return 99;
 }
 
 //формирование параметров запроса для расчёта перевозки
@@ -26,12 +26,13 @@ function getTypeBox(length, width, height){
 function makeSearchParameters(parameters, index) {
     if(parameters.weight[index] > 31.5) throw new Error('Почта России: превышение максимального веса');
 
-    console.log('type box: ', getTypeBox(parameters.length[index], parameters.width[index], parameters.height[index]));
+    // console.log('type box: ', getTypeBox(parameters.length[index], parameters.width[index], parameters.height[index]));
+    const typeBox = getTypeBox(parameters.length[index], parameters.width[index], parameters.height[index]);
 
     let arr = [
-        `object=27030`, //Код объекта расчёта (27030 - посылка / 3000 - бандероль)
+        `object=${typeBox === 99 ? 4030 : 27030}`, //Код объекта расчёта (27030 - посылка / 4030 - не стандартная посылка / 3000 - бандероль)
         `weight=${parameters.weight[index]}`, //Вес, кг 
-        `pack=${getTypeBox(parameters.length[index], parameters.width[index], parameters.height[index])}`, //код типа упаковки 
+        `pack=${typeBox}`, //код типа упаковки 
         `from=${parameters.derival.postalIndex}`, //индекс отправителя
         `to=${parameters.arrival.postalIndex}`, //индекс получателя
     ];
@@ -95,7 +96,8 @@ module.exports.calculation = async (ctx) => {
 
     await Promise.all(queries)
         .then(res => {
-            // console.log(res);
+            console.log(res);
+            console.log(res[0].tariff);
             ctx.body = postProcessing(res);
         })
         .catch(err => {
