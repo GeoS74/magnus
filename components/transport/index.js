@@ -39,14 +39,14 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 router.post('/calculation', koaBody, counter, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
-            // case 'delline': await DelLine.calculation(ctx); break;
-            // case 'kit': await Kit.calculation(ctx); break;
-            // case 'pek': await Pek.calculation(ctx); break;
-            // case 'cdek': await Cdek.calculation(ctx); break;
-            // case 'baikal': await Baikal.calculation(ctx); break;
-            // case 'boxberry': await Boxberry.calculation(ctx); break;
-            // case 'jeldor': await Jeldor.calculation(ctx); break;
-            // case 'pochta': await Pochta.calculation(ctx); break;
+            case 'delline': await DelLine.calculation(ctx); break;
+            case 'kit': await Kit.calculation(ctx); break;
+            case 'pek': await Pek.calculation(ctx); break;
+            case 'cdek': await Cdek.calculation(ctx); break;
+            case 'baikal': await Baikal.calculation(ctx); break;
+            case 'boxberry': await Boxberry.calculation(ctx); break;
+            case 'jeldor': await Jeldor.calculation(ctx); break;
+            case 'pochta': await Pochta.calculation(ctx); break;
             case 'luch': await Luch.calculation(ctx); break;
         }
     }
