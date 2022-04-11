@@ -133,59 +133,39 @@ function delay(ms) {
 
 
 
+
+function parseCookies(response) {
+    const raw = response.headers.raw()['set-cookie'];
+    return raw.map((entry) => {
+      const parts = entry.split(';');
+      const cookiePart = parts[0];
+      return cookiePart;
+    }).join(';');
+  }
+
+
+
 const fetch = require('node-fetch');
+const FormData = require('form-data');
 router.get('/test', async ctx => {
-    const obj = {
-        order: {
-            b_pickup: false,
-            b_delivery: false,
-            city_from: "Челябинск",
-            t_waiting_pickup: "0",
-            t_waiting_delivery: "0",
-            city_to: "Абзаково",
-            value_order: 100, 
-            cash_on_delivery:0, 
-            repurchase:0,
-            b_return_docs:false, 
-            cargos: [
-                {
-                    diameter_load: 0,
-                    length_load: 0.5,
-                    width_load: 0.5,
-                    height_load: 0.5, 
-                    mass_load: 10,
-                    number_of_identical_load: 1, 
-                    b_box_30x30x30: false, 
-                    b_box_50x50x50 :false,
-                    b_box_250x180x100: false, 
-                    b_box_380x300x230: false, 
-                    b_hot_box: false, 
-                    b_lathing: false, 
-                    b_namatrasnik_220x140x40: false, 
-                    b_namatrasnik_220x220x40: false, 
-                    b_palleting: false, 
-                    b_poddoning: false, 
-                    b_stretch_film: false, 
-                    b_tire: false
-                }]
-        },
-        from_order:"order_from_web"};
-
-
-
-    await fetch(`https://api.tk-luch.ru/api_calc_for_test`, {
+    await fetch(`https://zhdalians.ru/calculator`, {
         headers: {
+            // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Content-Type': 'application/x-www-form-urlencoded',
+            // 'Cookie:': 'WhiteCallback_timeAll=9; WhiteCallback_timePage=9',
+            // 'Referer:': 'https://zhdalians.ru/calculator/?__cf_chl_tk=Y9HGSW..Kw5b_bi1moL3dmdqOLgOJUNm4GKRRfKcLBg-1649686405-0-gaNycGzNCZE',
         },
-        method: 'POST',
+        redirect: 'follow',
+        credentials: 'some-origin', //include
+        method: 'GET',
         // mode: 'no-cors',
-        body: 'json_order='+encodeURIComponent(JSON.stringify(obj))
         // body: JSON.stringify(obj)
+        // body: fd
     })
         .then(async response => {
-            const res = await response.json();
+            const res = await response.text();
             console.log(response.status);
-            console.log(res);
+            // console.log(res);
 
             // for(let key in res) {
             //     console.log(key);
@@ -194,5 +174,49 @@ router.get('/test', async ctx => {
         .catch(error => {
             console.log(error);
         });
+
+
+
+    // const fd = new FormData();
+    // fd.append('cityFrom', 'Челябинск');
+    // fd.append('cityWhere', 'Екатеринбург');
+    // fd.append('Weight', '100');
+    // fd.append('Volume', '1');
+    // fd.append('From_City_ID', '7400000100000000000000000');
+    // fd.append('To_City_ID', '6600000100000000000000000');
+    // fd.append('cost', '1');
+
+    // const obj = {
+    //     cityFrom: 'Челябинск',
+    //     cityWhere: 'Екатеринбург',
+    //     Weight: '100',
+    //     Volume: '1',
+    //     From_City_ID: '7400000100000000000000000',
+    //     To_City_ID: '6600000100000000000000000',
+    //     cost: '1',
+    // }
+
+    // await fetch(`https://zhdalians.ru/ajcost`, {
+    //     headers: {
+    //         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    //     },
+    //     credentials: 'include',
+    //     method: 'POST',
+    //     // mode: 'no-cors',
+    //     body: JSON.stringify(obj)
+    //     // body: fd
+    // })
+    //     .then(async response => {
+    //         const res = await response.text();
+    //         console.log(response.status);
+    //         // console.log(res);
+
+    //         // for(let key in res) {
+    //         //     console.log(key);
+    //         // }
+    //     })
+    //     .catch(error => {
+    //         console.log(error);
+    //     });
     ctx.body = { name: "GeoS" };
 })
