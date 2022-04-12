@@ -10,6 +10,7 @@ const Boxberry = require('@transport/controllers/boxberryAPI');
 const Jeldor = require('@transport/controllers/jeldorAPI');
 const Pochta = require('@transport/controllers/pochtaAPI');
 const Luch = require('@transport/controllers/luchAPI');
+const Energy = require('@transport/controllers/energyAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 const { counter } = require('@transport/controllers/metrics');
@@ -48,6 +49,7 @@ router.post('/calculation', koaBody, counter, checkCity, checkParameters, async 
             case 'jeldor': await Jeldor.calculation(ctx); break;
             case 'pochta': await Pochta.calculation(ctx); break;
             case 'luch': await Luch.calculation(ctx); break;
+            case 'energy': await Energy.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -66,6 +68,9 @@ router.get('/calculator', async ctx => {
     });
 });
 
+
+//"Энергия" - обновление справочника населенных пунктов
+router.get('/energy/handbook/places/update', Energy.updateHandbookPlaces);
 
 //"Луч" - обновление справочника населенных пунктов
 router.get('/luch/handbook/places/update', Luch.updateHandbookPlaces);
@@ -134,89 +139,37 @@ function delay(ms) {
 
 
 
-function parseCookies(response) {
-    const raw = response.headers.raw()['set-cookie'];
-    return raw.map((entry) => {
-      const parts = entry.split(';');
-      const cookiePart = parts[0];
-      return cookiePart;
-    }).join(';');
-  }
-
 
 
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 router.get('/test', async ctx => {
-    await fetch(`https://zhdalians.ru/calculator`, {
+
+
+    await fetch(`https://api2.nrg-tk.ru/v2/cities`, {
         headers: {
             // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Content-Type': 'application/x-www-form-urlencoded',
             // 'Cookie:': 'WhiteCallback_timeAll=9; WhiteCallback_timePage=9',
             // 'Referer:': 'https://zhdalians.ru/calculator/?__cf_chl_tk=Y9HGSW..Kw5b_bi1moL3dmdqOLgOJUNm4GKRRfKcLBg-1649686405-0-gaNycGzNCZE',
         },
-        redirect: 'follow',
-        credentials: 'some-origin', //include
+        // redirect: 'follow',
+        // credentials: 'some-origin', //include
         method: 'GET',
         // mode: 'no-cors',
         // body: JSON.stringify(obj)
         // body: fd
     })
         .then(async response => {
-            const res = await response.text();
+            const res = await response.json();
             console.log(response.status);
-            // console.log(res);
+            console.log(res);
 
-            // for(let key in res) {
-            //     console.log(key);
-            // }
         })
         .catch(error => {
             console.log(error);
         });
 
 
-
-    // const fd = new FormData();
-    // fd.append('cityFrom', 'Челябинск');
-    // fd.append('cityWhere', 'Екатеринбург');
-    // fd.append('Weight', '100');
-    // fd.append('Volume', '1');
-    // fd.append('From_City_ID', '7400000100000000000000000');
-    // fd.append('To_City_ID', '6600000100000000000000000');
-    // fd.append('cost', '1');
-
-    // const obj = {
-    //     cityFrom: 'Челябинск',
-    //     cityWhere: 'Екатеринбург',
-    //     Weight: '100',
-    //     Volume: '1',
-    //     From_City_ID: '7400000100000000000000000',
-    //     To_City_ID: '6600000100000000000000000',
-    //     cost: '1',
-    // }
-
-    // await fetch(`https://zhdalians.ru/ajcost`, {
-    //     headers: {
-    //         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    //     },
-    //     credentials: 'include',
-    //     method: 'POST',
-    //     // mode: 'no-cors',
-    //     body: JSON.stringify(obj)
-    //     // body: fd
-    // })
-    //     .then(async response => {
-    //         const res = await response.text();
-    //         console.log(response.status);
-    //         // console.log(res);
-
-    //         // for(let key in res) {
-    //         //     console.log(key);
-    //         // }
-    //     })
-    //     .catch(error => {
-    //         console.log(error);
-    //     });
     ctx.body = { name: "GeoS" };
 })

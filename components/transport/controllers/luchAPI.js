@@ -131,7 +131,7 @@ module.exports.calculation = async (ctx) => {
 
     await Promise.all(queries)
         .then(res => {
-            console.log(res);
+            // console.log(res);
             ctx.body = postProcessing(res);
         })
         .catch(err => {

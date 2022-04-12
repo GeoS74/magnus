@@ -1,0 +1,103 @@
+{
+  "main": {
+    "id": "f4f3b79e298d0d0c",
+    "type": "split",
+    "children": [
+      {
+        "id": "12ca3bf4ef9cec90",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "Точки роста.md",
+            "mode": "preview"
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "3bbc99943fe6a9db",
+    "type": "split",
+    "children": [
+      {
+        "id": "89807f081d743e56",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c0a542e647cd9d91",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "de8ff697a9e0c276",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "точки",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "horizontal",
+    "width": 278
+  },
+  "right": {
+    "id": "5aa214f0c8b3a3e9",
+    "type": "split",
+    "children": [
+      {
+        "id": "d8b31e83f71f9f8d",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bd5d340db4b71e43",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Точки роста.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "12ca3bf4ef9cec90",
+  "lastOpenFiles": [
+    "Точки роста.md",
+    "Энергия.md",
+    "Список транспортных компаний.md",
+    "Почта России.md",
+    "Деловые линии.md",
+    "ПЭК.md",
+    "ЖелДорЭкспедиция.md",
+    "Главный справочник населённых пунктов.md",
+    "Универсальный калькулятор.md",
+    "КЛАДР.md"
+  ]
+}

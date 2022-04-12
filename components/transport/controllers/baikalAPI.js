@@ -122,6 +122,8 @@ function postProcessing(res) {
     return data;
 }
 
+
+
 //расчет доставки
 module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
