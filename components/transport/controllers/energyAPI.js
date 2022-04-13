@@ -92,7 +92,7 @@ module.exports.calculation = async (ctx) => {
                 // console.log(res);
                 ctx.body = postProcessing(res);
             }
-            if(response.status === 429){ //превышение лимита запросов к API
+            else if(response.status === 429){ //превышение лимита запросов к API
                 throw new Error(`Error limit query for Energy`);
             }
             else {
