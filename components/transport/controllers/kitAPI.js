@@ -63,6 +63,7 @@ async function makeSearchParameters(parameters) {
 //пост обработка данных перед отдачей клиенту
 //API отдает не только перевозку standart, но и другие варианты
 function postProcessing(res) {
+    console.log(res);
     const data = {
         main: {
             carrier: 'ТК Кит',

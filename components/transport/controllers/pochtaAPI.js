@@ -79,6 +79,7 @@ function postProcessing(res) {
         });
     }
 
+    data.main.price = data.main.price.toFixed(2);
     data.main.days = `${res[0].delivery.min} - ${res[0].delivery.max}` || '';
 
     return data;

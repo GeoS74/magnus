@@ -417,7 +417,7 @@
                         <p>${data.main.price} р.</p>
                     </article>
                     <article>
-                        <p>${data.main.days || 1} дней</p>
+                        <p>${data.main.days ? data.main.days+'дней' : 'уточняйте у перевозчика'}</p>
                     </article>
                 `;
             }
