@@ -13,6 +13,9 @@ const Schema = new mongoose.Schema({
         type: String,
         index: true
     },
+    aexOnly: { //Прием/Выдача груза осуществляется только путем автоэкспедирования (забора/доставки) 0/1
+        type: Number,
+    },
 }, {
     timestamps: true,
 })

@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const JeldorHandbookPlaces = require('@transport/models/JeldorHandbookPlaces');
+const JeldorHandbookTerminals = require('@transport/models/JeldorHandbookTerminals');
 
 //поиск города с терминалом ЖелДорЭкспедиции
 //результат участвует в расчёте: если терминал есть забор/доставка не требуется и наоборот
@@ -23,6 +24,7 @@ async function makeSearchParameters(parameters) {
         `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
         `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}`, //Адрес населенного пункта назначения
         `type=1`, //Тип вида доставки. Список типов доставки можно получить запросом /calculator/PriceTypeListAvailable
+                  //1 - доставка сборных грузов
         makeCargo(parameters),
         // `weight=100`, //Вес груза в кг.
         // `volume=100`, //Объем в м3
@@ -95,8 +97,17 @@ module.exports.calculation = async (ctx) => {
                 const res = await response.json();
                 // console.log(res);
 
+                await calculationFilial(ctx);
+                return;
+
+                //в случае ошибки расчёта сделать попытку расчитать через филиалы
                 if(res.error) {
-                    throw new Error(`Error fetch query: ${res.error}`);
+                    //throw new Error(`Error fetch query: ${res.error}`);
+                    await calculationFilial(ctx);
+                }
+                else if(res.result === 0) {
+                    //throw new Error(res.services[0].error);
+                    await calculationFilial(ctx);
                 }
                 else {
                     ctx.body = postProcessing(res);
@@ -109,7 +120,46 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(error => {
-            console.log('~~~~~Error API Jeldor~~~~~');
+            console.log('~~~~~Error API Jeldor method city~~~~~');
+            console.log(error.message);
+            throw new Error(error.message);
+        });
+}
+
+//попытка расчёта доставки по филиалам
+async function calculationFilial(ctx) {
+
+    const data = await makeSearchParameters(ctx.request.body);
+
+    await fetch('https://api.jde.ru/vD/calculator/price?' + data + `&user=${process.env.JELDOREXP_USER}&token=${process.env.JELDOREXP_TOKEN}`, {
+        headers: { 'Content-Type': 'application/json' },
+        method: 'GET',
+    })
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                // console.log(res);
+
+                if(res.error) {
+                    //throw new Error(`Error fetch query: ${res.error}`);
+                    await calculation_2(ctx);
+                }
+                else if(res.result === 0) {
+                    //throw new Error(res.services[0].error);
+                    await calculation_2(ctx);
+                }
+                else {
+                    ctx.body = postProcessing(res);
+                }
+            }
+            else {
+                const res = await response.json();
+                console.log(res);
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
+        .catch(error => {
+            console.log('~~~~~Error API Jeldor method city~~~~~');
             console.log(error.message);
             throw new Error(error.message);
         });
@@ -136,6 +186,7 @@ module.exports.updateHandbookPlaces = async ctx => {
                             code: city.kladr_code,
                             cityID: city.code,
                             searchString: city.title,
+                            aexOnly: city.aex_only,
                         })
                     }
                     catch (error) {
@@ -156,4 +207,58 @@ module.exports.updateHandbookPlaces = async ctx => {
             console.log(error.message);
             ctx.throw(400, error.message);
         });
+}
+
+//обновить справочник терминалов в БД
+module.exports.updateHandbookTerminals = async ctx => {
+    try {
+        const start = Date.now();
+        let i = 0;
+        // очистить коллекцию населённых пунктов
+        await JeldorHandbookTerminals.deleteMany();
+
+        i += await updateTerminals(1); //пункты приёма
+        i += await updateTerminals(2); //пункты выдачи
+
+        console.log('Jeldor terminals places is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
+                ctx.body = 'Jeldor terminals places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+    }
+    catch(error) {
+        console.log(error.message);
+        ctx.throw(400, error.message);
+    }
+}
+
+async function updateTerminals(type) {
+    return await fetch('https://api.jde.ru/vD/geo/search?mode=1')
+        .then(async response => {
+            if (response.ok) {
+                const res = await response.json();
+                // console.log(res);
+                let i = 0;
+
+                for (const city of res) {
+                    if (!(++i % 100)) console.log('write: ', i);
+                    try {
+                        await JeldorHandbookTerminals.create({
+                            terminalID: city.code,
+                            title: city.title,
+                            city: city.city,
+                            code: city.kladr_code,
+                            aexOnly: city.aex_only,
+                            type: type,
+                        })
+                    }
+                    catch (error) {
+                        console.log(error)
+                        continue;
+                    }
+                }
+                return i;
+            }
+            else {
+                // console.log(await response.json());
+                throw new Error(`Error fetch query - status: ${response.status}`);
+            }
+        })
 }

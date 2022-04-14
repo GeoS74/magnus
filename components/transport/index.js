@@ -89,6 +89,9 @@ router.get('/baikal/handbook/places/update', Baikal.updateHandbookPlaces);
 
 //"ЖелДорЭкспедиция" - обновление справочника населенных пунктов
 router.get('/jeldor/handbook/places/update', Jeldor.updateHandbookPlaces);
+//"ЖелДорЭкспедиция" - обновление справочника терминалов
+router.get('/jeldor/handbook/terminals/update', Jeldor.updateHandbookTerminals);
+
 
 //"Boxberry" - обновление справочника населенных пунктов
 router.get('/boxberry/handbook/places/update', Boxberry.updateHandbookPlaces);
@@ -146,7 +149,7 @@ const FormData = require('form-data');
 router.get('/test', async ctx => {
 
 
-    await fetch(`https://api2.nrg-tk.ru/v2/cities`, {
+    await fetch(`https://api.jde.ru/vD/calculator/PriceTypeListAvailable`, {
         headers: {
             // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Content-Type': 'application/x-www-form-urlencoded',
