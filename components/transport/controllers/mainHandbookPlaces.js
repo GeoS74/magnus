@@ -67,7 +67,7 @@ module.exports.update = async ctx => {
                 code: r[14].slice(1),
                 searchString: r[2],
                 searchStringEng: changeEngSymb(r[2]),
-                regname: r[12],
+                regname: r[10],
                 regcode: r[15].slice(1),
                 postalIndex: r[5],
             };
