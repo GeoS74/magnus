@@ -9,7 +9,7 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "Энергия.md",
+            "file": "Список транспортных компаний.md",
             "mode": "preview"
           }
         }
@@ -39,7 +39,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "каль",
+                "query": "кальsdd",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Энергия.md",
+                "file": "Список транспортных компаний.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "c3d1d8f02f0d0c33",
   "lastOpenFiles": [
-    "Энергия.md",
     "Список транспортных компаний.md",
+    "Энергия.md",
+    "ПЭК.md",
     "Универсальный калькулятор.md",
+    "Норд Вил.md",
+    "ЖелДорЭкспедиция.md",
+    "Создание справочника Энергия.md",
     "Главный справочник населённых пунктов.md",
     "Создание справочника. Вариант с MySQL.md",
-    "размеры фур.md",
-    "Почта России.md",
-    "Деловые линии.md",
-    "ЖелДорЭкспедиция.md",
-    "Точки роста.md"
+    "размеры фур.md"
   ]
 }
