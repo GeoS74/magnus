@@ -357,9 +357,9 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(err => {
-            console.log('~~~~~Error API DelLine~~~~~');
+            // console.log('~~~~~Error API DelLine~~~~~');
             // console.log(err);
-            throw new Error(err.message);
+            throw new Error(`Error API DelLine: ${err.message}`);
         });
 }
 //поиск населенного пункта

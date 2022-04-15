@@ -5,8 +5,48 @@ const JeldorHandbookTerminals = require('@transport/models/JeldorHandbookTermina
 //поиск города с терминалом ЖелДорЭкспедиции
 //результат участвует в расчёте: если терминал есть забор/доставка не требуется и наоборот
 async function requiredDelivery(city) {
-    const t = await JeldorHandbookPlaces.findOne({searchString: city});
+    const t = await JeldorHandbookPlaces.findOne({ searchString: city });
     return t === null ? 1 : 0;
+}
+
+//type - тип терминала. приём-1/выдача-2
+async function getTerminal(data, type) {
+    try {
+        //попытка найти город по коду
+        let city = await JeldorHandbookTerminals
+            .findOne({ code: data.code, type: type });
+        if (city) return city;
+
+        //попытка найти город по названию
+        city = await JeldorHandbookTerminals
+            .findOne({ city: data.searchString, type: type });
+        if (city) return city;
+        else throw new Error(`Jeldor: terminal ${data.searchString} not found`);
+    }
+    catch (error) {
+        // console.log(error.message);
+        throw new Error(error.message);
+    }
+}
+
+
+async function makeAddress(parameters, byFilial) {
+    if (byFilial) {
+        parameters.derival = await getTerminal(parameters.derival, 1);
+        parameters.arrival = await getTerminal(parameters.arrival, 2);
+
+        return [
+            `from=${parameters.derival.terminalID}`, //id терминала отправления
+            `to=${parameters.arrival.terminalID}` //id терминала  получателя
+        ].join('&');
+    }
+
+    //здесь жёстко прописано, что это город, иначе Челябинск не просчитывается
+    //этот баг надо проработать
+    return [
+        `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
+        `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}` //Адрес населенного пункта назначения
+    ].join('&');
 }
 
 //формирование параметров запроса для расчёта перевозки
@@ -14,17 +54,18 @@ async function requiredDelivery(city) {
 //расчёт с использованием КЛАДР даёт ошибки, зато с названиями городов работает
 //надо разобраться с расчётом негабаритного груза
 //расчёт проводится исходя из общего объёма и веса груза
-async function makeSearchParameters(parameters) {
+async function makeSearchParameters(parameters, byFilial) {
     let arr = [
         // `from_kladr=${parameters.derival.code}`, //Идентификатор КЛАДР населенного пункта отправления
         // `to_kladr=${parameters.arrival.code}`, //Идентификатор КЛАДР населенного пункта назначения
-
         //здесь жёстко прописано, что это город, иначе Челябинск не просчитывается
         //этот баг надо исправить внеся изменения в mainHandbookPlaces
-        `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
-        `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}`, //Адрес населенного пункта назначения
+        // `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
+        // `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}`, //Адрес населенного пункта назначения
+
+        await makeAddress(parameters, byFilial),
         `type=1`, //Тип вида доставки. Список типов доставки можно получить запросом /calculator/PriceTypeListAvailable
-                  //1 - доставка сборных грузов
+        //1 - доставка сборных грузов
         makeCargo(parameters),
         // `weight=100`, //Вес груза в кг.
         // `volume=100`, //Объем в м3
@@ -65,26 +106,50 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'ЖелДорЭкспедиция',
-            price: res.price,
+            price: 0,
             days: `${res.mindays}-${res.maxdays}` || '',
         },
         detail: []
     };
 
-    data.detail.push({
-        name: 'Терминал отправки',
-        value: 'г.' + res.from.mst_name
-    });
+    //обработка расчёта по адресам
+    if (res.from && res.to) {
+        data.detail.push({
+            name: 'Терминал отправки',
+            value: 'г.' + res.from.mst_name
+        });
 
-    data.detail.push({
-        name: 'Терминал получатель',
-        value: 'г.' + res.to.mst_name
-    });
+        data.detail.push({
+            name: 'Терминал получатель',
+            value: 'г.' + res.to.mst_name
+        });
+    }
 
+    for (const s of res.services) {
+        switch (s.item) {
+            case 'terminal': 
+                data.main.price = s.price; break;
+            //значения pickup и delivery могут быть только при расчёте по филиалам
+            case 'pickup':
+                data.detail.push({
+                    name: 'Дополнительно - забор груза от адреса',
+                    value: s.price + 'р.'
+                }); break;
+            case 'delivery':
+                data.detail.push({
+                    name: 'Дополнительно - доставка груза до адреса',
+                    value: s.price + 'р.'
+                }); break;
+        }
+    }
     return data;
 }
 
 //расчет доставки
+// использует 2 попытки и 2 разных метода API
+// 1) расчёт ведется по адресам, т.е. в строке запроса просто указывается название города
+//     если ошибка используется 2-ой вариант
+// 2) расчёт по терминалам. Здесь ищется терминал по коду КЛАДР
 module.exports.calculation = async (ctx) => {
     const data = await makeSearchParameters(ctx.request.body);
 
@@ -97,16 +162,15 @@ module.exports.calculation = async (ctx) => {
                 const res = await response.json();
                 // console.log(res);
 
-                await calculationFilial(ctx);
-                return;
-
                 //в случае ошибки расчёта сделать попытку расчитать через филиалы
-                if(res.error) {
+                if (res.error) {
                     //throw new Error(`Error fetch query: ${res.error}`);
+                    console.log(`Error API Jeldor calculate by place: ${res.error}`);
                     await calculationFilial(ctx);
                 }
-                else if(res.result === 0) {
+                else if (res.result === 0) {
                     //throw new Error(res.services[0].error);
+                    console.log(`Error API Jeldor calculate by place: ${res.services[0].error}`);
                     await calculationFilial(ctx);
                 }
                 else {
@@ -120,16 +184,17 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(error => {
-            console.log('~~~~~Error API Jeldor method city~~~~~');
-            console.log(error.message);
-            throw new Error(error.message);
+            // console.log('~~~~~Error API Jeldor method city~~~~~');
+            // console.log(error.message);
+            throw new Error(`Error API Jeldor: ${error.message}`);
         });
 }
 
-//попытка расчёта доставки по филиалам
-async function calculationFilial(ctx) {
 
-    const data = await makeSearchParameters(ctx.request.body);
+//попытка расчёта доставки по филиалам
+async function calculationByFilial(ctx) {
+
+    const data = await makeSearchParameters(ctx.request.body, true);
 
     await fetch('https://api.jde.ru/vD/calculator/price?' + data + `&user=${process.env.JELDOREXP_USER}&token=${process.env.JELDOREXP_TOKEN}`, {
         headers: { 'Content-Type': 'application/json' },
@@ -140,13 +205,11 @@ async function calculationFilial(ctx) {
                 const res = await response.json();
                 // console.log(res);
 
-                if(res.error) {
-                    //throw new Error(`Error fetch query: ${res.error}`);
-                    await calculation_2(ctx);
+                if (res.error) {
+                    throw new Error(`Error fetch query: ${res.error}`);
                 }
-                else if(res.result === 0) {
-                    //throw new Error(res.services[0].error);
-                    await calculation_2(ctx);
+                else if (res.result === 0) {
+                    throw new Error(res.services[0].error);
                 }
                 else {
                     ctx.body = postProcessing(res);
@@ -159,9 +222,7 @@ async function calculationFilial(ctx) {
             }
         })
         .catch(error => {
-            console.log('~~~~~Error API Jeldor method city~~~~~');
-            console.log(error.message);
-            throw new Error(error.message);
+            throw new Error(`Error API Jeldor: ${error.message}`);
         });
 }
 
@@ -221,9 +282,9 @@ module.exports.updateHandbookTerminals = async ctx => {
         i += await updateTerminals(2); //пункты выдачи
 
         console.log('Jeldor terminals places is updated. Run time: ', ((Date.now() - start) / 1000), ' sek rows: ', i)
-                ctx.body = 'Jeldor terminals places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
+        ctx.body = 'Jeldor terminals places is updated. Run time: ' + ((Date.now() - start) / 1000) + ' sec rows: ' + i;
     }
-    catch(error) {
+    catch (error) {
         console.log(error.message);
         ctx.throw(400, error.message);
     }

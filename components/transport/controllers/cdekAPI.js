@@ -133,7 +133,7 @@ module.exports.calculation = async (ctx) => {
         })
         .catch(err => {
             // console.log(err.message);
-            throw new Error(err.message);
+            throw new Error(`Error API CDEK: ${err.message}`);
         });
 }
 

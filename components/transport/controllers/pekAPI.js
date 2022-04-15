@@ -176,9 +176,9 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(err => {
-            console.log('~~~~~Error API Pek~~~~~');
+            // console.log('~~~~~Error API Pek~~~~~');
             // console.log(err);
-            throw new Error(err.message);
+            throw new Error(`Error API Pek: ${err.message}`);
         });
 }
 

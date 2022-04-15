@@ -108,9 +108,9 @@ module.exports.calculation = async (ctx) => {
             }
         })
         .catch(err => {
-            console.log('~~~~~Error API Energy~~~~~');
+            // console.log('~~~~~Error API Energy~~~~~');
             // console.log(err);
-            throw new Error(err.message);
+            throw new Error(`Error API Energy: ${err.message}`);
         });
 }
 
