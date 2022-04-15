@@ -60,11 +60,19 @@ function postProcessing(res) {
     const data = {
         main: {
             carrier: 'Энергия',
-            price: res.transfer[0].price,
-            days: res.transfer[0].interval.replace(' дней', '') || '',
+            price: 0,
+            days: '',
         },
         detail: []
     };
+
+    for(const t of res.transfer) {
+        if(t.type.toLowerCase() !== 'авто') continue;
+        data.main.price = t.price;
+        data.main.days = t.interval.replace(' дней', '');
+    }
+
+    if(!data.main.price) throw new Error(`нет доставки автотранспортом`);
 
     data.detail.push({
         name: 'Не включёно в расчёт',
