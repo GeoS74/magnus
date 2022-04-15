@@ -12,6 +12,7 @@
         .main {
             margin: 20px;
             max-width: 500px;
+            float: left;
         }
 
         h1 {
@@ -72,6 +73,19 @@
         .calculate {
             padding-top: 20px;
         }
+
+
+        #news {
+            position: relative;
+            margin: 130px 0 0 50px;
+            width: 350px;
+            float: left;
+        }
+        #news .card{
+            padding: 15px;
+        }
+        #news h4{font-size: 1.3em;}
+        #news p{font-size: 0.9em;}
     </style>
 </head>
 
@@ -146,16 +160,16 @@
         <script>
             //список перевозчиков
             const carriers = [
-                {name:'delline', alias:"Деловые линии"},
-                {name:'kit', alias:"Кит"},
-                {name:'pek', alias:"ПЭК"},
-                {name:'cdek', alias:"СДЭК"},
-                {name:'baikal', alias:"Байкал Сервис"},
-                {name:'boxberry', alias:"Boxberry"},
-                {name:'jeldor', alias:"ЖелДорЭкспедиция"},
-                {name:'pochta', alias:"Почта России"},
-                {name:'luch', alias:"Луч"},
-                {name:'energy', alias:"Энергия"},
+                { name: 'delline', alias: "Деловые линии" },
+                { name: 'kit', alias: "Кит" },
+                { name: 'pek', alias: "ПЭК" },
+                { name: 'cdek', alias: "СДЭК" },
+                { name: 'baikal', alias: "Байкал Сервис" },
+                { name: 'boxberry', alias: "Boxberry" },
+                { name: 'jeldor', alias: "ЖелДорЭкспедиция" },
+                { name: 'pochta', alias: "Почта России" },
+                { name: 'luch', alias: "Луч" },
+                { name: 'energy', alias: "Энергия" },
             ];
 
             //добавить погрузочное место
@@ -316,7 +330,7 @@
                     </div>`;
             }
             //сохраняет состояние чекбокса в localStorage
-            function setCarrier(event){
+            function setCarrier(event) {
                 localStorage[event.target.name] = localStorage[event.target.name] === 'on' ? 'off' : 'on';
             }
 
@@ -324,8 +338,8 @@
             function getCalculateList() {
                 const fd = new FormData(event.target);
                 const arr = [];
-                for(const carrier of carriers){
-                    if(localStorage[carrier.name] === 'off') continue;
+                for (const carrier of carriers) {
+                    if (localStorage[carrier.name] === 'off') continue;
                     arr.push(calculate(fd, carrier.name));
                 }
                 return arr;
@@ -398,7 +412,7 @@
                         <p>${data.main.price} р.</p>
                     </article>
                     <article>
-                        <p>${data.main.days ? data.main.days+' дней' : 'уточняйте у перевозчика'}</p>
+                        <p>${data.main.days ? data.main.days + ' дней' : 'уточняйте у перевозчика'}</p>
                     </article>
                 `;
             }
@@ -408,6 +422,52 @@
                     str += `<p><span class="text-muted">${d.name}:</span> ${d.value}</p>`
                 }
                 return str;
+            }
+        </script>
+    </div>
+
+    <div id="news">
+        <!-- <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Card title</h4>
+                <h6 class="card-subtitle mb-2 text-muted">Card subtitle</h6>
+                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the
+                    card's content.</p>
+                <a href="#" class="card-link">Card link</a>
+                <a href="#" class="card-link">Another link</a>
+            </div>
+        </div> -->
+
+        <script>
+            (async _ => {
+                await fetch('/transport/news')
+                .then(async response => {
+                        const res = await response.json();
+                        console.log(response.status);
+                        console.log(res);
+                        makeNews(res);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            })();
+
+            function makeNews(data) {
+                for(const n of data) {
+                    news.insertAdjacentHTML('beforeend', makePost(n));
+                }
+            }
+
+            function makePost(post) {
+                return `
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="card-title">${post.title}</h4>
+                        <p class="card-text">${post.description}</p>
+                        <a href="${post.link}" class="card-link">Подробнее...</a>
+                    </div>
+                </div>
+                `;
             }
         </script>
     </div>
