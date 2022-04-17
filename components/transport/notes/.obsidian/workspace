@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "MagicTrans.md",
-            "mode": "preview"
+            "file": "Список транспортных компаний.md",
+            "mode": "source"
           }
         }
       }
@@ -39,7 +39,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "желд",
+                "query": "спи",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "MagicTrans.md",
+                "file": "Список транспортных компаний.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "c3d1d8f02f0d0c33",
   "lastOpenFiles": [
-    "MagicTrans.md",
     "Список транспортных компаний.md",
-    "Энергия.md",
+    "hello.md",
     "ЖелДорЭкспедиция.md",
     "Универсальный калькулятор.md",
-    "Главный справочник населённых пунктов.md",
-    "Создание справочника. Вариант с MySQL.md",
-    "Создание справочника Энергия.md",
-    "КЛАДР.md",
-    "Вопросы к расчёту доставки.md"
+    "Boxberry.md",
+    "Байкал Сервис.md",
+    "DPD.md",
+    "СДЭК.md",
+    "ПЭК.md",
+    "Главный справочник населённых пунктов.md"
   ]
 }
