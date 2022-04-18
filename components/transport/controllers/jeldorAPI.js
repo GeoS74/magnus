@@ -45,7 +45,9 @@ async function makeAddress(parameters, byFilial) {
     //этот баг надо проработать
     return [
         `addr_from=г. ${parameters.derival.searchString.toLowerCase()}`, //Адрес населенного пункта отправления
-        `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}` //Адрес населенного пункта назначения
+        `addr_to=г. ${parameters.arrival.searchString.toLowerCase()}`, //Адрес населенного пункта назначения
+        `from_kladr=${parameters.derival.code}`, //Идентификатор КЛАДР населенного пункта отправления
+        `to_kladr=${parameters.arrival.code}`, //Идентификатор КЛАДР населенного пункта назначения
     ].join('&');
 }
 
@@ -166,12 +168,19 @@ module.exports.calculation = async (ctx) => {
                 if (res.error) {
                     //throw new Error(`Error fetch query: ${res.error}`);
                     console.log(`Error API Jeldor calculate by place: ${res.error}`);
-                    await calculationFilial(ctx);
+                    await calculationByFilial(ctx);
                 }
-                else if (res.result === 0) {
+                else if (res.result === '0') {
                     //throw new Error(res.services[0].error);
-                    console.log(`Error API Jeldor calculate by place: ${res.services[0].error}`);
-                    await calculationFilial(ctx);
+
+                    for(const e of res.services) {
+                        if(e.error) {
+                            console.log(`Error API Jeldor calculate by place: ${e.error}`);
+                            break;
+                        }
+                    }
+
+                    await calculationByFilial(ctx);
                 }
                 else {
                     ctx.body = postProcessing(res);
@@ -208,8 +217,13 @@ async function calculationByFilial(ctx) {
                 if (res.error) {
                     throw new Error(`Error fetch query: ${res.error}`);
                 }
-                else if (res.result === 0) {
-                    throw new Error(res.services[0].error);
+                else if (res.result === '0') {
+                    for(const e of res.services) {
+                        if(e.error) {
+                            console.log(`Error API Jeldor calculate by place: ${e.error}`);
+                            throw new Error(e.error);
+                        }
+                    }
                 }
                 else {
                     ctx.body = postProcessing(res);

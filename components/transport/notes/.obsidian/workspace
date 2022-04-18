@@ -9,8 +9,8 @@
         "state": {
           "type": "markdown",
           "state": {
-            "file": "Список транспортных компаний.md",
-            "mode": "source"
+            "file": "ЖелДорЭкспедиция.md",
+            "mode": "preview"
           }
         }
       }
@@ -39,7 +39,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "спи",
+                "query": "",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -69,7 +69,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Список транспортных компаний.md",
+                "file": "ЖелДорЭкспедиция.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -89,15 +89,15 @@
   },
   "active": "c3d1d8f02f0d0c33",
   "lastOpenFiles": [
-    "Список транспортных компаний.md",
-    "hello.md",
     "ЖелДорЭкспедиция.md",
-    "Универсальный калькулятор.md",
-    "Boxberry.md",
-    "Байкал Сервис.md",
-    "DPD.md",
-    "СДЭК.md",
+    "Список транспортных компаний.md",
+    "GTD (Кит, Кашалот).md",
     "ПЭК.md",
+    "Энергия.md",
+    "СДЭК.md",
+    "MagicTrans.md",
+    "DPD.md",
+    "Универсальный калькулятор.md",
     "Главный справочник населённых пунктов.md"
   ]
 }

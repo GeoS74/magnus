@@ -11,6 +11,7 @@ const Jeldor = require('@transport/controllers/jeldorAPI');
 const Pochta = require('@transport/controllers/pochtaAPI');
 const Luch = require('@transport/controllers/luchAPI');
 const Energy = require('@transport/controllers/energyAPI');
+const MagicTrans = require('@transport/controllers/magictransAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
 const { counter } = require('@transport/controllers/metrics');
@@ -50,6 +51,7 @@ router.post('/calculation', koaBody, counter, checkCity, checkParameters, async 
             case 'pochta': await Pochta.calculation(ctx); break;
             case 'luch': await Luch.calculation(ctx); break;
             case 'energy': await Energy.calculation(ctx); break;
+            case 'magictrans': await MagicTrans.calculation(ctx); break;
         }
     }
     catch (error) {
@@ -72,6 +74,9 @@ router.get('/calculator', async ctx => {
     });
 });
 
+
+//"Magic Trans" - обновление справочника населенных пунктов
+router.get('/magictrans/handbook/places/update', MagicTrans.updateHandbookPlaces);
 
 //"Энергия" - обновление справочника населенных пунктов
 router.get('/energy/handbook/places/update', Energy.updateHandbookPlaces);
