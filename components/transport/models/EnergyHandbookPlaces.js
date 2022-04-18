@@ -13,7 +13,10 @@ const Schema = new mongoose.Schema({
     parentID: Number, //id родителя в рамках системы Энергии
     isRegionalDelivery: Boolean,
     regname: String, //наименование региона
-    regcode: String, //код КЛАДР региона (берётся из mainHandbook)
+    regcode: { //код КЛАДР региона (берётся из mainHandbook)
+        type: String,
+        index: true
+    },
     type: Number, //какой-то тип
 }, {
     timestamps: true,
