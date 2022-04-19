@@ -5,6 +5,8 @@
 
 [калькулятор на сайте Мэйджика](https://magic-trans.ru/calculator/)
 
+[онлайн пример от Мэйджика](https://magic-trans.ru/developers/example/)
+
 ### Список упаковок с кодами Мэйджик
 ```
 [

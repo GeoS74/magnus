@@ -2,23 +2,86 @@ const fetch = require('node-fetch');
 const MagicTransHandbookPlaces = require('@transport/models/MagicTransHandbookPlaces');
 const MainHandbookPlaces = require('@transport/models/MainHandbookPlaces');
 
+//принимает данные населенного пункта, полученные из главного справочника и сопоставляет их со справочником Magic Trans
+async function getCity(data) {
+    try {
+        //попытка найти город по названию и коду региона
+        let city = await MagicTransHandbookPlaces.find({
+            $and: [
+                { name: new RegExp(`^${data.searchString.toLowerCase()}`, 'i') },
+                { regcode: data.regcode }
+            ]
+        });
 
+        if (city.length === 1) return city[0];
+        else throw new Error(`MagicTrans: city ${data.searchString} not found`);
+    }
+    catch (error) {
+        // console.log(error.message);
+        throw new Error(error.message);
+    }
+}
+
+//параметры груза
+function makeCargo(parameters) {
+    const cargo = [];
+
+    for (let i = 0; i < parameters.width.length; i++) {
+        cargo.push(...[
+            `items[${i}][weight]=${parameters.weight[i]}`, //Вес
+            `items[${i}][width]=${parameters.width[i]}`, //Ширина
+            `items[${i}][length]=${parameters.length[i]}`, //Длина
+            `items[${i}][height]=${parameters.height[i]}`, //Высота
+            `items[${i}][count]=${parameters.quantity[i]}`, //кол-во мест
+        ]);
+    }
+    return cargo.join('&');
+}
+
+//формирование параметров запроса для расчёта перевозки
+//параметры должны передаваться GET запросом
+async function makeSearchParameters(parameters) {
+    parameters.derival = await getCity(parameters.derival);
+    parameters.arrival = await getCity(parameters.arrival);
+
+    let arr = [
+        `from=${parameters.derival.cityID}`, //ID города забора 
+        `to=${parameters.arrival.cityID}`, //ID города доставки 
+        makeCargo(parameters)
+    ];
+    return arr.join('&');
+}
+
+//пост обработка данных перед отдачей клиенту
+function postProcessing(res) {
+    if (res.error) throw new Error(res.message || 'поставка в город не возможна');
+    if (res.result === null || !res.result.price) throw new Error(`нет доставки автотранспортом`);
+
+    const data = {
+        main: {
+            carrier: 'MagicTrans',
+            price: res.result.price,
+            days: `${res.result.min}-${res.result.max}`,
+        },
+        detail: []
+    };
+
+    if (res.result.routes !== null) {
+        data.detail.push({
+            name: 'Перевозка',
+            value: `${res.result.routes[0].from.name}-${res.result.routes[0].to.name}`
+        });
+    }
+
+    return data;
+}
 
 
 //расчет доставки
 module.exports.calculation = async (ctx) => {
-    const data = [
-        'from=121',
-        'to=399',
-        'items[0][weight]=10',
-        'items[0][width]=1',
-        'items[0][length]=1',
-        'items[0][height]=1',
-        'items[0][count]=5',
-    ];
+    const data = await makeSearchParameters(ctx.request.body);
 
-
-    await fetch(`http://magic-trans.ru/api/v1/delivery/calculate/?${data.join('&')}`, {
+    await fetch(`http://magic-trans.ru/api/v1/delivery/calculate/?${data}`, {
         headers: {
             // 'Content-Type': 'application/json',
             // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
@@ -29,9 +92,9 @@ module.exports.calculation = async (ctx) => {
         .then(async response => {
             if (response.ok) {
                 const res = await response.json();
-                console.log(res);
-                console.log(res.result.routes);
-                // ctx.body = postProcessing(res);
+                // console.log(res);
+
+                ctx.body = postProcessing(res);
             }
             else {
                 const res = await response.json();
