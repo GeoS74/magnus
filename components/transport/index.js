@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
+const csrf = require('@root/libs/csrf-protect');
 const path = require('path');
 const DelLine = require('@transport/controllers/dellineAPI');
 const Pek = require('@transport/controllers/pekAPI');
@@ -38,7 +39,7 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 
 
 //роутинг запросов расчёта стоимости перевозки
-router.post('/calculation', koaBody, counter, checkCity, checkParameters, async ctx => {
+router.post('/calculation', csrf.checkToken, koaBody, counter, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
             case 'delline': await DelLine.calculation(ctx); break;
@@ -61,7 +62,7 @@ router.post('/calculation', koaBody, counter, checkCity, checkParameters, async 
     }
 });
 //страница с расчётом стоимости доставки грузов
-router.get('/calculator', async ctx => {
+router.get('/calculator', csrf.createToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {
