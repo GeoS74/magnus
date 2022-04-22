@@ -38,8 +38,10 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 
 
 
+
+
 //роутинг запросов расчёта стоимости перевозки
-router.post('/calculation', csrf.checkToken, koaBody, counter, checkCity, checkParameters, async ctx => {
+router.post('/calculation', /*csrf.checkToken,*/ koaBody, counter, checkCity, checkParameters, async ctx => {
     try {
         switch (ctx.request.body.carrier) {
             case 'delline': await DelLine.calculation(ctx); break;
@@ -62,7 +64,7 @@ router.post('/calculation', csrf.checkToken, koaBody, counter, checkCity, checkP
     }
 });
 //страница с расчётом стоимости доставки грузов
-router.get('/calculator', csrf.createToken, async ctx => {
+router.get('/calculator', /*csrf.createToken,*/ async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {

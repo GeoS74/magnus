@@ -9,11 +9,11 @@ const schema = new mongoose.Schema({
         required: true,
         unique: true
     },
-    refreshToken: {
-        type: String,
-        required: true,
-        unique: true
-    },
+    // refreshToken: {
+    //     type: String,
+    //     required: true,
+    //     unique: true
+    // },
     lastVisit: {
         type: Date,
         required: true,
@@ -30,15 +30,15 @@ const CSRFTokens = connection.model('CSRFTokens', schema);
 exports.createToken = async (ctx, next) => {
     const token = await CSRFTokens.create({
         token: uuid(),
-        refreshToken: uuid(),
+        // refreshToken: uuid(),
     })
     ctx.cookies.set('csrf-token', token.token, {
         maxAge: maxAgeToken, //ms
         // httpOnly: false, //если false - куки доступен для клиентского JS
     })
-    ctx.cookies.set('csrf-refresh-token', token.token, {
-        maxAge: maxAgeToken, //ms
-    })
+    // ctx.cookies.set('csrf-refresh-token', token.token, {
+    //     maxAge: maxAgeToken, //ms
+    // })
     // ctx.set('csrf-token', token.token);
     // ctx.csrftoken = token.token;
     await next();
@@ -46,11 +46,13 @@ exports.createToken = async (ctx, next) => {
 
 exports.checkToken = async (ctx, next) => {
     const token = ctx.cookies.get('csrf-token')
+    // const token = ctx.get('csrf-token');
+
     if(!token) {
         ctx.throw(403, 'bad token')
     }
     
-    const checkinToken = await CSRFTokens.find({token: token});
+    const checkinToken = await CSRFTokens.findOne({token: token});
     if(!checkinToken) {
         ctx.throw(403, 'bad token')
     }
