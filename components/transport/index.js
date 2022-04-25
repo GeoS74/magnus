@@ -38,6 +38,27 @@ router.post('/search/city', koaBody, mainHandbookPlaces.searchCity);
 
 
 
+//csrf proteected
+router.get('/auth', csrf.createToken, ctx => {
+    const obj = {
+        name: 'GeoS',
+        rank: 'админ'
+    }
+    // const encode = btoa(JSON.stringify(obj));
+    const encode = Buffer.from(JSON.stringify(obj)).toString('base64');
+    console.log(encode);
+    console.log(Buffer.from(encode, 'base64').toString('utf-8'));
+    // console.log(atob(encode));
+
+    ctx.body = 'set token';
+})
+router.get('/secret', csrf.checkToken, ctx => {
+    ctx.body = 'secret page';
+})
+router.post('/secret', csrf.checkToken, ctx => {
+    ctx.body = 'secret page';
+})
+
 
 
 //роутинг запросов расчёта стоимости перевозки
