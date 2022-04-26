@@ -6,7 +6,7 @@ module.exports = {
     },
     mongodb: {
         uri: process.env.MONGO_DB || 'mongodb://localhost:27017/magnus',
-        autoindex: (process.env.AUTOINDEX === 'develop' ? false : true),
+        autoindex: (process.env.NODE_ENV === 'develop' ? false : true),
     },
     app: {
         uploadFilesDir: './files/upload',
