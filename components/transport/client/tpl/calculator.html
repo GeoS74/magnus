@@ -158,10 +158,6 @@
         <!-- результаты расчета -->
         <div id="calculations"></div>
         <script>
-        console.log(window);
-        console.log(navigator);
-        console.dir(document.cookie);
-
             //список перевозчиков
             const carriers = [
                 { name: 'delline', alias: "Деловые линии" },
@@ -242,6 +238,9 @@
                 const fd = new FormData();
                 fd.set('city', event.target.value);
                 const options = {
+                    headers: {
+                        'X-CSRF-TOKEN': getCSRFToken(),
+                    },
                     method: 'POST',
                     body: fd
                 }
@@ -368,6 +367,9 @@
             function calculate(fd, carrier) {
                 fd.set('carrier', carrier);
                 const options = {
+                    headers: {
+                        'X-CSRF-TOKEN': getCSRFToken(),
+                    },
                     method: 'POST',
                     body: fd
                 };
@@ -427,6 +429,15 @@
                     str += `<p><span class="text-muted">${d.name}:</span> ${d.value}</p>`
                 }
                 return str;
+            }
+            //получить csrf-токен из куки
+            function getCSRFToken() {
+                const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
+                if(!csrfCookie) {
+                    console.log('csrf cookie not found');
+                    return;
+                }
+                return csrfCookie[1];
             }
         </script>
     </div>
