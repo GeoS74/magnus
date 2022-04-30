@@ -156,6 +156,8 @@ function delay(ms) {
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 router.get('/test', async ctx => {
+    console.log(__dirname);
+
     // await fetch(`https://newssearch.yandex.ru/news/search?from=tabbar&text=%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B7%D0%BA%D0%B8%20%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8`, {
     //     headers: {
     //         // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
