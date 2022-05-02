@@ -20,7 +20,7 @@ exports.carrierCounter = async ctx => {
         const stat = new Map();
 
         for(const v of data) {
-            stat.set(v.carrier, v.count);
+            stat.set(v.carrier, (stat.get(v.carrier) || 0) + v.count);
         }
 
         ctx.body = [...stat].sort((a, b) => {return b[1] - a[1]});
