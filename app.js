@@ -16,6 +16,7 @@ app.use(require('@valdane').router.routes());
 
 app.use(serve('components/transport/client/img')); //статические файлы компоненты
 app.use(require('@transport').router.routes());
+app.use(require('@transport').pageRouter.routes());
 
 module.exports = app;
 
