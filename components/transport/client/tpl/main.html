@@ -31,15 +31,43 @@
             max-width: 1000px;
         }
 
-        #present > h1 {
-            font-size: 4em;
-            text-align: center;
+        @media screen and (min-width: 1000px) {
+            #present>h1 {
+                font-size: 4em;
+                text-align: center;
+            }
         }
-        #present > p {
-            text-align: center;
+
+        @media screen and (max-width: 1000px) {
+            #present>h1 {
+                font-size: 3em;
+                text-align: center;
+            }
         }
-        #present > a {
-            font-size: 2em;
+
+        @media screen and (max-width: 420px) {
+            #present>h1 {
+                font-size: 2em;
+                text-align: center;
+            }
+        }
+
+
+        @media screen and (min-width: 420px) {
+            #present>a {
+                font-size: 2em;
+            }
+        }
+        @media screen and (max-width: 420px) {
+            #present>a {
+                font-size: 1em;
+            }
+        }
+
+
+
+        #present>p {
+            text-align: center;
         }
     </style>
 </head>
@@ -48,10 +76,10 @@
     <div id="main">
         <div id="present">
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
-            <p>Используйте калькулятор расчёта стоимости доставки грузов для получения информации 
+            <p>Используйте калькулятор расчёта стоимости доставки грузов для получения информации
                 о стоимости и сроках доставки в едином окне</p>
             <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a>
         </div>
-         
+
     </div>
 </body>
