@@ -32,12 +32,13 @@ router.prefix('/transport');
 module.exports.router = router;
 
 
+
 const pageRouter = new Router();
 module.exports.pageRouter = pageRouter;
 //главная страница
 pageRouter.get('/', async ctx => {
     ctx.set('content-type', 'text/html');
-    ctx.set('cache-control', 'public, max-age=604800'); //кэширование на неделю
+    // ctx.set('cache-control', 'public, max-age=604800'); //кэширование на неделю
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/main.html'), (err, html) => {
             if (err) {
