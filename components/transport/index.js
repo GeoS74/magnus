@@ -15,7 +15,7 @@ const Energy = require('@transport/controllers/energyAPI');
 const MagicTrans = require('@transport/controllers/magictransAPI');
 const mainHandbookPlaces = require('@transport/controllers/mainHandbookPlaces');
 const { checkCity, checkParameters } = require('@transport/controllers/checkCredentials');
-const { counter } = require('@transport/controllers/metrics');
+const { counter, carrierCounter } = require('@transport/controllers/metrics');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -84,6 +84,24 @@ router.get('/calculator', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            res(html);
+        });
+    });
+});
+
+
+
+//статистика
+router.get('/metrics/counter/carrier', carrierCounter);
+//страница со статистикой
+router.get('/metrics/counter', async ctx => {
+    ctx.set('content-type', 'text/html');
+    ctx.body = await new Promise(res => {
+        ssi.compileFile(path.join(__dirname, 'client/tpl/metricscounter.html'), (err, html) => {
             if (err) {
                 console.log(err);
                 return;

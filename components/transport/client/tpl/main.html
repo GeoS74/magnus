@@ -22,6 +22,7 @@
             align-items: center;
             justify-content: space-around;
         }
+
         #present {
             display: flex;
             flex-flow: column wrap;
@@ -29,12 +30,14 @@
             justify-content: center;
             margin: 0 20px;
         }
+
         @media screen and (min-width: 1000px) {
             #present>h1 {
                 font-size: 4em;
                 text-align: center;
             }
         }
+
         @media screen and (max-width: 1000px) {
             #present>h1 {
                 font-size: 3em;
@@ -48,26 +51,31 @@
                 text-align: center;
             }
         }
+
         @media screen and (min-width: 420px) {
             #present>a {
                 font-size: 2em;
             }
         }
+
         @media screen and (max-width: 420px) {
             #present>a {
                 font-size: 1em;
             }
         }
+
         #present h1:hover,
         #present p:hover {
             cursor: none;
         }
+
         #present h1::selection,
         #present p::selection {
             cursor: none;
             background: "";
             color: "";
         }
+
         #present>p {
             text-align: center;
         }
