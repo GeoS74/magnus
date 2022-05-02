@@ -28,7 +28,7 @@
             flex-flow: column wrap;
             align-items: center;
             justify-content: center;
-            max-width: 1000px;
+            margin: 0 20px;
         }
 
         @media screen and (min-width: 1000px) {
@@ -47,10 +47,11 @@
 
         @media screen and (max-width: 420px) {
             #present>h1 {
-                font-size: 2em;
+                font-size: 2.3em;
                 text-align: center;
             }
         }
+
 
 
         @media screen and (min-width: 420px) {
@@ -62,6 +63,17 @@
             #present>a {
                 font-size: 1em;
             }
+        }
+
+        #present h1:hover,
+        #present p:hover {
+            cursor: none;
+        }
+
+        #present h1::selection,
+        #present p::selection {
+            cursor: none;
+            background: ""; color: "";
         }
 
 
@@ -76,7 +88,7 @@
     <div id="main">
         <div id="present">
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
-            <p>Используйте калькулятор расчёта стоимости доставки грузов для получения информации
+            <p>Используйте калькулятор расчёта доставки грузов для получения информации
                 о стоимости и сроках доставки в едином окне</p>
             <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a>
         </div>
