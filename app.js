@@ -3,7 +3,8 @@ const Koa = require('koa');
 const app = new Koa();
 
 const serve = require('koa-static');
-app.use(serve('client/public'));
+app.use(serve('client/public')); //общие статические файлы
+
 
 app.use(require('@logger'));
 
@@ -16,7 +17,7 @@ app.use(require('@valdane').router.routes());
 
 app.use(serve('components/transport/client/img')); //статические файлы компоненты
 app.use(require('@transport').router.routes());
-app.use(require('@transport').pageRouter.routes());
+app.use(require('@transport').mainPage.routes());
 
 module.exports = app;
 

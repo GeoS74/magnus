@@ -45,6 +45,8 @@ exports.signin = async (ctx) => {
             ctx.body = info;
             return;
         }
+
+        //здесь надо сгенерировать JWT-токен
         const token = await login(user); //заместо ctx.login(user);
         ctx.cookies.set('session_id', token, {maxAge: 1*60*1000});
         ctx.body = {token};

@@ -33,10 +33,10 @@ module.exports.router = router;
 
 
 
-const pageRouter = new Router();
-module.exports.pageRouter = pageRouter;
+const mainPage = new Router();
+module.exports.mainPage = mainPage;
 //главная страница
-pageRouter.get('/', async ctx => {
+mainPage.get('/', async ctx => {
     ctx.set('content-type', 'text/html');
     // ctx.set('cache-control', 'public, max-age=604800'); //кэширование на неделю
     ctx.body = await new Promise(res => {
@@ -195,31 +195,36 @@ function delay(ms) {
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 router.get('/test', async ctx => {
-    console.log(__dirname);
 
-    // await fetch(`https://newssearch.yandex.ru/news/search?from=tabbar&text=%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B7%D0%BA%D0%B8%20%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8`, {
-    //     headers: {
-    //         // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-    //         'Content-Type': 'application/x-www-form-urlencoded',
-    //         // 'Cookie:': 'WhiteCallback_timeAll=9; WhiteCallback_timePage=9',
-    //         // 'Referer:': 'https://zhdalians.ru/calculator/?__cf_chl_tk=Y9HGSW..Kw5b_bi1moL3dmdqOLgOJUNm4GKRRfKcLBg-1649686405-0-gaNycGzNCZE',
-    //     },
-    //     // redirect: 'follow',
-    //     // credentials: 'some-origin', //include
-    //     method: 'GET',
-    //     // mode: 'no-cors',
-    //     // body: JSON.stringify(obj)
-    //     // body: fd
-    // })
-    //     .then(async response => {
-    //         const res = await response.text();
-    //         console.log(response.status);
-    //         console.log(res);
+    await fetch(`http://cargobox.site`, {
+        headers: {
+            // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+            // 'Cookie:': 'WhiteCallback_timeAll=9; WhiteCallback_timePage=9',
+            // 'Referer:': 'https://zhdalians.ru/calculator/?__cf_chl_tk=Y9HGSW..Kw5b_bi1moL3dmdqOLgOJUNm4GKRRfKcLBg-1649686405-0-gaNycGzNCZE',
+        },
+        // redirect: 'follow',
+        // credentials: 'some-origin', //include
+        method: 'GET',
+        // mode: 'no-cors',
+        // body: JSON.stringify(obj)
+        // body: fd
+    })
+        .then(async response => {
 
-    //     })
-    //     .catch(error => {
-    //         console.log(error);
-    //     });
+            if(response.ok) {
+                const res = await response.text();
+            console.log(response.status);
+            console.log(res);
+            }
+            else {
+                console.log(response.status)
+            }
+
+        })
+        .catch(error => {
+            console.log(error);
+        });
 
 
     ctx.body = { name: "GeoS" };
