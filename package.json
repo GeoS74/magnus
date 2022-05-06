@@ -14,7 +14,8 @@
         "@user": "components/user",
         "@letters": "components/letters",
         "@valdane": "components/valdane",
-        "@transport": "components/transport"
+        "@transport": "components/transport",
+        "@auth": "microservice/auth"
     },
     "dependencies": {
         "csv-parser": "^3.0.0",

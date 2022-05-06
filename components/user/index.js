@@ -4,6 +4,7 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const {signin, checkCredentials, signup, authorization} = require('@user/controllers/user');
+const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
@@ -14,11 +15,14 @@ const ssi = new SSI({
         payload: {}
     });
 
-module.exports.routerUser = router;
+module.exports.router = router;
 module.exports.authorization = authorization;
 
+
+router.prefix('/user');
+
 //страница входа
-router.get('/login', async ctx => {
+router.get('/login', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/loginform.html'), (err, html) => {
@@ -27,7 +31,7 @@ router.get('/login', async ctx => {
     });
 });
 //страница регистрации
-router.get('/registrate', async ctx => {
+router.get('/registrate', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/registrationform.html'), (err, html) => {
@@ -36,13 +40,13 @@ router.get('/registrate', async ctx => {
     });
 })
 //регистрация пользователя
-router.post('/signup', koaBody, checkCredentials, signup);
+router.post('/signup', csrf.checkCSRFToken, koaBody, checkCredentials, signup);
 //авторизация пользователя
-router.post('/signin', koaBody, checkCredentials, signin);
+router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
 //signout
 router.get('/logout', koaBody, ctx => ctx.throw(400, 'Not implemented'));
 //страница пользователя
-router.get('/user', authorization, mustBeAuthenticated, async ctx => {
+router.get('/page', authorization, mustBeAuthenticated, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/userpage.html'), (err, html) => {

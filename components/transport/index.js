@@ -25,18 +25,13 @@ const ssi = new SSI({
     payload: {}
 });
 
-const router = new Router();
-
-router.prefix('/transport');
-
-module.exports.router = router;
-
-
-
+/////main page/////main page/////main page/////main page/////main page/////
+/////main page/////main page/////main page/////main page/////main page/////
+/////main page/////main page/////main page/////main page/////main page/////
 const mainPage = new Router();
 module.exports.mainPage = mainPage;
 //главная страница
-mainPage.get('/', async ctx => {
+mainPage.get('/', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     // ctx.set('cache-control', 'public, max-age=604800'); //кэширование на неделю
     ctx.body = await new Promise(res => {
@@ -49,8 +44,17 @@ mainPage.get('/', async ctx => {
         });
     });
 });
+/////main page/////main page/////main page/////main page/////main page/////
+/////main page/////main page/////main page/////main page/////main page/////
+/////main page/////main page/////main page/////main page/////main page/////
 
 
+
+const router = new Router();
+
+router.prefix('/transport');
+
+module.exports.router = router;
 
 
 //поиск населенного пункта
@@ -81,7 +85,7 @@ router.post('/calculation', csrf.checkCSRFToken, koaBody, counter, checkCity, ch
     }
 });
 //страница с расчётом стоимости доставки грузов
-router.get('/calculator', csrf.setCSRFToken, async ctx => {
+router.get('/calculator', csrf.checkCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {

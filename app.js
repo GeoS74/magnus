@@ -8,7 +8,7 @@ app.use(serve('client/public')); //общие статические файлы
 
 app.use(require('@logger'));
 
-app.use(require('@user').routerUser.routes());
+app.use(require('@user').router.routes());
 
 app.use(require('@letters').router.routes());
 
