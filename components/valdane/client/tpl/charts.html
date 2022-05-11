@@ -27,7 +27,7 @@
 
         h1,
         h3 {
-            margin: 35px 0
+            margin: 35px 0;
         }
 
 
@@ -188,6 +188,7 @@
                                 width="${this._width - this._periodPaddingLeft}" height="${this._heightRow}"
                                 x="${this._periodPaddingLeft}" 
                                 y ="${offset}" />`;
+
                 for (let period of periods) {
                     //кол-во дней от начала графика до начала блока
                     let diffDayStart = (period[0] - this._dateStart) / 1000 / 60 / 60 / 24;
@@ -209,8 +210,9 @@
                             data-block-id="${period[3]}"
                             data-period-start="${period[0].getTime()}" 
                             data-period-end="${period[1].getTime()}"
+                            data-period-closed="${period[5]}"
                             class="period-block"
-                            width="${(diffDayEnd - diffDayStart + 1) * this._step}" height="${this._heightRow}" fill="${this._colorBlock}" 
+                            width="${(diffDayEnd - diffDayStart + 1) * this._step}" height="${this._heightRow}" fill="${period[5] ? 'green': this._colorBlock}" 
                             stroke="red" stroke-width="0"
                                 x="${this._periodPaddingLeft + diffDayStart * this._step}" 
                                 y ="${offset}
@@ -367,6 +369,17 @@
                     <div id="rightCalendarContainer"></div>
                 </div>
             </div>
+
+            <fieldset class="form-group mt-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="closed" id="flexCheckDefault">
+                  <label class="form-check-label" for="flexCheckDefault">
+                    Период закрыт
+                  </label>
+                </div>
+              </fieldset>
+
+
             <input type="hidden" name="techCenterId">
             <input type="hidden" name="stafferId">
             <input type="hidden" name="startPeriod">
@@ -427,6 +440,8 @@
             //установить даты на контроллерах
             cal.setValue(new Date(+event.target.dataset.periodStart));
             cal2.setValue(new Date(+event.target.dataset.periodEnd));
+            //установить галку "период закрыт"
+            formChangePeriodBlock.elements.closed.checked = event.target.dataset.periodClosed == 'true' ? true : false;
             //установить значения скрытых полей формы
             formChangePeriodBlock.elements.stafferId.value = event.target.dataset.stafferId;
             formChangePeriodBlock.elements.techCenterId.value = event.target.parentElement.parentElement.parentElement.dataset.techcenterId;
@@ -445,6 +460,8 @@
             //сброс контроллеров
             cal.setValue(null);
             cal2.setValue(null);
+            //установить галку "период закрыт"
+            formChangePeriodBlock.elements.closed.checked = false;
             //установить значения скрытых полей формы
             formChangePeriodBlock.elements.stafferId.value = event.target.dataset.stafferId;
             formChangePeriodBlock.elements.techCenterId.value = event.target.parentElement.parentElement.dataset.techcenterId;
@@ -493,7 +510,7 @@
 
                         if (options.method === 'POST') {
                             //добавить в него новый блок
-                            chart.addRow([`${res.staffShortName} (${res.staffPosition})`, new Date(res.start), new Date(res.end), res.staffId, res.blockId]);
+                            chart.addRow([`${res.staffShortName} (${res.staffPosition})`, new Date(res.start), new Date(res.end), res.staffId, res.blockId, null, res.closed]);
                         }
                         else {
                             //здесь надо отредактировать границы периода, но т.к. специального метода для поиска периода в объекте Chart нет - сделать это руками
@@ -504,6 +521,8 @@
                                 //изменить период
                                 p[0] = new Date(res.start);
                                 p[1] = new Date(res.end);
+                                //установить галку "период закрыт"
+                                p[5] = res.closed;
                                 break;
                             }
                         }
@@ -625,7 +644,7 @@
 
             //получить объект графика
             const chart = charts.get(fd.get('techcenterId'));
-            chart.addRow([`${staffer.shortName} (${staffer.position})`, null, null, staffer.id, null]);
+            chart.addRow([`${staffer.shortName} (${staffer.position})`, null, null, staffer.id, null, null, null]);
             //удалить старый график
             chart.container.querySelector('svg').remove();
             //отрисовать новый график
@@ -634,7 +653,7 @@
             hideAddStaffForm();
 
             //проверить состояние чекбокса для отрисовки временной сетки
-            visualTimeLine(document.querySelector('.form-check-input').checked);
+            visualTimeLine(document.querySelector('#showTimeLineCheck').checked);
         };
         //заполнение глобальной коллекции сотрудников + заполнение datalist формы
         fetch('/valdane/stafferWithoutLimit/', { method: 'GET' })
@@ -748,7 +767,7 @@
                 hideCreateChartForm();
 
                 //проверить состояние чекбокса для отрисовки временной сетки
-                visualTimeLine(document.querySelector('.form-check-input').checked);
+                visualTimeLine(document.querySelector('#showTimeLineCheck').checked);
             };
         </script>
 
@@ -865,9 +884,9 @@
         </div>
         <script>
             //показать/скрыть временную сетку
-            document.querySelector('.form-check').addEventListener('click', event => {
+            document.querySelector('#showTimeLine').addEventListener('click', event => {
                 if (!event.target.closest('.form-check-input')) return;
-                visualTimeLine(document.querySelector('.form-check-input').checked);
+                visualTimeLine(document.querySelector('#showTimeLineCheck').checked);
             });
             //функция отрисовки временной сетки
             function visualTimeLine(show) {
@@ -1053,7 +1072,6 @@
                 .then(async response => {
                     if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                         const res = await response.json();
-                        // console.log(res);
                         for (const key in res) renderChart(res[key], dateStart.getTime(), dateEnd.getTime());
                     }
                     else {
@@ -1082,7 +1100,7 @@
 
             // //добавить блоки
             for (const p of data.periods) {
-                chart.addRow([`${p.staffShortName} (${p.staffPosition})`, new Date(p.start), new Date(p.end), p.staffId, p.blockId, p.staffStatus]);
+                chart.addRow([`${p.staffShortName} (${p.staffPosition})`, new Date(p.start), new Date(p.end), p.staffId, p.blockId, p.staffStatus, p.closed]);
             }
             const svg = chart.container.querySelector('svg');
             if (svg) svg.remove();
@@ -1091,7 +1109,7 @@
             charts.set(data.techCenterId, chart);
 
             //проверить состояние чекбокса для отрисовки временной сетки
-            visualTimeLine(document.querySelector('.form-check-input').checked);
+            visualTimeLine(document.querySelector('#showTimeLineCheck').checked);
         }
     </script>
 </body>

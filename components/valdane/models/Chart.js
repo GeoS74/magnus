@@ -25,6 +25,10 @@ const ChartSchema = new mongoose.Schema({
             required: 'этот {PATH} не должен быть пустым',
             index: true
         }
+    },
+    closed: {
+        type: Boolean,
+        default: false
     }
 });
 

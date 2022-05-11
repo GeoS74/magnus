@@ -14,7 +14,8 @@ exports.updPeriod = async ctx => {
                 period: {
                     start: new Date(+ctx.request.body.startPeriod),
                     end: new Date(+ctx.request.body.endPeriod)
-                }
+                },
+                closed: !!ctx.request.body.closed
             },
             {
                 new: true,
@@ -41,6 +42,7 @@ exports.updPeriod = async ctx => {
             staffPosition: data.staff.position ? data.staff.position.title : '',
             start: timeBlock.period.start,
             end: timeBlock.period.end,
+            closed: data.closed ? true : false,
         };
     }
     catch (error) {
@@ -74,7 +76,8 @@ exports.addPeriod = async ctx => {
             period: {
                 start: new Date(+ctx.request.body.startPeriod),
                 end: new Date(+ctx.request.body.endPeriod)
-            }
+            },
+            closed: !!ctx.request.body.closed
         });
 
         const data = await Chart.findOne({ _id: timeBlock._id })
@@ -95,6 +98,7 @@ exports.addPeriod = async ctx => {
             staffPosition: data.staff.position ? data.staff.position.title : '',
             start: timeBlock.period.start,
             end: timeBlock.period.end,
+            closed: data.closed ? true : false,
         };
     }
     catch (error) {
@@ -150,7 +154,8 @@ exports.allCharts = async ctx => {
                 staffPosition: p.staff.position ? p.staff.position.title : '',
                 start: p.period.start,
                 end: p.period.end,
-                staffStatus: p.staff.status
+                staffStatus: p.staff.status,
+                closed: !!p.closed
             });
         }
 
