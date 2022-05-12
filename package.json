@@ -18,6 +18,7 @@
         "@auth": "microservice/auth"
     },
     "dependencies": {
+        "base-64": "^1.0.0",
         "csv-parser": "^3.0.0",
         "dbf-reader": "^1.0.3",
         "dotenv": "^10.0.0",

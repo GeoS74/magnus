@@ -107,7 +107,7 @@
                     setValid(password);
                     console.log(await response.json());
 
-                    location.href = '/user/page';
+                    // location.href = '/user/page';
                 }
                 else if (response.status === 400) { //ошибка авторизации
                     showMistake(await response.json());

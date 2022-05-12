@@ -1,7 +1,9 @@
-const passport = require('@user/libs/passport');
-const User = require('@user/models/User');
-const Session = require('@user/models/Session');
-const {v4: uuid} = require('uuid');
+const passport = require('@user/libs/passport')
+const User = require('@user/models/User')
+const Session = require('@user/models/Session')
+const {v4: uuid} = require('uuid')
+const jwt = require('@user/libs/jwt')
+const config = require('@root/config')
 
 exports.authorization = async (ctx, next) => {
     const token = ctx.cookies.get('session_id');
@@ -47,22 +49,31 @@ exports.signin = async (ctx) => {
         }
 
         //здесь надо сгенерировать JWT-токен
-        const token = await login(user); //заместо ctx.login(user);
-        ctx.cookies.set('session_id', token, {maxAge: 1*60*1000});
-        ctx.body = {token};
+        const tokens = await login(user); //заместо ctx.login(user);
+        // ctx.cookies.set('session_id', token, {maxAge: 1*60*1000});
+        ctx.body = {tokens};
     })(ctx);
 };
 //
 async function login(user){
-    const token = uuid();
+    const accessToken = jwt.sign({
+        email: user.email,
+        rank: user.rank,
+        exp: Date.now() + 1000*60*10, //10 минут
+    }, config.jwt.secret)
 
-    await Session.create({
-        user: user.id,
-        token: token,
-        lastVisit: new Date()
-    });
+    const refreshToken = uuid();
 
-    return token;
+    // await Session.create({
+    //     user: user.id,
+    //     token: refreshToken,
+    //     lastVisit: new Date()
+    // });
+
+    return {
+        access: accessToken,
+        refresh: refreshToken,
+    };
 }
 //регистрация пользователя
 exports.signup = async (ctx) => { 

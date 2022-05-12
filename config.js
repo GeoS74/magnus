@@ -28,4 +28,7 @@ module.exports = {
         //!!!В Н И М А Н И Е!!! Измени это!!!
         secure: false,
     },
+    jwt: {
+        secret: process.env.JWT_SECRET || 'ssdT$#t#%Y%$'
+    }
 };

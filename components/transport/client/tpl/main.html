@@ -15,6 +15,7 @@
             background-size: cover;
             background-position: 50% 0%;
             position: absolute;
+            top: 0;
             width: 100%;
             height: 100%;
             display: flex;
@@ -83,6 +84,62 @@
 </head>
 
 <body>
+
+
+
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="z-index:100500">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">CargoBox</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03" aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+      
+          <div class="collapse navbar-collapse" id="navbarColor03">
+            <ul class="navbar-nav me-auto">
+              <li class="nav-item">
+                <a class="nav-link active" href="#">Home
+                  <span class="visually-hidden">(current)</span>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Features</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">Pricing</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">About</a>
+              </li>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Dropdown</a>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="#">Action</a>
+                  <a class="dropdown-item" href="#">Another action</a>
+                  <a class="dropdown-item" href="#">Something else here</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="#">Separated link</a>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      <script>
+          document.querySelector('nav button').addEventListener('click', event => {
+              const elem = event.target.closest('button');
+              elem.classList.toggle('collapsed');
+              elem.setAttribute('aria-expanded', elem.getAttribute('aria-expanded') == 'false' ? 'true' : 'false');
+              elem.nextElementSibling.classList.toggle('show');
+          })
+      </script>
+
+
+
+
+
+    
     <div id="main">
         <div id="present">
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
@@ -93,7 +150,7 @@
         </div>
     </div>
     <script>
-        document.querySelector('button').onclick = _ => {
+        document.querySelector('#main button').onclick = _ => {
             fetch('/transport/calculator', {
                 headers: {
                         'X-CSRF-TOKEN': getCSRFToken(),
