@@ -5,7 +5,6 @@ const app = new Koa();
 const serve = require('koa-static');
 app.use(serve('client/public')); //общие статические файлы
 
-
 app.use(require('@logger'));
 
 app.use(require('@user').router.routes());
@@ -34,6 +33,21 @@ module.exports = app;
 
 
 
+// app.use((ctx, next) => {
+//     if(ctx.path == '/get') return next();
+
+//     ctx.cookies.set('token', 'dhh54hdfr6hhe3geg5454gh4', {
+//         httpOnly: true,
+//         secure: false,
+//         sameSite: true,
+//     })
+//     ctx.body = 'ok'
+// })
+
+// app.use((ctx, next) => {
+//     console.log(ctx.cookies.get('token'))
+//     ctx.body = 'get: ' + ctx.cookies.get('token')
+// })
 
 
 

@@ -88,7 +88,7 @@
 
 
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="z-index:100500">
+    <!-- <nav class="navbar navbar-expand-lg navbar-light bg-light" style="z-index:100500">
         <div class="container-fluid">
           <a class="navbar-brand" href="#">CargoBox</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor03" aria-controls="navbarColor03" aria-expanded="false" aria-label="Toggle navigation">
@@ -133,7 +133,7 @@
               elem.setAttribute('aria-expanded', elem.getAttribute('aria-expanded') == 'false' ? 'true' : 'false');
               elem.nextElementSibling.classList.toggle('show');
           })
-      </script>
+      </script> -->
 
 
 
@@ -145,33 +145,33 @@
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
             <p>Используйте калькулятор расчёта доставки грузов для получения информации
                 о стоимости и сроках доставки в едином окне</p>
-            <!-- <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a> -->
-            <button type="button" class="btn btn-outline-light">Расчитать доставку</button>
+            <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a>
+            <!-- <button type="button" class="btn btn-outline-light">Расчитать доставку</button> -->
         </div>
     </div>
     <script>
-        document.querySelector('#main button').onclick = _ => {
-            fetch('/transport/calculator', {
-                headers: {
-                        'X-CSRF-TOKEN': getCSRFToken(),
-                    },
-            })
-            .then(async res => {
-                document.write(await res.text());
-            })
-            .catch(err => {
-                console.log(err);
-            })
-        };
+        // document.querySelector('#main button').onclick = _ => {
+        //     fetch('/transport/calculator', {
+        //         headers: {
+        //                 'X-CSRF-TOKEN': getCSRFToken(),
+        //             },
+        //     })
+        //     .then(async res => {
+        //         document.write(await res.text());
+        //     })
+        //     .catch(err => {
+        //         console.log(err);
+        //     })
+        // };
 
         //получить csrf-токен из куки
-        function getCSRFToken() {
-                const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
-                if(!csrfCookie) {
-                    console.log('csrf cookie not found');
-                    return;
-                }
-                return csrfCookie[1];
-            }
+        // function getCSRFToken() {
+        //         const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
+        //         if(!csrfCookie) {
+        //             console.log('csrf cookie not found');
+        //             return;
+        //         }
+        //         return csrfCookie[1];
+        //     }
     </script>
 </body>

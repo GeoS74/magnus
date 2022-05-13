@@ -8,12 +8,22 @@ const server = app.listen(config.server.port, _ => {
 
 // socket(server);
 
-
+////////////////////////////////////////////////////////////////////////
 
 // const http = require('http');
-// const https = require('https');
+// http.createServer(options, app.callback()).listen(config.server.port, _ => {
+//     console.log('server run http://localhost:', config.server.port);
+// });
 
+////////////////////////////////////////////////////////////////////////
+
+// const https = require('https');
 // const fs = require('fs')
+
+// ssl_certificate "/var/www/httpd-cert/geos/cargobox.site_le1.crtca";
+// ssl_certificate_key "/var/www/httpd-cert/geos/cargobox.site_le1.key";
+// /root/www/nodejs/magnus
+
 
 // const options = {
 //     key: fs.readFileSync('key.pem'),
@@ -24,6 +34,4 @@ const server = app.listen(config.server.port, _ => {
 //     console.log('server run https://localhost:', config.server.portSSL);
 // });
 
-// http.createServer(options, app.callback()).listen(config.server.port, _ => {
-//     console.log('server run http://localhost:', config.server.port);
-// });
+ 

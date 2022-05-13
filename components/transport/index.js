@@ -31,7 +31,7 @@ const ssi = new SSI({
 const mainPage = new Router();
 module.exports.mainPage = mainPage;
 //главная страница
-mainPage.get('/', csrf.setCSRFToken, async ctx => {
+mainPage.get('/', async ctx => {
     ctx.set('content-type', 'text/html');
     // ctx.set('cache-control', 'public, max-age=604800'); //кэширование на неделю
     ctx.body = await new Promise(res => {
@@ -85,7 +85,7 @@ router.post('/calculation', csrf.checkCSRFToken, koaBody, counter, checkCity, ch
     }
 });
 //страница с расчётом стоимости доставки грузов
-router.get('/calculator', csrf.checkCSRFToken, async ctx => {
+router.get('/calculator', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/calculator.html'), (err, html) => {
