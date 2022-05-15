@@ -134,7 +134,9 @@
               elem.nextElementSibling.classList.toggle('show');
           })
       </script> -->
-
+<script>
+    var hello = 'HELLO';
+</script>
 
 
 
@@ -145,24 +147,25 @@
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
             <p>Используйте калькулятор расчёта доставки грузов для получения информации
                 о стоимости и сроках доставки в едином окне</p>
-            <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a>
-            <!-- <button type="button" class="btn btn-outline-light">Расчитать доставку</button> -->
+            <!-- <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a> -->
+            <button type="button" class="btn btn-outline-light">Расчитать доставку</button>
         </div>
     </div>
     <script>
-        // document.querySelector('#main button').onclick = _ => {
-        //     fetch('/transport/calculator', {
-        //         headers: {
-        //                 'X-CSRF-TOKEN': getCSRFToken(),
-        //             },
-        //     })
-        //     .then(async res => {
-        //         document.write(await res.text());
-        //     })
-        //     .catch(err => {
-        //         console.log(err);
-        //     })
-        // };
+        document.querySelector('#main button').onclick = _ => {
+            // fetch('/transport/calculator', {
+            fetch('/user/login', {
+                // headers: {
+                //         'X-CSRF-TOKEN': getCSRFToken(),
+                //     },
+            })
+            .then(async res => {
+                document.write(await res.text());
+            })
+            .catch(err => {
+                console.log(err);
+            })
+        };
 
         //получить csrf-токен из куки
         // function getCSRFToken() {

@@ -48,10 +48,10 @@ exports.signin = async (ctx) => {
             return;
         }
 
-        //здесь надо сгенерировать JWT-токен
-        const tokens = await login(user); //заместо ctx.login(user);
+        //JWT-токен + refresh-token
+        // const tokens = await login(user); //заместо ctx.login(user);
         // ctx.cookies.set('session_id', token, {maxAge: 1*60*1000});
-        ctx.body = {tokens};
+        ctx.body = await login(user); 
     })(ctx);
 };
 //

@@ -105,7 +105,11 @@
                 if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                     setValid(email);
                     setValid(password);
-                    console.log(await response.json());
+                    const tokens = await response.json();
+                    console.log(tokens);
+
+                    //записать токены
+                    
 
                     // location.href = '/user/page';
                 }
