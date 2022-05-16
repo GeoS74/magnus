@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
-const {signin, checkCredentials, signup, authorization} = require('@user/controllers/user');
+const {signin, checkCredentials, signup, signout, authorization, updateTokens} = require('@user/controllers/user');
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
 
@@ -39,12 +39,24 @@ router.get('/registrate', csrf.setCSRFToken, async ctx => {
         });
     });
 })
+//завершение сессии
+router.get('/logout', async ctx => {
+    ctx.set('content-type', 'text/html');
+    ctx.body = await new Promise(res => {
+        ssi.compileFile(path.join(__dirname, 'client/tpl/signout.html'), (err, html) => {
+            res(html);
+        });
+    });
+});
+router.get('/signout', signout);
+
 //регистрация пользователя
 router.post('/signup', csrf.checkCSRFToken, koaBody, checkCredentials, signup);
 //авторизация пользователя
 router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
-//signout
-router.get('/logout', koaBody, ctx => ctx.throw(400, 'Not implemented'));
+
+
+
 //страница пользователя
 router.get('/page', authorization, mustBeAuthenticated, async ctx => {
     ctx.set('content-type', 'text/html');
@@ -54,4 +66,5 @@ router.get('/page', authorization, mustBeAuthenticated, async ctx => {
         });
     });
 });
-
+//перевыпуск токенов + обновлении сессии
+router.get('/tokens/update', updateTokens);

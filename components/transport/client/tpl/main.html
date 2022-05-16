@@ -9,6 +9,7 @@
     <!--https://bootswatch.com/cosmo/-->
     <!--https://icons.getbootstrap.com/-->
     <!-- https://www.pexels.com/ru-ru/photo/2624031/ -->
+    <script type="text/javascript" src="/libs/Loader.js"></script>
     <style>
         #main {
             background-image: url("/img/mainfon.jpg");
@@ -134,9 +135,11 @@
               elem.nextElementSibling.classList.toggle('show');
           })
       </script> -->
-<script>
-    var hello = 'HELLO';
-</script>
+
+
+
+
+      
 
 
 
@@ -153,18 +156,22 @@
     </div>
     <script>
         document.querySelector('#main button').onclick = _ => {
+
+            new Loader().page('/user/page');
+
+
             // fetch('/transport/calculator', {
-            fetch('/user/login', {
-                // headers: {
-                //         'X-CSRF-TOKEN': getCSRFToken(),
-                //     },
-            })
-            .then(async res => {
-                document.write(await res.text());
-            })
-            .catch(err => {
-                console.log(err);
-            })
+        //     fetch('/user/login', {
+        //         // headers: {
+        //         //         'X-CSRF-TOKEN': getCSRFToken(),
+        //         //     },
+        //     })
+        //     .then(async res => {
+        //         document.write(await res.text());
+        //     })
+        //     .catch(err => {
+        //         console.log(err);
+        //     })
         };
 
         //получить csrf-токен из куки

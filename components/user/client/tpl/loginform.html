@@ -8,7 +8,7 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <!--https://bootswatch.com/cosmo/-->
     <!--https://icons.getbootstrap.com/-->
-    <script type="text/javascript" src="/libs/El.js"></script>
+    <script type="text/javascript" src="/libs/Loader.js"></script>
     <style>
         #main {
             background-image: url("/img/mainfon.jpg");
@@ -105,13 +105,11 @@
                 if (response.ok) { // если HTTP-статус в диапазоне 200-299 
                     setValid(email);
                     setValid(password);
-                    const tokens = await response.json();
-                    console.log(tokens);
 
                     //записать токены
+                    new Loader().tokens = await response.json();
                     
-
-                    // location.href = '/user/page';
+                    location.href = '/';
                 }
                 else if (response.status === 400) { //ошибка авторизации
                     showMistake(await response.json());
