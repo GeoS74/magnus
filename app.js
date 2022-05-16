@@ -5,6 +5,22 @@ const app = new Koa();
 const serve = require('koa-static');
 app.use(serve('client/public')); //общие статические файлы
 
+// app.use(ctx => {
+//     const config = require('./config')
+//     ctx.cookies.set('sid', `bla bla bla`, {
+//         domain: 'localhost',
+//         // maxAge: 1000 * maxAgeSecondsToken, //ms
+//         secure: config.cookie.secure, //логическое значение, указывающее, должен ли файл cookie отправляться только через HTTPS ( false по умолчанию для HTTP, true по умолчанию для HTTPS).
+//         httpOnly: true, //если false - куки доступен для клиентского JS
+//         //логическое значение или строка, указывающая, является ли файл cookie файлом cookie «того же сайта» ( falseпо умолчанию)
+//         //sameSite работает только в Chrome и Firefox
+//         sameSite: true,
+//         overwrite: true, //логическое значение, указывающее, перезаписывать ли ранее установленные файлы cookie с тем же именем ( falseпо умолчанию).
+//     })
+
+//     ctx.body = 'cookie';
+// })
+
 app.use(require('@logger'));
 
 app.use(require('@user').router.routes());

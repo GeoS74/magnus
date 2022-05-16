@@ -20,6 +20,6 @@ const schema = new mongoose.Schema({
     timestamps: true
 });
 
-schema.path('lastVisit').index({expires: '2m'});
+schema.path('lastVisit').index({expires: 60 * 60 * 24});
 
 module.exports = connection.model('Session', schema);

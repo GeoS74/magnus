@@ -16,4 +16,48 @@
 
 <h1>User page</h1>
 <a href="/">home</a>
+
+<h3 id="query">click me</h3>
+<script>
+  function auth() {
+    fetch('/user/refreshSession')
+    .then(response => {
+      if(response.ok) {
+        console.log('refresh');
+        sessionStorage.setItem('sid', response.headers.get('jwt-token'))
+      }
+      else if(response.status === 401) {
+        location.href = '/user/login';
+      }
+      else {
+        throw new Error(response.status);
+      }
+    })
+    .catch(error => {
+      console.log(error.message);
+    })
+  }
+
+  query.onclick = _ => {
+    fetch('/user/data', {
+      headers: {
+        'Authorization': `Bearer ${sessionStorage.getItem('sid') || ''}`
+      }})
+    .then(async response => {
+      if(response.ok){
+        console.log(await response.json());
+      }
+      else if(response.status === 401) {
+        console.log('boom');
+        auth();
+      }
+      else {
+        throw new Error(`status: ${response.status}`);
+      }
+    })
+    .catch(err => {
+      console.log(err.message)
+    })
+  }
+</script>
 </body>

@@ -20,14 +20,14 @@ const server = app.listen(config.server.port, _ => {
 // const https = require('https');
 // const fs = require('fs')
 
-// ssl_certificate "/var/www/httpd-cert/geos/cargobox.site_le1.crtca";
-// ssl_certificate_key "/var/www/httpd-cert/geos/cargobox.site_le1.key";
-// /root/www/nodejs/magnus
+// // ssl_certificate "/var/www/httpd-cert/geos/cargobox.site_le1.crtca";
+// // ssl_certificate_key "/var/www/httpd-cert/geos/cargobox.site_le1.key";
+// // /root/www/nodejs/magnus
 
 
 // const options = {
-//     key: fs.readFileSync('key.pem'),
-//     cert: fs.readFileSync('cert.pem')
+//     key: fs.readFileSync('./ssl_cert/key.pem'),
+//     cert: fs.readFileSync('./ssl_cert/cert.pem')
 // }
 
 // https.createServer({}, app.callback()).listen(config.server.portSSL, _ => {

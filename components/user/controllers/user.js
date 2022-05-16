@@ -3,56 +3,46 @@ const User = require('@user/models/User')
 const Session = require('@user/models/Session')
 const { v4: uuid } = require('uuid')
 const jwt = require('@user/libs/jwt')
+const config = require('@root/config')
 
-//endpoint обновления access-токена и refresh-токена
-exports.updateTokens = async ctx => {
-    const token = ctx.get('Authorization').split(' ')[1]
-    if (!token) return ctx.status = 409
+exports.refreshSession = async ctx => {
+    const tokens = await login(ctx.user); //заместо ctx.login(user);
 
-    const refreshToken = uuid();
-
-    const session = await Session.findOneAndUpdate(
-        { token: token },
-        {
-            token: refreshToken,
-            lastVisit: new Date()
-        },
-        { new: true }
-    ).populate('user');
-
-
-    if (!session) return ctx.status = 409
-
-    const accessToken = jwt.sign({
-        sid: session.id,
-        email: session.user.email,
-        rank: session.user.rank,
-        exp: Date.now() + 1000 * 60 * 10, //10 минут
-    })
-
-    ctx.body = {
-        access: accessToken,
-        refresh: refreshToken,
-    };
+    ctx.cookies.set('sid', tokens.refresh, {
+            domain: 'localhost',
+            maxAge: 1000 * 60 * 10, //ms
+            secure: config.cookie.secure, //логическое значение, указывающее, должен ли файл cookie отправляться только через HTTPS ( false по умолчанию для HTTP, true по умолчанию для HTTPS).
+            httpOnly: true, //если false - куки доступен для клиентского JS
+            //логическое значение или строка, указывающая, является ли файл cookie файлом cookie «того же сайта» ( falseпо умолчанию)
+            //sameSite работает только в Chrome и Firefox
+            sameSite: true,
+            overwrite: true, //логическое значение, указывающее, перезаписывать ли ранее установленные файлы cookie с тем же именем ( falseпо умолчанию).
+        })
+    ctx.set('jwt-token', tokens.access)
+    ctx.status = 200
 }
 
-
-
-exports.authorization = async (ctx, next) => {
+exports.accessControl = async (ctx, next) => {
     const token = ctx.get('Authorization').split(' ')[1]
-    if (!token) return next()
+    if (!token) return next();
 
-    if (!jwt.verify(token)) return next()
+    if (!jwt.verify(token)) return next();
 
     const data = jwt.decode(token)
 
-    console.log(new Date(Date.now()));
-    console.log(new Date(data.payload.exp));
-    console.log(Date.now() > data.payload.exp);
-    if (Date.now() > data.payload.exp) return next()
+    if (Date.now() > data.payload.exp) return next();
+
+    ctx.access = true;
+    return next();
+}
+
+exports.authorization = async (ctx, next) => {
+    const token = ctx.cookies.get('sid');
+
+    if (!token) return next()
 
     const session = await Session.findOneAndUpdate(
-        { id: data.payload.sid },
+        { token: token },
         { lastVisit: new Date() },
         { new: true }
     ).populate('user');
@@ -61,6 +51,26 @@ exports.authorization = async (ctx, next) => {
 
     ctx.user = session.user;
     return next();
+    ///////////////////////////////////////////////////////////
+
+//     const token = ctx.get('Authorization').split(' ')[1]
+//     if (!token) return next()
+//     if (!jwt.verify(token)) return next()
+
+//     const data = jwt.decode(token)
+// \
+//     if (Date.now() > data.payload.exp) return next()
+
+//     const session = await Session.findOneAndUpdate(
+//         { id: data.payload.sid },
+//         { lastVisit: new Date() },
+//         { new: true }
+//     ).populate('user');
+
+//     if (!session) return next()
+
+//     ctx.user = session.user;
+//     return next();
 };
 
 // exports.authorization = async (ctx, next) => {
@@ -108,17 +118,18 @@ exports.signin = async (ctx) => {
             return;
         }
 
-        //JWT-токен + refresh-token
-        // const tokens = await login(user); //заместо ctx.login(user);
-        // ctx.cookies.set('session_id', token, {maxAge: 1*60*1000});
-        ctx.body = await login(user);
+        ctx.user = user;
+        return this.refreshSession.call(null, ctx)
     })(ctx);
 };
+
+
 //
 async function login(user) {
     const refreshToken = uuid();
 
-    await Session.deleteMany({ user: user.id })
+    //если это работает, то залогиниться на разных клиентах одновременно не получится
+    // await Session.deleteMany({ user: user.id })
 
     const session = await Session.create({
         user: user.id,
@@ -127,7 +138,7 @@ async function login(user) {
     });
 
     const accessToken = jwt.sign({
-        sid: session.id,
+        // sid: session.id,
         email: user.email,
         rank: user.rank,
         exp: Date.now() + 1000 * 60 * 10, //10 минут
@@ -141,17 +152,8 @@ async function login(user) {
 
 //завершение сессии
 exports.signout = async ctx => {
-    const token = ctx.get('Authorization').split(' ')[1]
-
-    if (!token) return ctx.status = 401
-
-    if (!jwt.verify(token)) return ctx.status = 401
-
-    const data = jwt.decode(token)
-
-    await Session.deleteMany({ id: data.payload.sid });
-
-    ctx.body = 'session delete'
+    await Session.deleteMany({ user: ctx.user.id });
+    ctx.status = 401
 }
 
 

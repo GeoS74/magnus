@@ -107,9 +107,10 @@
                     setValid(password);
 
                     //записать токены
-                    new Loader().tokens = await response.json();
-                    
-                    location.href = '/';
+                    // new Loader().tokens = await response.json();
+                //    console.log( response.headers.get('jwt-token'));
+                    sessionStorage.setItem('sid', response.headers.get('jwt-token'))
+                    location.href = '/user/page';
                 }
                 else if (response.status === 400) { //ошибка авторизации
                     showMistake(await response.json());
