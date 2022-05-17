@@ -1,5 +1,6 @@
 const connection = require('@root/libs/connection');
 const mongoose = require('mongoose');
+const config = require('@root/config')
 
 const schema = new mongoose.Schema({
     user: {
@@ -20,6 +21,6 @@ const schema = new mongoose.Schema({
     timestamps: true
 });
 
-schema.path('lastVisit').index({expires: 60 * 60 * 24});
+schema.path('lastVisit').index({expires: config.session.expiry}); //sec
 
 module.exports = connection.model('Session', schema);

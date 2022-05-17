@@ -139,49 +139,12 @@
 
 
 
-      
-
-
-
-
-    
     <div id="main">
         <div id="present">
             <h1>КАЛЬКУЛЯТОР ГРУЗОПЕРЕВОЗОК</h1>
             <p>Используйте калькулятор расчёта доставки грузов для получения информации
                 о стоимости и сроках доставки в едином окне</p>
-            <!-- <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a> -->
-            <button type="button" class="btn btn-outline-light">Расчитать доставку</button>
+            <a href="/transport/calculator" class="btn btn-outline-light">Расчитать доставку</a>
         </div>
     </div>
-    <script>
-        document.querySelector('#main button').onclick = _ => {
-            location.href = '/user/page';
-            // new Loader().page('/user/page');
-
-
-            // fetch('/transport/calculator', {
-        //     fetch('/user/login', {
-        //         // headers: {
-        //         //         'X-CSRF-TOKEN': getCSRFToken(),
-        //         //     },
-        //     })
-        //     .then(async res => {
-        //         document.write(await res.text());
-        //     })
-        //     .catch(err => {
-        //         console.log(err);
-        //     })
-        };
-
-        //получить csrf-токен из куки
-        // function getCSRFToken() {
-        //         const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
-        //         if(!csrfCookie) {
-        //             console.log('csrf cookie not found');
-        //             return;
-        //         }
-        //         return csrfCookie[1];
-        //     }
-    </script>
 </body>

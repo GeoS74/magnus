@@ -5,27 +5,39 @@ const { v4: uuid } = require('uuid')
 const jwt = require('@user/libs/jwt')
 const config = require('@root/config')
 
+exports.me = async ctx => {
+    const token = ctx.get('Authorization').split(' ')[1]
+    const data = jwt.decode(token)
+    const user = await User.findOne({ email: data.payload.email });
+    ctx.body = {
+        id: user.id,
+        email: user.email,
+        rank: user.rank,
+    }
+}
+
+//установить токены в куки и в заголовок ответа
 exports.refreshSession = async ctx => {
     const tokens = await login(ctx.user); //заместо ctx.login(user);
 
     ctx.cookies.set('sid', tokens.refresh, {
-            domain: 'localhost',
-            maxAge: 1000 * 60 * 10, //ms
-            secure: config.cookie.secure, //логическое значение, указывающее, должен ли файл cookie отправляться только через HTTPS ( false по умолчанию для HTTP, true по умолчанию для HTTPS).
-            httpOnly: true, //если false - куки доступен для клиентского JS
-            //логическое значение или строка, указывающая, является ли файл cookie файлом cookie «того же сайта» ( falseпо умолчанию)
-            //sameSite работает только в Chrome и Firefox
-            sameSite: true,
-            overwrite: true, //логическое значение, указывающее, перезаписывать ли ранее установленные файлы cookie с тем же именем ( falseпо умолчанию).
-        })
+        domain: 'localhost',
+        maxAge: config.session.expiry * 1000, //ms
+        secure: config.cookie.secure, //логическое значение, указывающее, должен ли файл cookie отправляться только через HTTPS ( false по умолчанию для HTTP, true по умолчанию для HTTPS).
+        httpOnly: true, //если false - куки доступен для клиентского JS
+        //логическое значение или строка, указывающая, является ли файл cookie файлом cookie «того же сайта» ( falseпо умолчанию)
+        //sameSite работает только в Chrome и Firefox
+        sameSite: true,
+        overwrite: true, //логическое значение, указывающее, перезаписывать ли ранее установленные файлы cookie с тем же именем ( falseпо умолчанию).
+    })
     ctx.set('jwt-token', tokens.access)
     ctx.status = 200
 }
 
 exports.accessControl = async (ctx, next) => {
     const token = ctx.get('Authorization').split(' ')[1]
-    if (!token) return next();
 
+    if (!token) return next();
     if (!jwt.verify(token)) return next();
 
     const data = jwt.decode(token)
@@ -38,7 +50,6 @@ exports.accessControl = async (ctx, next) => {
 
 exports.authorization = async (ctx, next) => {
     const token = ctx.cookies.get('sid');
-
     if (!token) return next()
 
     const session = await Session.findOneAndUpdate(
@@ -51,26 +62,6 @@ exports.authorization = async (ctx, next) => {
 
     ctx.user = session.user;
     return next();
-    ///////////////////////////////////////////////////////////
-
-//     const token = ctx.get('Authorization').split(' ')[1]
-//     if (!token) return next()
-//     if (!jwt.verify(token)) return next()
-
-//     const data = jwt.decode(token)
-// \
-//     if (Date.now() > data.payload.exp) return next()
-
-//     const session = await Session.findOneAndUpdate(
-//         { id: data.payload.sid },
-//         { lastVisit: new Date() },
-//         { new: true }
-//     ).populate('user');
-
-//     if (!session) return next()
-
-//     ctx.user = session.user;
-//     return next();
 };
 
 // exports.authorization = async (ctx, next) => {
@@ -124,25 +115,27 @@ exports.signin = async (ctx) => {
 };
 
 
-//
+//создать токены + записать сессию в БД
 async function login(user) {
+    //ограничение на кол-во одновременных сессий одного пользователя
+    const sessions = await Session.find({ user: user.id })
+    if(sessions.length === config.session.maxCount) {
+        await Session.deleteMany({ user: user.id })
+    }
+
     const refreshToken = uuid();
 
-    //если это работает, то залогиниться на разных клиентах одновременно не получится
-    // await Session.deleteMany({ user: user.id })
+    const accessToken = jwt.sign({
+        email: user.email,
+        rank: user.rank,
+        exp: Date.now() + config.jwt.expiry, //10 минут
+    })
 
-    const session = await Session.create({
+    await Session.create({
         user: user.id,
         token: refreshToken,
         lastVisit: new Date()
     });
-
-    const accessToken = jwt.sign({
-        // sid: session.id,
-        email: user.email,
-        rank: user.rank,
-        exp: Date.now() + 1000 * 60 * 10, //10 минут
-    })
 
     return {
         access: accessToken,

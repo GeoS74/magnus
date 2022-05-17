@@ -4,7 +4,7 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
-const {signin, checkCredentials, signup, signout, authorization, accessControl, refreshSession} = require('@user/controllers/user');
+const {signin, checkCredentials, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
 
@@ -40,17 +40,6 @@ router.get('/registrate', csrf.setCSRFToken, async ctx => {
         });
     });
 })
-//завершение сессии
-router.get('/logout', authorization, mustBeAuthenticated, signout);
-
-
-//регистрация пользователя
-router.post('/signup', csrf.checkCSRFToken, koaBody, checkCredentials, signup);
-//авторизация пользователя
-router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
-
-
-
 //страница пользователя
 router.get('/page', authorization, mustBeAuthenticated, async ctx => {
     ctx.set('content-type', 'text/html');
@@ -59,12 +48,16 @@ router.get('/page', authorization, mustBeAuthenticated, async ctx => {
             res(html);
         });
     });
-});
-router.get('/data', accessControl, mustHaveAccess, ctx => {
-    ctx.body = {
-        name: 'GeoS'
-    }
 })
 
+
+//завершение сессии
+router.get('/logout', authorization, mustBeAuthenticated, signout);
+//регистрация пользователя
+router.post('/signup', csrf.checkCSRFToken, koaBody, checkCredentials, signup);
+//авторизация пользователя
+router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
+//данные пользователя
+router.get('/me', accessControl, mustHaveAccess, me)
 //перевыпуск токенов + обновлении сессии
 router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession);

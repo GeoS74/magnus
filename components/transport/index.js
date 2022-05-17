@@ -2,6 +2,9 @@ const Router = require('koa-router');
 const koaBody = require('@root/libs/koaBody');
 const csrf = require('@root/libs/csrf-protect');
 const path = require('path');
+const user = require('@user/controllers/user');
+const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
+const mustHaveAccess = require('@root/libs/mustHaveAccess');
 const DelLine = require('@transport/controllers/dellineAPI');
 const Pek = require('@transport/controllers/pekAPI');
 const Kit = require('@transport/controllers/kitAPI');
@@ -100,10 +103,10 @@ router.get('/calculator', csrf.setCSRFToken, async ctx => {
 
 
 
-//статистика
-router.get('/metrics/counter/carrier', carrierCounter);
+//данные статистики
+router.get('/metrics/counter/carrier', user.accessControl, mustHaveAccess, carrierCounter);
 //страница со статистикой
-router.get('/metrics/counter', async ctx => {
+router.get('/metrics/counter', user.authorization, mustBeAuthenticated, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/metricscounter.html'), (err, html) => {
@@ -119,41 +122,41 @@ router.get('/metrics/counter', async ctx => {
 
 
 //"Magic Trans" - обновление справочника населенных пунктов
-router.get('/magictrans/handbook/places/update', MagicTrans.updateHandbookPlaces);
+router.get('/magictrans/handbook/places/update', user.authorization, mustBeAuthenticated, MagicTrans.updateHandbookPlaces);
 
 //"Энергия" - обновление справочника населенных пунктов
-router.get('/energy/handbook/places/update', Energy.updateHandbookPlaces);
+router.get('/energy/handbook/places/update', user.authorization, mustBeAuthenticated, Energy.updateHandbookPlaces);
 
 //"Луч" - обновление справочника населенных пунктов
-router.get('/luch/handbook/places/update', Luch.updateHandbookPlaces);
+router.get('/luch/handbook/places/update', user.authorization, mustBeAuthenticated, Luch.updateHandbookPlaces);
 
 //"СДЭК" - обновление справочника населенных пунктов
-router.get('/cdek/handbook/places/update', Cdek.getJWToken, Cdek.updateHandbookPlaces);
+router.get('/cdek/handbook/places/update', user.authorization, mustBeAuthenticated, Cdek.getJWToken, Cdek.updateHandbookPlaces);
 
 //"ПЭК" - обновление справочника населенных пунктов
-router.get('/pek/handbook/places/update', Pek.updateHandbookPlaces);
+router.get('/pek/handbook/places/update', user.authorization, mustBeAuthenticated, Pek.updateHandbookPlaces);
 
 //"Кит" - обновление справочника населенных пунктов
-router.get('/kit/handbook/places/update', Kit.updateHandbookPlaces);
+router.get('/kit/handbook/places/update', user.authorization, mustBeAuthenticated, Kit.updateHandbookPlaces);
 
 //"Байкал" - обновление справочника населенных пунктов
-router.get('/baikal/handbook/places/update', Baikal.updateHandbookPlaces);
+router.get('/baikal/handbook/places/update', user.authorization, mustBeAuthenticated, Baikal.updateHandbookPlaces);
 
 //"ЖелДорЭкспедиция" - обновление справочника населенных пунктов
-router.get('/jeldor/handbook/places/update', Jeldor.updateHandbookPlaces);
+router.get('/jeldor/handbook/places/update', user.authorization, mustBeAuthenticated, Jeldor.updateHandbookPlaces);
 //"ЖелДорЭкспедиция" - обновление справочника терминалов
-router.get('/jeldor/handbook/terminals/update', Jeldor.updateHandbookTerminals);
+router.get('/jeldor/handbook/terminals/update', user.authorization, mustBeAuthenticated, Jeldor.updateHandbookTerminals);
 
 
 //"Boxberry" - обновление справочника населенных пунктов
-router.get('/boxberry/handbook/places/update', Boxberry.updateHandbookPlaces);
+router.get('/boxberry/handbook/places/update', user.authorization, mustBeAuthenticated, Boxberry.updateHandbookPlaces);
 //"Boxberry" - обновление справочника пунктов выдачи
-router.get('/boxberry/handbook/outputPoints/update', Boxberry.updateHandbookOutputPoints);
+router.get('/boxberry/handbook/outputPoints/update', user.authorization, mustBeAuthenticated, Boxberry.updateHandbookOutputPoints);
 //"Boxberry" - обновление справочника пунктов приёма
-router.get('/boxberry/handbook/inputPoints/update', Boxberry.updateHandbookInputPoints);
+router.get('/boxberry/handbook/inputPoints/update', user.authorization, mustBeAuthenticated, Boxberry.updateHandbookInputPoints);
 
 //"Деловые Линии" - обновление справочника населенных пунктов
-router.get('/delline/handbook/places/update', (ctx, next) => {
+router.get('/delline/handbook/places/update', user.authorization, mustBeAuthenticated, (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v1/public/places.json',
         fname: 'places.csv',
@@ -161,7 +164,7 @@ router.get('/delline/handbook/places/update', (ctx, next) => {
     return next();
 }, DelLine.getHandbook, DelLine.updateHandbookPlaces);
 //"Деловые Линии" - обновление справочника улиц
-router.get('/delline/handbook/streets/update', (ctx, next) => {
+router.get('/delline/handbook/streets/update', user.authorization, mustBeAuthenticated, (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v1/public/streets.json',
         fname: 'streets.csv',
@@ -169,7 +172,7 @@ router.get('/delline/handbook/streets/update', (ctx, next) => {
     return next();
 }, DelLine.getHandbook, DelLine.updateHandbookStreets);
 //"Деловые Линии" - обновление справочника терминалов
-router.get('/delline/handbook/terminals/update', async (ctx, next) => {
+router.get('/delline/handbook/terminals/update', user.authorization, mustBeAuthenticated, async (ctx, next) => {
     ctx.delline = {
         link: 'https://api.dellin.ru/v3/public/terminals.json',
         fname: 'terminals.json',
@@ -179,7 +182,7 @@ router.get('/delline/handbook/terminals/update', async (ctx, next) => {
 
 
 //обновление основного справочника населенных пунктов системы, основанного на данных КЛАДР
-router.get('/handbook/places/update', mainHandbookPlaces.update);
+router.get('/handbook/places/update', user.authorization, mustBeAuthenticated, mainHandbookPlaces.update);
 
 
 
@@ -240,7 +243,7 @@ router.get('/test', async ctx => {
 
 
 const { JSDOM } = require('jsdom');
-router.get('/news', async ctx => {
+router.get('/news', user.accessControl, mustHaveAccess, async ctx => {
     await fetch(`https://newssearch.yandex.ru/news/search?from=tabbar&text=%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%BE%D0%B1%D0%B8%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5%20%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B7%D0%BA%D0%B8%20%D0%BD%D0%BE%D0%B2%D0%BE%D1%81%D1%82%D0%B8`, {
         headers: {
             // 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',

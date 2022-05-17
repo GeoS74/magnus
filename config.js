@@ -28,7 +28,12 @@ module.exports = {
         //!!!В Н И М А Н И Е!!! Измени это!!!
         secure: false,
     },
+    session: {
+        expiry: 60 * 60 * 24,//sec
+        maxCount: 5, //максимальное количество одновременных сессий для одного пользователя
+    },
     jwt: {
-        secret: process.env.JWT_SECRET || 'ssdT$#t#%Y%$'
+        secret: process.env.JWT_SECRET || 'ssdT$#t#%Y%$',
+        expiry: 1000 * 60 * 10, //ms
     }
 };

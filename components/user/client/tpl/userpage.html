@@ -39,7 +39,7 @@
   }
 
   query.onclick = _ => {
-    fetch('/user/data', {
+    fetch('/user/me', {
       headers: {
         'Authorization': `Bearer ${sessionStorage.getItem('sid') || ''}`
       }})
