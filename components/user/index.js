@@ -17,10 +17,10 @@ const ssi = new SSI({
     });
 
 module.exports.router = router;
-module.exports.authorization = authorization;
-
+// module.exports.authorization = authorization;
 
 router.prefix('/user');
+
 
 //страница входа
 router.get('/login', csrf.setCSRFToken, async ctx => {

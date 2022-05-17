@@ -35,5 +35,11 @@ module.exports = {
     jwt: {
         secret: process.env.JWT_SECRET || 'ssdT$#t#%Y%$',
         expiry: 1000 * 60 * 10, //ms
+    },
+    mailer: {
+        host: process.env.MAILER_HOST || '',
+        port: process.env.MAILER_PORT || 25,
+        user: process.env.MAILER_USER || '',
+        pass: process.env.MAILER_PASS || '',
     }
 };

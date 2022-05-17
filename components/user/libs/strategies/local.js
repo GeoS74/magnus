@@ -1,5 +1,5 @@
-const LocalStrategy = require('passport-local').Strategy;
-const User = require('@user/models/User');
+const LocalStrategy = require('passport-local').Strategy
+const User = require('@user/models/User')
 
 module.exports = new LocalStrategy(
     {
@@ -7,19 +7,26 @@ module.exports = new LocalStrategy(
         passwordField: 'password',
         session: false
     },
-    async function(email, password, done){
-        try{
-            const user = await User.findOne({email: email});
+    async function (email, password, done) {
+        try {
+            const user = await User.findOne({ email: email })
 
-            if(!user) return done(null, false, {path: 'user', message: 'Нет такого пользователя'});
-            
-            if(!await user.checkPassword(password)) return done(null, false, {path: 'password', message: 'Не корректный пароль'});
+            if (!user) {
+                return done(null, false, { path: 'user', message: 'Нет такого пользователя' })
+            }
 
-            done(null, user);
+            if (!await user.checkPassword(password)) {
+                return done(null, false, { path: 'password', message: 'Не корректный пароль' })
+            }
+
+            if (user.verificationToken) {
+                return done(null, false, { path: 'user', message: 'Подтвердите email' })
+            }
+
+            done(null, user)
         }
-        catch(error) {
-            
-            done(error);
+        catch (error) {
+            done(error)
         }
     }
-);
+)

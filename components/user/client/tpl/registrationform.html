@@ -8,7 +8,6 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <!--https://bootswatch.com/cosmo/-->
     <!--https://icons.getbootstrap.com/-->
-    <script type="text/javascript" src="/libs/El.js"></script>
     <style>
         #main {
             background-image: url("/img/mainfon.jpg");
@@ -65,6 +64,14 @@
             /* Non-prefixed version, currently
                                             not supported by any browser */
         }
+
+        .alert {
+            display: inline-block;
+            vertical-align: middle;
+            width: 80%;
+            max-width: 450px;
+            padding: 10px 50px 30px 50px;
+        }
     </style>
 </head>
 
@@ -97,6 +104,7 @@
 <script>
     document.getElementById('form').addEventListener('submit', event => {
         event.preventDefault();
+
         button.disabled = true; //деактивировать кнопку отправки данных
         fetch('/user/signup',
             {
@@ -112,7 +120,7 @@
                     setValid(password);
                     setValid(displayName);
 
-                    console.log(await response.json());
+                    confirmMessage(new FormData(event.target).get('email'))
                 }
                 else if (response.status === 400) { //ошибка авторизации
                     showMistake(await response.json());
@@ -169,7 +177,23 @@
     });
     showpass.addEventListener('mouseover', event => event.target.classList.toggle('text-muted'));
     showpass.addEventListener('mouseout', event => event.target.classList.toggle('text-muted'));
+    //
+    function confirmMessage(mail) {
+        main.innerHTML = `<div id="alert" class="alert alert-dismissible alert-success">
+            <strong>Отлично!</strong> Вы успешно зарегистрировались. Осталось подтвердить email,
+            ссылка для подтверждения уже отправлена на <strong>${mail}</strong>
+            <br><br>Через <b id="sec">10</b> сек Вы будете перенаправлены на главную страницу, 
+            если этого не произошло перейдите <a href="/" class="alert-link">по ссылке</a>.
+        </div>`;
 
+        (function timer(s) {
+            setTimeout(_ => {
+                sec.innerHTML = --s;
+                if (s !== 0) return timer(s);
+                location.href = '/';
+            }, 1000)
+        })(10)
+    }
     //получить csrf-токен из куки
     function getCSRFToken() {
         const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);

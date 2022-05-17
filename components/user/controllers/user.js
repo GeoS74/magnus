@@ -153,15 +153,16 @@ exports.signout = async ctx => {
 //регистрация пользователя
 exports.signup = async (ctx) => {
     try {
+        const token = uuid()
         const user = new User({
             email: ctx.request.body.email,
             displayName: ctx.request.body.displayName.trim() || undefined,
+            verificationToken: token,
         });
         await user.setPassword(ctx.request.body.password);
         await user.save();
 
         ctx.status = 201;
-        ctx.body = { user_id: user.id };
     }
     catch (error) {
         if (error.name === 'ValidationError') {
@@ -185,6 +186,49 @@ exports.signup = async (ctx) => {
 
 
 
+
+
+
+
+
+
+
+
+//пример подтверждения email пользователя
+// module.exports.register = async (ctx, next) => {
+//     const token = uuid();
+
+//     const user = await new User({
+//         email: ctx.request.body.email,
+//         displayName: ctx.request.body.displayName,
+//         verificationToken: token
+//     });
+
+//     await user.setPassword(ctx.request.body.password);
+//     await user.save();
+    
+//     await sendMail({
+//         template: 'confirmation',
+//         locals: {token: user.verificationToken},
+//         to: user.email,
+//         subject: 'Подтвердите почту',
+//         });
+    
+//     ctx.body = {status: 'ok'};
+// };
+
+// module.exports.confirm = async (ctx, next) => {
+//     const user = await User.findOne({verificationToken: ctx.request.body.verificationToken});
+
+//     if(!user) ctx.throw(400, 'Ссылка подтверждения недействительна или устарела');
+
+//     user.verificationToken = undefined;
+//     await user.save();
+
+//     const token = await ctx.login(user);
+
+//     ctx.body = {token: token};
+// };
 
 
 

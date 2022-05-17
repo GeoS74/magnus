@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     rank: {
         type: String,
         default: 'user'
+    },
+    verificationToken: {
+        type: String,
+        index: true
     }
 }, {
     timestamps: true
