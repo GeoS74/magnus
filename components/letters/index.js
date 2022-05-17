@@ -4,8 +4,11 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const router = new Router();
 const {manyCreate, objectIdValidator, allThemas, addThema, searchThemas, addLetter} = require('@letters/controllers/letters');
+const user = require('@user/controllers/user');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
-const authorization = require('@user').authorization;
+const mustHaveAccess = require('@root/libs/mustHaveAccess');
+
+// const authorization = require('@user').authorization;
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
@@ -31,7 +34,7 @@ router.get('/letters/files/:file_name', async ctx => {
 });
 router.get('/themas', objectIdValidator, allThemas, searchThemas);
 //router.get('/themas/search', searchThemas);
-router.post('/letter', authorization, koaBody, addLetter);
-router.post('/thema', authorization, koaBody, addThema);
+router.post('/letter', user.authorization, mustBeAuthenticated, koaBody, addLetter);
+router.post('/thema', user.authorization, mustBeAuthenticated, koaBody, addThema);
 // router.put('/thema/:id', koaBody, allLetter);
 // router.del('/letter/:id', allLetter);
