@@ -168,10 +168,17 @@ Backend.prototype.query = function(method, path, data)
                 this.setVal(await response.json());
             }
             else {
-				const error = await response.json();
-				error.status = response.status;
-				this.setVal(error);
-                // throw new Error('error HTTP '+response.status);
+                try {
+                    const error = await response.json();
+                    error.status = response.status;
+                    this.setVal(error);
+                    // throw new Error('error HTTP '+response.status);
+                }
+				 catch(e) {
+                    const error = e;
+                    error.status = response.status;
+                    this.setVal(error);
+                 }
             }
 		})
 		.catch(error => {

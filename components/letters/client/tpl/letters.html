@@ -104,6 +104,10 @@
         .render('beforeend', '<div class="form-group"><label for="titleThemaInput" class="form-label mt-4">Введите тему переписки</label>')
         .on('submit', _ => event.preventDefault())
         .setHandler(function(){
+             if(this.getVal().status === 401) {
+                    location.href = '/user/login';
+                }
+
             if(this.getVal().error) {
                 if(this.getVal().status === 400){
                   // let error_message = themaForm.elem.querySelector('.error_message');
@@ -153,6 +157,10 @@
         .render('beforeend', '<div class="form-group"><label for="numberLetterInput" class="form-label mt-4">Добавьте атрибуты письма</label>')
         .on('submit', function(){event.preventDefault()})
         .setHandler(async function(){
+            if(this.getVal().status === 401) {
+                    location.href = '/user/login';
+                }
+                
             if(this.getVal().error) {
                 if(this.getVal().status === 400){
                   // let error_message = themaForm.elem.querySelector('.error_message');
@@ -402,6 +410,18 @@
   function hideAddSpan(event){ //скрыть кнопку добавления письма
       event.target.querySelector('small').remove();
   }
+</script>
+
+<script>
+    //получить csrf-токен из куки
+    function getCSRFToken() {
+                const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
+                if(!csrfCookie) {
+                    console.log('csrf cookie not found');
+                    return;
+                }
+                return csrfCookie[1];
+            }
 </script>
 </div>
 </body>

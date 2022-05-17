@@ -7,6 +7,7 @@ const {manyCreate, objectIdValidator, allThemas, addThema, searchThemas, addLett
 const user = require('@user/controllers/user');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
+const csrf = require('@root/libs/csrf-protect');
 
 // const authorization = require('@user').authorization;
 
