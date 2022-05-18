@@ -146,7 +146,8 @@ async function login(user) {
 
 //завершение сессии
 exports.signout = async ctx => {
-    await Session.deleteMany({ user: ctx.user.id });
+    await Session.deleteMany({ user: ctx.user.id })
+    ctx.set('Cache-Control', 'no-cache');
     ctx.status = 301
     ctx.redirect('/')
 }
