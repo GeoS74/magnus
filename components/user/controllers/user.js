@@ -4,6 +4,7 @@ const Session = require('@user/models/Session')
 const { v4: uuid } = require('uuid')
 const jwt = require('@user/libs/jwt')
 const config = require('@root/config')
+const sendMail = require('@root/libs/sendMail')
 
 exports.me = async ctx => {
     const token = ctx.get('Authorization').split(' ')[1]
@@ -146,7 +147,8 @@ async function login(user) {
 //завершение сессии
 exports.signout = async ctx => {
     await Session.deleteMany({ user: ctx.user.id });
-    ctx.status = 401
+    ctx.status = 301
+    ctx.redirect('/')
 }
 
 
@@ -161,6 +163,15 @@ exports.signup = async (ctx) => {
         });
         await user.setPassword(ctx.request.body.password);
         await user.save();
+
+        await sendMail({
+            from: config.mailer.user,
+            to: user.email,
+            subject: 'Подтверждение email',
+            html: `Вы зарегестрировались на ${config.server.host},
+            для подтверждения регистрации перейдите по ссылке:<br>
+            <a href="http://${config.server.host}/user/confirm/${token}">${config.server.host}/user/confirm/${token}</a>`
+        })
 
         ctx.status = 201;
     }
@@ -185,6 +196,29 @@ exports.signup = async (ctx) => {
 };
 
 
+//подтверждение email
+exports.confirm = async ctx => {
+    const token = JSON.parse(ctx.request.body).token
+    if(!token) return ctx.status = 400
+
+    const user = await User.findOne({verificationToken: token})
+    
+    if(!user) return ctx.status = 400;
+
+    user.verificationToken = undefined
+
+    await user.save()
+
+    ctx.status = 200;
+}
+
+
+
+function delay(ms) {
+    return new Promise(res => {
+        setTimeout(_ => res(), ms);
+    });
+}
 
 
 

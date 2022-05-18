@@ -37,6 +37,9 @@
             border: 1px solid #ced4da;
             padding: 10px 50px 30px 50px;
         }
+        #password{
+            padding-right: 50px;
+        }
 
         legend {
             font-size: 2em;
@@ -72,6 +75,17 @@
             max-width: 450px;
             padding: 10px 50px 30px 50px;
         }
+
+        .eyeIcon {
+            float:right;
+            margin-top: -32px;
+            margin-right: 10px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+        .eyeIcon:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -86,8 +100,9 @@
                 <label for="email" class="form-label mt-4">Email</label>
                 <input type="text" name="email" id="email" class="form-control" placeholder="email" autofocus>
                 <label for="password" class="form-label mt-4">Password</label>
-                <span class="form-label mt-4 text-muted" id="showpass">Show password</span>
+                <!-- <span class="form-label mt-4 text-muted" id="showpass">Show password</span> -->
                 <input type="password" name="password" id="password" class="form-control " placeholder="password">
+                <article class="eyeIcon"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16"></svg></svg></article>
                 <label for="displayName" class="form-label mt-4">Your name <span class="text-muted">-
                         optional</span></label>
                 <input type="text" name="displayName" id="displayName" class="form-control" placeholder="name"
@@ -102,9 +117,22 @@
     </div>
 </body>
 <script>
+
+    const openedEye = `<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>`;
+    const closedEye = `<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>`;
+    document.querySelector('.eyeIcon > svg').innerHTML = closedEye;
+    document.querySelector('.eyeIcon').onclick = event => {
+        const svg = event.target.closest('svg');
+        if (!svg) return;
+        svg.innerHTML = svg.classList.toggle("openedEye") ? openedEye : closedEye;
+        password.type = password.type == 'password' ? 'text' : 'password';
+    };
+
+
     document.getElementById('form').addEventListener('submit', event => {
         event.preventDefault();
 
+        const fd = new FormData(event.target);
         button.disabled = true; //деактивировать кнопку отправки данных
         fetch('/user/signup',
             {
@@ -112,7 +140,7 @@
                 headers: {
                     'X-CSRF-TOKEN': getCSRFToken(),
                 },
-                body: new FormData(event.target)
+                body: fd
             })
             .then(async response => {
                 if (response.ok) { // если HTTP-статус в диапазоне 200-299 
@@ -120,7 +148,7 @@
                     setValid(password);
                     setValid(displayName);
 
-                    confirmMessage(new FormData(event.target).get('email'))
+                    confirmMessage(fd.get('email'))
                 }
                 else if (response.status === 400) { //ошибка авторизации
                     showMistake(await response.json());
@@ -132,7 +160,9 @@
             .catch(error => {
                 console.log(error);
             })
-            .finally(_ => button.disabled = false); //активировать кнопку отправки данных
+            .finally(_ => { //активировать кнопку отправки данных
+                if (document.querySelector('#button')) button.disabled = false
+            });
     });
 
     function showMistake(error) {
@@ -171,26 +201,26 @@
         }
     }
 
-    showpass.addEventListener('click', event => {
-        password.type = password.type == 'password' ? 'text' : 'password';
-        event.target.textContent = event.target.textContent == 'Show password' ? 'Hide password' : 'Show password';
-    });
-    showpass.addEventListener('mouseover', event => event.target.classList.toggle('text-muted'));
-    showpass.addEventListener('mouseout', event => event.target.classList.toggle('text-muted'));
+    // showpass.addEventListener('click', event => {
+    //     password.type = password.type == 'password' ? 'text' : 'password';
+    //     event.target.textContent = event.target.textContent == 'Show password' ? 'Hide password' : 'Show password';
+    // });
+    // showpass.addEventListener('mouseover', event => event.target.classList.toggle('text-muted'));
+    // showpass.addEventListener('mouseout', event => event.target.classList.toggle('text-muted'));
     //
     function confirmMessage(mail) {
         main.innerHTML = `<div id="alert" class="alert alert-dismissible alert-success">
             <strong>Отлично!</strong> Вы успешно зарегистрировались. Осталось подтвердить email,
             ссылка для подтверждения уже отправлена на <strong>${mail}</strong>
             <br><br>Через <b id="sec">10</b> сек Вы будете перенаправлены на главную страницу, 
-            если этого не произошло перейдите <a href="/" class="alert-link">по ссылке</a>.
+            если этого не произошло перейдите <a href="/user/login" class="alert-link">по ссылке</a>.
         </div>`;
 
         (function timer(s) {
             setTimeout(_ => {
                 sec.innerHTML = --s;
                 if (s !== 0) return timer(s);
-                location.href = '/';
+                location.href = '/user/login';
             }, 1000)
         })(10)
     }

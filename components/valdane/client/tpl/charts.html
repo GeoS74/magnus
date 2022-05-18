@@ -782,11 +782,15 @@
             yearEnd.insertAdjacentHTML('afterbegin', makeOptionYear(2019));
             //initialization period
             (_ => {
+                //установка периода по-умолчанию: +/- 3 месяца относительно текущей даты
                 const date = new Date();
-                yearStart.value = date.getFullYear();
-                yearEnd.value = date.getFullYear() + 1;
-                monthStart.selectedIndex = date.getMonth();
-                monthEnd.selectedIndex = date.getMonth();
+                const start = new Date(date.getFullYear(), date.getMonth()-3);
+                const end = new Date(date.getFullYear(), date.getMonth()+3);
+
+                yearStart.value = start.getFullYear();
+                yearEnd.value = end.getFullYear();
+                monthStart.selectedIndex = start.getMonth();
+                monthEnd.selectedIndex = end.getMonth();
             })();
 
             function makeOptionMonth() {

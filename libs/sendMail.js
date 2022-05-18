@@ -4,13 +4,13 @@ const config = require('@root/config')
 const transport = nodemailer.createTransport({
     host: config.mailer.host,
     port: config.mailer.port,
-    secure: true,
+    secure: config.mailer.secure,
     auth: {
         user: config.mailer.user,
         pass: config.mailer.pass,
     },
 })
-
+//используй эту функцию внутри блока try{}catch{}
 module.exports = async options => {
     await transport.sendMail({
         from: options.from,
@@ -19,8 +19,6 @@ module.exports = async options => {
         text: options.text || '',
         html: options.html || '',
     })
-
-    ctx.status = 200
 }
 
 //создание пользователя и пароля для тестов

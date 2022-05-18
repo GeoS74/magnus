@@ -4,7 +4,7 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
-const {signin, checkCredentials, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
+const {confirm, signin, checkCredentials, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
 
@@ -40,6 +40,11 @@ router.get('/registrate', csrf.setCSRFToken, async ctx => {
         });
     });
 })
+//страница подтверждения email
+router.get('/confirm/:token', csrf.setCSRFToken, ctx => {
+    ctx.set('content-type', 'text/html')
+    ctx.body = fs.createReadStream(path.join(__dirname, 'client/tpl/confirm.html'))
+})
 //страница пользователя
 router.get('/page', authorization, mustBeAuthenticated, async ctx => {
     ctx.set('content-type', 'text/html');
@@ -49,7 +54,7 @@ router.get('/page', authorization, mustBeAuthenticated, async ctx => {
         });
     });
 })
-
+ 
 
 //завершение сессии
 router.get('/logout', authorization, mustBeAuthenticated, signout);
@@ -61,3 +66,5 @@ router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
 router.get('/me', accessControl, mustHaveAccess, me)
 //перевыпуск токенов + обновлении сессии
 router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession);
+//подтверждение email
+router.post('/confirm', csrf.checkCSRFToken, koaBody, confirm);
