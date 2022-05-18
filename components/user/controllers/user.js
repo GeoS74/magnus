@@ -21,6 +21,10 @@ exports.me = async ctx => {
 exports.refreshSession = async ctx => {
     const tokens = await login(ctx.user); //заместо ctx.login(user);
 
+    //вызов login(...) создаёт новую сессию в БД
+    //завершить сессию, по которой пользователь залогинен
+    await Session.deleteOne({token: ctx.refreshToken})
+
     ctx.cookies.set('sid', tokens.refresh, {
         domain: 'localhost',
         maxAge: config.session.expiry * 1000, //ms
@@ -62,6 +66,7 @@ exports.authorization = async (ctx, next) => {
     if (!session) return next()
 
     ctx.user = session.user;
+    ctx.refreshToken = token;
     return next();
 };
 
@@ -146,8 +151,13 @@ async function login(user) {
 
 //завершение сессии
 exports.signout = async ctx => {
-    await Session.deleteMany({ user: ctx.user.id })
-    ctx.set('Cache-Control', 'no-cache');
+    //выйти из всех сессий одновременно
+    //await Session.deleteMany({ user: ctx.user.id })
+    //завершить сессию, по которой пользователь залогинен
+    await Session.deleteOne({token: ctx.refreshToken})
+
+    //запрет кеширования устанавливается в этом роутере для всех путей
+    // ctx.set('Cache-Control', 'no-cache')
     ctx.status = 301
     ctx.redirect('/')
 }

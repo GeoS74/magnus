@@ -21,6 +21,11 @@ module.exports.router = router;
 
 router.prefix('/user');
 
+//запрет кешировать все ответы этой компоненты
+router.use((ctx, next) => {
+    ctx.set('Cache-Control', 'no-cache')
+    return next();
+})
 
 //страница входа
 router.get('/login', csrf.setCSRFToken, async ctx => {
