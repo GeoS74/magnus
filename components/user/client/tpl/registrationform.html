@@ -77,13 +77,16 @@
         }
 
         .eyeIcon {
-            float:right;
-            margin-top: -32px;
-            margin-right: 10px;
+            position: absolute;
+            top: 5px;
+            right: 8px;
+            background-color: white;
             cursor: pointer;
+        }
+        .eyeIcon svg{
             opacity: 0.6;
         }
-        .eyeIcon:hover {
+        .eyeIcon svg:hover {
             opacity: 1;
         }
     </style>
@@ -101,8 +104,13 @@
                 <input type="text" name="email" id="email" class="form-control" placeholder="email" autofocus>
                 <label for="password" class="form-label mt-4">Password</label>
                 <!-- <span class="form-label mt-4 text-muted" id="showpass">Show password</span> -->
-                <input type="password" name="password" id="password" class="form-control " placeholder="password">
-                <article class="eyeIcon"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16"></svg></svg></article>
+                
+        <fieldset style="position:relative">
+                             <article class="eyeIcon"><svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16"></svg></svg></article>
+                             <input type="password" name="password" id="password" class="form-control " placeholder="password">
+   
+                            </fieldset>
+               
                 <label for="displayName" class="form-label mt-4">Your name <span class="text-muted">-
                         optional</span></label>
                 <input type="text" name="displayName" id="displayName" class="form-control" placeholder="name"
