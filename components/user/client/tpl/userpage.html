@@ -38,7 +38,7 @@
       console.log(error.message);
     })
   }
-
+console.log(location.href);
   query.onclick = _ => {
     fetch('/user/me', {
       headers: {
@@ -51,6 +51,9 @@
       else if(response.status === 401) {
         console.log('boom');
         auth();
+      }
+      else if(response.status === 409) {
+        location.href = location.href;
       }
       else {
         throw new Error(`status: ${response.status}`);
