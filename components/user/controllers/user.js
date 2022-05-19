@@ -26,7 +26,7 @@ exports.refreshSession = async ctx => {
     await Session.deleteOne({token: ctx.refreshToken})
 
     ctx.cookies.set('sid', tokens.refresh, {
-        domain: 'localhost',
+        // domain: 'localhost',
         maxAge: config.session.expiry * 1000, //ms
         secure: config.cookie.secure, //логическое значение, указывающее, должен ли файл cookie отправляться только через HTTPS ( false по умолчанию для HTTP, true по умолчанию для HTTPS).
         httpOnly: true, //если false - куки доступен для клиентского JS
