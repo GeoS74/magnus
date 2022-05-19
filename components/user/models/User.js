@@ -39,7 +39,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'user'
     },
-    verificationToken: {
+    verificationToken: { //токен подтверждения email при регистрации
+        type: String,
+        index: true
+    },
+    recoveryToken: { //токен восстановления пароля
         type: String,
         index: true
     }

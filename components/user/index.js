@@ -4,7 +4,8 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
-const {confirm, signin, checkCredentials, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
+const {forgot, confirm, signin, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
+const {checkEmail, checkPassword} = require('@user/controllers/credentials')
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
 
@@ -51,7 +52,7 @@ router.get('/confirm/:token', csrf.setCSRFToken, ctx => {
     ctx.body = fs.createReadStream(path.join(__dirname, 'client/tpl/confirm.html'))
 })
 //страница пользователя
-router.get('/page', authorization, mustBeAuthenticated, async ctx => {
+router.get('/page', authorization, mustBeAuthenticated, csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
     ctx.body = await new Promise(res => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/userpage.html'), (err, html) => {
@@ -59,17 +60,29 @@ router.get('/page', authorization, mustBeAuthenticated, async ctx => {
         });
     });
 })
+//страница восстановления пароля
+router.get('/forgot', csrf.setCSRFToken, async ctx => {
+    ctx.set('content-type', 'text/html')
+    ctx.body = await new Promise(res => {
+        ssi.compileFile(path.join(__dirname, 'client/tpl/forgotform.html'), (err, html) => {
+            res(html);
+        })
+    })
+})
  
 
 //завершение сессии
-router.get('/logout', authorization, mustBeAuthenticated, signout);
+router.get('/logout', authorization, mustBeAuthenticated, signout)
 //регистрация пользователя
-router.post('/signup', csrf.checkCSRFToken, koaBody, checkCredentials, signup);
+router.post('/signup', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signup)
 //авторизация пользователя
-router.post('/signin', csrf.checkCSRFToken, koaBody, checkCredentials, signin);
+router.post('/signin', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signin)
 //данные пользователя
-router.get('/me', accessControl, mustHaveAccess, me)
+router.get('/me', /*csrf.checkCSRFToken,*/ accessControl, mustHaveAccess, me)
 //перевыпуск токенов + обновлении сессии
-router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession);
+//jwt-токен на этом маршруте не проверяется
+router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession)
 //подтверждение email
-router.post('/confirm', csrf.checkCSRFToken, koaBody, confirm);
+router.post('/confirm', csrf.checkCSRFToken, koaBody, confirm)
+//восстановление пароля
+router.post('/forgot', csrf.checkCSRFToken, koaBody, checkEmail, forgot)

@@ -6,6 +6,46 @@ const jwt = require('@user/libs/jwt')
 const config = require('@root/config')
 const sendMail = require('@root/libs/sendMail')
 
+//восстановление пароля
+exports.forgot = async ctx => {
+    try {
+        const token = uuid()
+
+        const user = await User.findOne({email: ctx.request.body.email})
+        //в случае отсутствия пользователя с указанным email не стоит подсказывать, что такого пользователя нет в системе
+        //клиент должен думать, что письмо для сброса пароля отправлено
+        if(!user) return ctx.status = 200;
+
+        user.recoveryToken = token;
+        await user.save();
+
+        await sendMail({
+            from: config.mailer.user,
+            to: ctx.request.body.email,
+            subject: 'Сброс пароля',
+            html: `Кто-то запросил восстановление пароля на сайте ${config.server.host},
+            если это не Вы, то просто проигнорируйте это письмо.<br>
+            Для сброса пароля перейдите по ссылке:<br>
+            <a href="http://${config.server.host}/user/confirm/${token}">${config.server.host}/user/confirm/${token}</a>`
+        })
+
+        ctx.status = 200;
+    }
+    catch (error) {
+        if (error.name === 'ValidationError') {
+            ctx.status = 400;
+            if (error.errors.email) {
+                if (error.errors.email.kind === 'user defined') {
+                    ctx.body = { path: 'user', message: 'Не корректный email' };
+                }
+                else ctx.body = { path: 'user', message: 'Такой email уже есть' };
+                return;
+            }
+        } else throw error;
+    }
+}
+
+
 exports.me = async ctx => {
     const token = ctx.get('Authorization').split(' ')[1]
     const data = jwt.decode(token)
@@ -87,23 +127,6 @@ exports.authorization = async (ctx, next) => {
 // };
 
 
-//проверка учётных данных
-//если клиент не передаёт учётные данные для авторизации пользователя
-//passport вернёт стандартное сообщение об ошибке:
-//  {message: 'Missing credentials'}
-//из этого сообщения не понятно какое поле не заполнено, поэтому используется этот middleware
-//для проверки учётных данных и возврата клиенту адектватного описания ошибки
-exports.checkCredentials = (ctx, next) => {
-    if (ctx.request.body.email && ctx.request.body.password) return next();
-    ctx.status = 400;
-    if (!ctx.request.body.email) {
-        ctx.body = { path: 'user', message: 'Данные не передаются' };
-        return;
-    }
-    if (!ctx.request.body.password) {
-        ctx.body = { path: 'password', message: 'Данные не передаются' };
-    }
-};
 //авторизация пользователя
 exports.signin = async (ctx) => {
     await passport.authenticate('local', async (error, user, info) => {
@@ -222,6 +245,12 @@ exports.confirm = async ctx => {
 
     ctx.status = 200;
 }
+
+
+
+
+
+
 
 
 
