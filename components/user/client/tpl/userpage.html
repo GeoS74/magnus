@@ -52,9 +52,9 @@ console.log(location.href);
         console.log('boom');
         auth();
       }
-      else if(response.status === 409) {
-        location.href = location.href;
-      }
+      // else if(response.status === 409) {
+      //   location.href = location.href;
+      // }
       else {
         throw new Error(`status: ${response.status}`);
       }

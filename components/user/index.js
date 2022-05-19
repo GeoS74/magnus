@@ -83,7 +83,7 @@ router.post('/signup', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, 
 //авторизация пользователя
 router.post('/signin', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signin)
 //данные пользователя
-router.get('/me', csrf.checkCSRFToken, accessControl, mustHaveAccess, me)
+router.get('/me', /*csrf.checkCSRFToken,*/ accessControl, mustHaveAccess, me)
 //перевыпуск токенов + обновлении сессии
 //jwt-токен на этом маршруте не проверяется
 router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession)
