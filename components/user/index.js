@@ -4,7 +4,7 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
-const {forgot, confirm, signin, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
+const {changePass, forgot, confirm, signin, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
 const {checkEmail, checkPassword} = require('@user/controllers/credentials')
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
@@ -69,6 +69,11 @@ router.get('/forgot', csrf.setCSRFToken, async ctx => {
         })
     })
 })
+//страница изменения пароля
+router.get('/forgot/:token', csrf.setCSRFToken, ctx => {
+    ctx.set('content-type', 'text/html')
+    ctx.body = fs.createReadStream(path.join(__dirname, 'client/tpl/changePassword.html'))
+})
  
 
 //завершение сессии
@@ -84,5 +89,7 @@ router.get('/me', /*csrf.checkCSRFToken,*/ accessControl, mustHaveAccess, me)
 router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession)
 //подтверждение email
 router.post('/confirm', csrf.checkCSRFToken, koaBody, confirm)
-//восстановление пароля
+//запрос восстановление пароля
 router.post('/forgot', csrf.checkCSRFToken, koaBody, checkEmail, forgot)
+//изменение пароля
+router.post('/forgot/changePassword', csrf.checkCSRFToken, koaBody, checkPassword, changePass, refreshSession)

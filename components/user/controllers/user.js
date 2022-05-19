@@ -6,6 +6,24 @@ const jwt = require('@user/libs/jwt')
 const config = require('@root/config')
 const sendMail = require('@root/libs/sendMail')
 
+//изменение пароля
+exports.changePass = async (ctx, next) => {
+    const token = JSON.parse(ctx.request.body).token
+    if(!token) return ctx.status = 400
+
+    const user = await User.findOne({recoveryToken: token})
+    
+    if(!user) return ctx.status = 400;
+
+    await user.setPassword(ctx.request.body.password);
+    user.recoveryToken = undefined
+
+    await user.save()
+
+    ctx.user = user
+    return next()
+}
+
 //восстановление пароля
 exports.forgot = async ctx => {
     try {
@@ -15,6 +33,9 @@ exports.forgot = async ctx => {
         //в случае отсутствия пользователя с указанным email не стоит подсказывать, что такого пользователя нет в системе
         //клиент должен думать, что письмо для сброса пароля отправлено
         if(!user) return ctx.status = 200;
+        //то же самое происходит если токен для смены пароля уже запрашивался
+        // if(user.recoveryToken) return ctx.status = 200;
+
 
         user.recoveryToken = token;
         await user.save();
@@ -26,7 +47,7 @@ exports.forgot = async ctx => {
             html: `Кто-то запросил восстановление пароля на сайте ${config.server.host},
             если это не Вы, то просто проигнорируйте это письмо.<br>
             Для сброса пароля перейдите по ссылке:<br>
-            <a href="http://${config.server.host}/user/confirm/${token}">${config.server.host}/user/confirm/${token}</a>`
+            <a href="http://${config.server.host}/user/forgot/${token}">${config.server.host}/user/confirm/${token}</a>`
         })
 
         ctx.status = 200;
@@ -63,7 +84,9 @@ exports.refreshSession = async ctx => {
 
     //вызов login(...) создаёт новую сессию в БД
     //завершить сессию, по которой пользователь залогинен
-    await Session.deleteOne({token: ctx.refreshToken})
+    if(ctx.refreshToken) {
+        await Session.deleteOne({token: ctx.refreshToken})
+    }
 
     ctx.cookies.set('sid', tokens.refresh, {
         // domain: 'localhost',
