@@ -38,14 +38,16 @@ module.exports = {
         expiry: 1000 * 60 * 10, //ms
     },
     mailer: {
-        host: (process.env.NODE_ENV === 'develop' ? 'smtp.ethereal.email' : process.env.MAILER_HOST),
-        port: (process.env.NODE_ENV === 'develop' ? 587 : process.env.MAILER_PORT),
-        secure: (process.env.NODE_ENV === 'develop' ? false : true),
-        user: (process.env.NODE_ENV === 'develop' ? 'zbsv3oogpixlef66@ethereal.email' : process.env.MAILER_USER),
-        pass: (process.env.NODE_ENV === 'develop' ? '4anRY5Y37gvmKqaKKT' : process.env.MAILER_PASS),
-        // host: process.env.MAILER_HOST || 'smtp.ethereal.email',
-        // port: process.env.MAILER_PORT || 587,
-        // user: process.env.MAILER_USER || 'zbsv3oogpixlef66@ethereal.email',
-        // pass: process.env.MAILER_PASS || '4anRY5Y37gvmKqaKKT',
+        // host: (process.env.NODE_ENV === 'develop' ? 'smtp.ethereal.email' : process.env.MAILER_HOST),
+        // port: (process.env.NODE_ENV === 'develop' ? 587 : process.env.MAILER_PORT),
+        // secure: (process.env.NODE_ENV === 'develop' ? false : true),
+        // user: (process.env.NODE_ENV === 'develop' ? 'zbsv3oogpixlef66@ethereal.email' : process.env.MAILER_USER),
+        // pass: (process.env.NODE_ENV === 'develop' ? '4anRY5Y37gvmKqaKKT' : process.env.MAILER_PASS),
+        host: process.env.MAILER_HOST || 'smtp.ethereal.email',
+        port: process.env.MAILER_PORT || 587,
+        user: process.env.MAILER_USER || 'zbsv3oogpixlef66@ethereal.email',
+        pass: process.env.MAILER_PASS || '4anRY5Y37gvmKqaKKT',
+        secure: false,
+        ignoreTLS: true,
     }
 };

@@ -47,7 +47,7 @@ exports.forgot = async ctx => {
             html: `Кто-то запросил восстановление пароля на сайте ${config.server.host},
             если это не Вы, то просто проигнорируйте это письмо.<br>
             Для сброса пароля перейдите по ссылке:<br>
-            <a href="http://${config.server.host}:${config.server.port}/user/forgot/${token}">${config.server.host}/user/confirm/${token}</a>`
+            <a href="http://${config.server.host}/user/forgot/${token}">${config.server.host}/user/confirm/${token}</a>`
         })
 
         ctx.status = 200;
@@ -238,7 +238,7 @@ exports.signup = async (ctx) => {
             subject: 'Подтверждение email',
             html: `Вы зарегестрировались на ${config.server.host},
             для подтверждения регистрации перейдите по ссылке:<br>
-            <a href="http://${config.server.host}:${config.server.port}/user/confirm/${token}">${config.server.host}/user/confirm/${token}</a>`
+            <a href="http://${config.server.host}/user/confirm/${token}">${config.server.host}/user/confirm/${token}</a>`
         })
 
         ctx.status = 201;
