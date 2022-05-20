@@ -4,7 +4,7 @@ const path = require('path');
 const koaBody = require('@root/libs/koaBody');
 const mustBeAuthenticated = require('@root/libs/mustBeAuthenticated');
 const mustHaveAccess = require('@root/libs/mustHaveAccess');
-const {changePass, forgot, confirm, signin, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
+const {clearRecoveryToken, changePass, forgot, confirm, signin, signup, signout, authorization, accessControl, refreshSession, me} = require('@user/controllers/user');
 const {checkEmail, checkPassword} = require('@user/controllers/credentials')
 const csrf = require('@root/libs/csrf-protect');
 const router = new Router();
@@ -81,9 +81,10 @@ router.get('/logout', authorization, mustBeAuthenticated, signout)
 //регистрация пользователя
 router.post('/signup', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signup)
 //авторизация пользователя
-router.post('/signin', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signin)
+router.post('/signin', csrf.checkCSRFToken, koaBody, checkEmail, checkPassword, signin, clearRecoveryToken, refreshSession)
 //данные пользователя
-router.get('/me', /*csrf.checkCSRFToken,*/ accessControl, mustHaveAccess, me)
+//на этом маршруте защита от CSRF излишняя, т.к. используется метод GET и проверяется JWT-token
+router.get('/me', csrf.checkCSRFToken, accessControl, mustHaveAccess, me)
 //перевыпуск токенов + обновлении сессии
 //jwt-токен на этом маршруте не проверяется
 router.get('/refreshSession', authorization, mustBeAuthenticated, refreshSession)

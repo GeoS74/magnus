@@ -20,7 +20,7 @@ exports.checkCSRFToken = async (ctx, next) => {
     const token = await generateToken(salt);
 
     if(clientToken !== `${salt}:${token}`) {
-        ctx.throw(419, 'autentication timeout');
+        ctx.throw(409, 'bad token');
     }
 
     return next();

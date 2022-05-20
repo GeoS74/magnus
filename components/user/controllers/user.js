@@ -8,7 +8,6 @@ const sendMail = require('@root/libs/sendMail')
 
 //изменение пароля
 exports.changePass = async (ctx, next) => {
-
     const token = ctx.request.body.token
     if(!token) return ctx.status = 400
 
@@ -81,10 +80,11 @@ exports.me = async ctx => {
 
 //установить токены в куки и в заголовок ответа
 exports.refreshSession = async ctx => {
-    const tokens = await login(ctx.user); //заместо ctx.login(user);
+    console.log('refreshSession')
 
+    const tokens = await login(ctx.user); //заместо ctx.login(user);
     //вызов login(...) создаёт новую сессию в БД
-    //завершить сессию, по которой пользователь залогинен
+    //завершить сессию, по которой пользователь был залогинен
     if(ctx.refreshToken) {
         await Session.deleteOne({token: ctx.refreshToken})
     }
@@ -163,13 +163,18 @@ exports.signin = async (ctx, next) => {
         }
 
         ctx.user = user;
-        return this.refreshSession.call(null, ctx)
+        // return this.refreshSession.call(null, ctx)
+        return next()
     })(ctx);
 };
 
-exports.clearRecoveryToken = async ctx => {
+//сбросить токен изменения для пароля (recoveryToken) если он есть у пользователя
+exports.clearRecoveryToken = async (ctx, next) => {
+    if(!ctx.user.recoveryToken) return next()
+
     ctx.user.recoveryToken = undefined
     await ctx.user.save()
+    return next()
 }
 
 

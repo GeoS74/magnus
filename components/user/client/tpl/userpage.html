@@ -38,11 +38,12 @@
       console.log(error.message);
     })
   }
-console.log(location.href);
+
   query.onclick = _ => {
     fetch('/user/me', {
       headers: {
-        'Authorization': `Bearer ${sessionStorage.getItem('sid') || ''}`
+        'Authorization': `Bearer ${sessionStorage.getItem('sid') || ''}`,
+        'X-CSRF-TOKEN': getCSRFToken(),
       }})
     .then(async response => {
       if(response.ok){
@@ -52,9 +53,9 @@ console.log(location.href);
         console.log('boom');
         auth();
       }
-      // else if(response.status === 409) {
-      //   location.href = location.href;
-      // }
+      else if(response.status === 409) {
+        location.href = location.href;
+      }
       else {
         throw new Error(`status: ${response.status}`);
       }
@@ -63,5 +64,14 @@ console.log(location.href);
       console.log(err.message)
     })
   }
+
+  function getCSRFToken() {
+        const csrfCookie = document.cookie.match(/CSRF-TOKEN=([\w:]+)/);
+        if (!csrfCookie) {
+            console.log('csrf cookie not found');
+            return;
+        }
+        return csrfCookie[1];
+    }
 </script>
 </body>
