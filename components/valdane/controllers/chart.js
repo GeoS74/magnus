@@ -237,7 +237,7 @@ exports.getStatisticForDate = async ctx => {
         //получить всех работающих сотрудников
         const workStaff = await Staffer.find({ status: 'работает' });
 
-        ctx.body = {
+        return ctx.body = {
             techCenters: Object.values(charts),
             workStaff: workStaff.length,
             time: ctx.request.query.start,

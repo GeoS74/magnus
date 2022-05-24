@@ -11,11 +11,11 @@ const mongoose = require('mongoose');
 
 const SSI = require('node-ssi'); //https://www.npmjs.com/package/node-ssi
 const ssi = new SSI({
-        baseDir: '.',   //file include всегда относятся к baseDir, указанному в опциях
-                        //virtual include относятся к текущему файлу
-        encoding: 'utf-8',
-        payload: {}
-    });
+    baseDir: '.',   //file include всегда относятся к baseDir, указанному в опциях
+    //virtual include относятся к текущему файлу
+    encoding: 'utf-8',
+    payload: {}
+});
 
 const router = new Router();
 
@@ -153,7 +153,7 @@ router.get('/positions', async ctx => {
         ssi.compileFile(path.join(__dirname, 'client/tpl/positions.html'), (err, html) => {
             res(html);
         });
-    });  
+    });
 });
 //вернуть все должности
 router.get('/position', allPositions);
@@ -205,7 +205,7 @@ router.post('/chart/period', koaBody, addPeriod);
 router.del('/chart/period/:id', delPeriod);
 //получить все графики
 router.get('/chart', allCharts);
-//получить статистику по сторудникам на вахтах
+//получить статистику по сотрудникам на вахтах
 router.get('/chart/statistic', getStatisticForDate);
 //получить список по должности в разрезе тех.центра и даты
 router.get('/chart/statistic/position', showStatisticPosition);
@@ -215,28 +215,80 @@ router.get('/chart/statistic/relax', showStatisticRelax);
 
 
 
-//delete this code
-// const connection = require('@root/libs/connection');
-// const BarSchema = new mongoose.Schema({
-//     tech: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: 'TechCenter'
-//     },
-//     staff: {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: 'Staffer'
-//     },
-//     period: {
-//         start: Date,
-//         end: Date
-//     }
-// });
-// const Bar = connection.model('Bar', BarSchema);
 
-// router.get('/testdb', async ctx => {
-//     const bar = await Bar.find().populate('staff').populate('tech');
 
-//     console.log(bar);
 
-//     ctx.body = { bar };
-// });
+
+
+
+
+
+//формирование отчёта по кадрам
+const sendMail = require('@root/libs/sendMail')
+const timeLine = new Date()
+timeLine.setHours(9);
+timeLine.setMinutes(0);
+timeLine.setSeconds(0);
+timeLine.setMilliseconds(0);
+let runDelay = timeLine - new Date(); //задержка до первого вызова после перезапуска сервера
+if (runDelay < 0) { //если текущее время запуска сервера позже чем назначенное время выполнения задания
+    runDelay = 24 * 60 * 60 * 1000 + runDelay;
+}
+
+setTimeout(async function run() {
+    //формирование отчёта
+    const html = await makeReference()
+    const date = new Date()
+
+    sendMail({
+        from: 'noreply-magnus@bovid.ru',
+        to: 'gsirotkin@bovid.ru',
+        subject: `[Алданский робот] Справка по сотрудникам на ${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`,
+        html: html
+    })
+
+    console.log('отчёт по кадрам сформирован: ', new Date())
+
+    setTimeout(run, 1000 * 60 * 60 * 24) //следующий вызов через сутки
+
+}, runDelay)
+
+
+async function makeReference() {
+    const data = await getStatisticForDate({ request: { query: { start: Date.now() } } })
+
+    const date = new Date();
+
+    let html = '<pre>';
+
+    html += `Справка по сотрудникам на ${date.getDate()}/${date.getMonth()+1}/${date.getFullYear()}`
+
+    //проход по техцентрам
+    for(const t of data.techCenters) {
+        html += `<h1>${t.techCenterTitle}</h1>`
+
+        const staffers = Object.values(t.staffers)
+
+        if(t.techCenterQuantity && (t.techCenterQuantity-staffers.length) > 0) {
+            html += `<p style="color:red; font-weight:bold">Нехватка кадров: ${t.techCenterQuantity-staffers.length}</p>`
+        }
+
+        html += `<p>Всего на вахте: ${staffers.length}
+            <br>из них:</p>`
+
+        const prof = new Map()
+        // console.log(t)
+
+        //проход по сотрудникам
+        for(const s of staffers) {
+            prof.set(s.staffPosition, (prof.get(s.staffPosition)+1 || 1))
+        }
+
+        for(const p of prof) {
+            html += `\t${p[0] || 'Должность не указана'}: ${p[1]}\n\n`
+        }
+    }
+    html += `Это письмо сформировано автоматически, отвечать на него не нужно.\n\n`
+    html += '</pre>'
+    return html
+}
