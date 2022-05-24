@@ -94,3 +94,4 @@ router.post('/confirm', csrf.checkCSRFToken, koaBody, confirm)
 router.post('/forgot', csrf.checkCSRFToken, koaBody, checkEmail, forgot)
 //изменение пароля
 router.post('/forgot/changePassword', csrf.checkCSRFToken, koaBody, checkPassword, changePass, refreshSession)
+//
