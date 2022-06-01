@@ -8,6 +8,7 @@ app.use(serve('client/public')); //общие статические файлы
 
 app.use(require('@logger'));
 
+app.use(serve('components/user/client/public')); //статические файлы компоненты
 app.use(require('@user').router.routes());
 
 app.use(require('@letters').router.routes());

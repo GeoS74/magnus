@@ -1,0 +1,28 @@
+.root {}
+
+.forgotPass {
+    float: right;
+}
+
+.feild {
+    position: relative;
+}
+
+.password {
+    padding-right: 50px;
+}
+
+.eyeIcon {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    /* background-color: white; */
+    width: 25px;
+    cursor: pointer;
+}
+.eyeIcon{
+    opacity: 0.6;
+}
+.eyeIcon:hover {
+    opacity: 1;
+}

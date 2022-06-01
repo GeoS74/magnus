@@ -7,3 +7,5 @@ backup*
 **/scancopy/
 **/.obsidian/
 ssl_cert/
+components/user/public/build/
+components/user/public/node_modules/

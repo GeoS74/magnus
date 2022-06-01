@@ -28,6 +28,16 @@ router.use((ctx, next) => {
     return next();
 })
 
+
+////////////////////////////////////////////////////////////////////////
+//react app
+router.get('/', csrf.setCSRFToken, async ctx => {
+    ctx.set('content-type', 'text/html')
+    ctx.body = fs.createReadStream(path.join(__dirname, '/client/public/build/index.html'))
+})
+////////////////////////////////////////////////////////////////////////
+
+
 //страница входа
 router.get('/login', csrf.setCSRFToken, async ctx => {
     ctx.set('content-type', 'text/html');
