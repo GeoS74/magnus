@@ -14,6 +14,7 @@ export const InputPassword = () => {
     return <div className="form-group">
         <label htmlFor="password" className="form-label mt-4">Password</label>
         <a href="/user/forgot" className={`form-label mt-4 text-primary ${styles.forgotPass}`}>Forgot password?</a>
+        
         <fieldset className={styles.feild}>
             <img src={EyeSlash} onClick={showPass} className={styles.eyeIcon} loading="lazy"/>
             <input type="password" name="password" id="password" className={`form-control ${styles.password}`} placeholder="password"></input>
