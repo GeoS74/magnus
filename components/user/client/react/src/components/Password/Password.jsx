@@ -10,7 +10,7 @@ const showPass = event => {
     pass.type = pass.type == 'password' ? 'text' : 'password';
 }
 
-export const InputPassword = () => {
+export const Password = () => {
     return <div className="form-group">
         <label htmlFor="password" className="form-label mt-4">Password</label>
         <a href="/user/forgot" className={`form-label mt-4 text-primary ${styles.forgotPass}`}>Forgot password?</a>
