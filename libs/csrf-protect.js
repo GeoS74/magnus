@@ -29,8 +29,10 @@ exports.checkCSRFToken = async (ctx, next) => {
 
 exports.setCSRFToken = async (ctx, next) => {
     try {
-        const salt = await generateSalt();
-        const token = await generateToken(salt);
+        const salt = await generateSalt()
+        const token = await generateToken(salt)
+
+        ctx.set('csrf-token', `${salt}:${token}`)
 
         ctx.cookies.set('CSRF-TOKEN', `${salt}:${token}`, {
             // domain: 'localhost',
@@ -43,10 +45,10 @@ exports.setCSRFToken = async (ctx, next) => {
             overwrite: true, //логическое значение, указывающее, перезаписывать ли ранее установленные файлы cookie с тем же именем ( falseпо умолчанию).
         })
 
-        return next();
+        return next()
     }
     catch (error) {
-        ctx.throw(409, error.message);
+        ctx.throw(409, error.message)
     }
 }
 

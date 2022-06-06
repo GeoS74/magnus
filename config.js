@@ -47,7 +47,7 @@ module.exports = {
         port: process.env.MAILER_PORT || 587,
         user: process.env.MAILER_USER || 'zbsv3oogpixlef66@ethereal.email',
         pass: process.env.MAILER_PASS || '4anRY5Y37gvmKqaKKT',
-        secure: false,
-        ignoreTLS: true,
+        // secure: false,
+        // ignoreTLS: true,
     }
 };
