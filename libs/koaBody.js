@@ -7,7 +7,8 @@ module.exports = koaBody({
         allowEmptyFiles: false, //разрешить загрузку пустых файлов - не работает или я не понимаю как это должно работать
         minFileSize: 1,
         multiples: true,
-        hash: 'md5',
+        // hash: 'md5',
+        hashAlgorithm: 'md5',//эта опция была изменена
         keepExtensions: true
     },
     multipart: true,
